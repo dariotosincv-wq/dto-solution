@@ -1,16 +1,28 @@
-# React + Vite
+# DTO Solution
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Prima fase strutturale del sito ufficiale DTO Solution, realizzata con React, Vite e CSS puro.
 
-Currently, two official plugins are available:
+## Comandi disponibili
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+npm run preview
+```
 
-## React Compiler
+## Struttura
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `src/components`: componenti React riutilizzabili
+- `src/data`: dati centralizzati delle applicazioni
+- `src/pages`: pagine collegate al routing
+- `src/styles`: reset, variabili e stili globali, dei componenti e delle pagine
 
-## Expanding the ESLint configuration
+Le applicazioni hanno pagine prodotto e Privacy Policy dedicate. `/privacy` è l’indice delle informative, mentre i software separati dalle applicazioni DTO Solution utilizzano il percorso `/software`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Contenuti da completare
+
+Il progetto usa placeholder espliciti finché non saranno disponibili logo, favicon, screenshot, testi, recapiti, stati dei progetti e link Google Play ufficiali.
+
+Per pubblicare la SPA, il server deve reindirizzare le richieste delle rotte applicative a `index.html`.

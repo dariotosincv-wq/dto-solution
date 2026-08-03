@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">DTO</title>
+  <rect width="64" height="64" rx="16" fill="#2563EB"/>
+  <text x="32" y="40" fill="#FFFFFF" font-family="Manrope Variable, Manrope, sans-serif" font-size="21" font-weight="800" letter-spacing="-0.8" text-anchor="middle">DTO</text>
+</svg>

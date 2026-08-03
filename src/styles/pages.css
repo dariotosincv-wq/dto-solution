@@ -1,0 +1,374 @@
+.hero {
+  padding-block: clamp(4rem, 10vw, 8rem);
+}
+
+.hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(18rem, 0.92fr);
+  align-items: center;
+  gap: clamp(2.5rem, 7vw, 6rem);
+}
+
+.hero__content h1 {
+  max-width: 48rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero__lead {
+  max-width: 39rem;
+  margin-bottom: 2rem;
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+}
+
+.section,
+.page-section {
+  padding-block: clamp(4rem, 9vw, 7rem);
+}
+
+.section--surface {
+  border-block: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.section--cta {
+  padding-top: 0;
+}
+
+.split-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(18rem, 1.1fr);
+  gap: clamp(2rem, 7vw, 6rem);
+}
+
+.split-section .section-heading {
+  margin-bottom: 0;
+}
+
+.callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(2rem, 6vw, 4rem);
+  border-radius: var(--radius-large);
+  background: var(--color-ink);
+}
+
+.callout h2 {
+  color: white;
+}
+
+.callout .eyebrow {
+  color: #bfdbfe;
+}
+
+.page-intro {
+  max-width: 50rem;
+  margin-bottom: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.narrow-layout {
+  max-width: 54rem;
+}
+
+.narrow-layout > * + * {
+  margin-top: 2rem;
+}
+
+.prose p + p {
+  margin-top: 1rem;
+}
+
+.application-detail {
+  display: grid;
+  gap: clamp(2rem, 6vw, 4rem);
+}
+
+.application-detail__intro {
+  max-width: 45rem;
+}
+
+.application-detail__intro h1 {
+  margin-bottom: 1.25rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.application-detail > .button {
+  justify-self: start;
+}
+
+.not-found {
+  text-align: center;
+}
+
+.not-found h1,
+.not-found p:not(.eyebrow) {
+  margin-bottom: 1.5rem;
+}
+
+.product-layout {
+  display: grid;
+  gap: clamp(4rem, 9vw, 7rem);
+}
+
+.product-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.55fr);
+  align-items: center;
+  gap: clamp(2rem, 7vw, 6rem);
+}
+
+.product-hero__content h1 {
+  margin-bottom: 1.25rem;
+}
+
+.product-hero__content > p:last-child {
+  max-width: 40rem;
+  font-size: 1.1rem;
+}
+
+.product-hero .media-placeholder--compact {
+  min-height: 18rem;
+  border: 1px dashed #9ca3af;
+  border-radius: var(--radius-large);
+}
+
+.product-section {
+  display: grid;
+  gap: 2rem;
+}
+
+.product-section__heading {
+  max-width: 42rem;
+}
+
+.screenshot-grid,
+.product-information-grid,
+.privacy-index {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.screenshot-grid .media-placeholder--compact {
+  min-height: 24rem;
+  border: 1px dashed #9ca3af;
+  border-radius: var(--radius-medium);
+}
+
+.product-content {
+  box-shadow: none;
+}
+
+.faq-placeholder {
+  padding: 2rem;
+  border: 1px dashed #9ca3af;
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-weight: 650;
+}
+
+.product-download {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(2rem, 6vw, 4rem);
+  border-radius: var(--radius-large);
+  background: var(--color-ink);
+  color: #d1d5db;
+}
+
+.product-download h2 {
+  margin-bottom: 0.75rem;
+  color: white;
+}
+
+.product-download .eyebrow {
+  color: #bfdbfe;
+}
+
+.product-download .button--secondary {
+  border-color: #9ca3af;
+}
+
+.software-index {
+  margin-top: clamp(5rem, 10vw, 8rem);
+  padding-top: clamp(4rem, 8vw, 6rem);
+  border-top: 1px solid var(--color-border);
+}
+
+.software-card {
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: minmax(15rem, 0.7fr) minmax(0, 1.3fr);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.software-card .media-placeholder--compact {
+  min-height: 18rem;
+  border-width: 0 1px 0 0;
+}
+
+.software-card__body {
+  align-self: center;
+  padding: clamp(1.5rem, 5vw, 3rem);
+}
+
+.software-card__body h3,
+.software-card__body p:not(.eyebrow) {
+  margin-bottom: 0.8rem;
+}
+
+.privacy-card {
+  box-shadow: none;
+}
+
+.privacy-card h2 {
+  font-size: 1.35rem;
+}
+
+.nacscan-logo-panel {
+  overflow: hidden;
+  max-width: 28rem;
+  justify-self: end;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: #020d20;
+  box-shadow: var(--shadow-soft);
+}
+
+.nacscan-logo {
+  width: 100%;
+  height: auto;
+}
+
+.nacscan-video {
+  width: min(100%, 30rem);
+  max-height: 80vh;
+  justify-self: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background: #020d20;
+  box-shadow: var(--shadow-soft);
+  object-fit: contain;
+}
+
+.nacscan-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.nacscan-gallery__item {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: #020d20;
+  box-shadow: var(--shadow-soft);
+}
+
+.nacscan-gallery__item--landscape {
+  grid-column: span 2;
+}
+
+.nacscan-gallery__item img {
+  width: 100%;
+  height: auto;
+}
+
+.nacscan-feature-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.nacscan-feature-list .content-panel {
+  box-shadow: none;
+}
+
+.nacscan-feature-list h3 {
+  margin-bottom: 0.65rem;
+}
+
+@media (max-width: 52rem) {
+  .hero__grid,
+  .split-section,
+  .product-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero .media-placeholder {
+    min-height: 18rem;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .screenshot-grid,
+  .product-information-grid,
+  .privacy-index {
+    grid-template-columns: 1fr;
+  }
+
+  .screenshot-grid .media-placeholder--compact {
+    min-height: 18rem;
+  }
+
+  .product-download {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .software-card {
+    grid-template-columns: 1fr;
+  }
+
+  .software-card .media-placeholder--compact {
+    border-width: 0 0 1px;
+  }
+
+  .nacscan-logo-panel {
+    width: min(100%, 25rem);
+    justify-self: start;
+  }
+
+  .nacscan-gallery,
+  .nacscan-feature-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 38rem) {
+  .callout {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .button-group .button {
+    width: 100%;
+  }
+
+  .nacscan-gallery,
+  .nacscan-feature-list {
+    grid-template-columns: 1fr;
+  }
+
+  .nacscan-gallery__item--landscape {
+    grid-column: auto;
+  }
+}
