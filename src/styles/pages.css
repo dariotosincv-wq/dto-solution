@@ -237,6 +237,84 @@
   font-size: 1.35rem;
 }
 
+.privacy-document__header {
+  margin-bottom: 2rem;
+}
+
+.privacy-document__updated {
+  color: var(--color-ink);
+  font-size: 1.05rem;
+}
+
+.privacy-toc {
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.privacy-toc h2 {
+  margin-bottom: 1.25rem;
+  font-size: 1.5rem;
+}
+
+.privacy-toc ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 2rem;
+  margin: 0;
+  padding-left: 1.35rem;
+}
+
+.privacy-toc a,
+.privacy-document__content a {
+  color: var(--color-primary-dark);
+  font-weight: 650;
+  text-underline-offset: 0.22rem;
+}
+
+.privacy-document__content {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.privacy-document__content section {
+  scroll-margin-top: 6rem;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.privacy-document__content h2 {
+  margin-bottom: 1rem;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+}
+
+.privacy-document__content h3 {
+  margin: 1.5rem 0 0.65rem;
+  font-size: 1.12rem;
+}
+
+.privacy-document__content p + p,
+.privacy-document__content ul + p,
+.privacy-document__content p + ul {
+  margin-top: 0.9rem;
+}
+
+.privacy-document__content ul {
+  padding-left: 1.35rem;
+}
+
+.privacy-document__content li + li {
+  margin-top: 0.3rem;
+}
+
+.privacy-document__content address {
+  font-style: normal;
+}
+
 .nacscan-logo-panel {
   overflow: hidden;
   max-width: 28rem;
@@ -340,6 +418,10 @@
 
   .software-card .media-placeholder--compact {
     border-width: 0 0 1px;
+  }
+
+  .privacy-toc ol {
+    grid-template-columns: 1fr;
   }
 
   .nacscan-logo-panel {

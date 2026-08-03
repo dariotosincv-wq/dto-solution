@@ -15,7 +15,7 @@ function PageLayout() {
       '/': 'DTO Solution | Sito ufficiale',
       '/applicazioni': 'Applicazioni | DTO Solution',
       '/applicazioni/nacscan': 'NACScan | Scanner ed editor PDF',
-      '/applicazioni/nacscan/privacy': 'Privacy Policy NACScan | DTO Solution',
+      '/applicazioni/nacscan/privacy': 'Privacy Policy NACSCAN | DTO Solution',
       '/applicazioni/driver-utility': 'Driver Utility | DTO Solution',
       '/applicazioni/driver-utility/privacy': 'Privacy Policy Driver Utility | DTO Solution',
       '/applicazioni/checkvan-pro': 'CheckVan Pro | DTO Solution',
