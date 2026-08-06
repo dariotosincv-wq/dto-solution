@@ -982,19 +982,74 @@
   gap: clamp(3.5rem, 8vw, 6rem);
 }
 
-.nacscan-hero__payoff {
-  margin: -0.55rem 0 1.25rem;
-  color: var(--color-primary-dark);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-align: center;
-  text-transform: uppercase;
+.nacscan-hero {
+  gap: clamp(2rem, 5vw, 4rem);
 }
 
-.nacscan-hero__payoff span {
-  margin-inline: 0.25em;
-  color: #14b8a6;
+.nacscan-title {
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 0.35rem !important;
+  color: var(--color-ink);
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 850;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+  white-space: nowrap;
+}
+
+.nacscan-title__nac {
+  color: #07182f;
+}
+
+.nacscan-title__scan {
+  color: #078fc5;
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .nacscan-title__scan {
+    background: linear-gradient(90deg, #1769e8 0%, #10aee5 50%, #10cfa0 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.nacscan-hero__payoff {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: clamp(0.35rem, 1vw, 0.7rem);
+  margin: 0.75rem 0 1.5rem;
+  font-size: clamp(0.66rem, 1.25vw, 0.82rem);
+  font-weight: 850;
+  letter-spacing: clamp(0.08em, 0.35vw, 0.16em);
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.nacscan-hero__payoff-scan {
+  color: #1769e8;
+}
+
+.nacscan-hero__payoff-sign {
+  color: #086d9a;
+}
+
+.nacscan-hero__payoff-save {
+  color: #08735c;
+}
+
+.nacscan-hero__payoff-separator {
+  color: #64788b;
+  font-size: 0.7em;
+}
+
+.nacscan-landing .nacscan-logo-panel {
+  max-width: 25rem;
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.13);
 }
 
 .nacscan-hero__actions {
@@ -1297,5 +1352,15 @@
   .nacscan-update-note {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .nacscan-title {
+    font-size: clamp(2.65rem, 14vw, 4rem);
+  }
+
+  .nacscan-hero__payoff {
+    gap: 0.35rem;
+    font-size: clamp(0.58rem, 2.75vw, 0.72rem);
+    letter-spacing: 0.07em;
   }
 }
