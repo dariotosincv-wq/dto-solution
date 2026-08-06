@@ -21,7 +21,7 @@ function ProductPrivacyLayout({ product }) {
           </p>
           <p>
             Sito ufficiale:{' '}
-            <a href="https://dto-solution.it">https://dto-solution.it</a>
+            <a href="https://dtosolution.it">https://dtosolution.it</a>
           </p>
         </section>
 

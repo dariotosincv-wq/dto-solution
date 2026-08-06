@@ -1,7 +1,7 @@
 import ButtonLink from '../../components/common/ButtonLink.jsx'
 import MetaDescription from '../../components/common/MetaDescription.jsx'
 
-const privacyUrl = 'https://dto-solution.it/applicazioni/driver-utility/privacy'
+const privacyUrl = 'https://dtosolution.it/applicazioni/driver-utility/privacy'
 
 const sections = [
   ['titolare-del-trattamento', 'Titolare del trattamento'],
@@ -232,7 +232,7 @@ function DriverUtilityPrivacyPage() {
           <section id="modifiche-alla-privacy-policy">
             <h2>Modifiche alla Privacy Policy</h2>
             <p>La presente Privacy Policy può essere aggiornata in qualsiasi momento per riflettere modifiche dell'app o cambiamenti normativi.</p>
-            <p>La versione più recente sarà sempre disponibile all'interno dell'app e sul <a href="https://dto-solution.it">sito ufficiale di DTO Solution</a>.</p>
+            <p>La versione più recente sarà sempre disponibile all'interno dell'app e sul <a href="https://dtosolution.it">sito ufficiale di DTO Solution</a>.</p>
           </section>
         </div>
 

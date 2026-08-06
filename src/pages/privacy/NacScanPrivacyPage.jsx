@@ -381,7 +381,7 @@ function NacScanPrivacyPage() {
               <strong>DTO Solution</strong><br />
               Applicazione: NACSCAN<br />
               E-mail: <PrivacyEmail /><br />
-              Sito web: <a href="https://dto-solution.it">https://dto-solution.it</a>
+              Sito web: <a href="https://dtosolution.it">https://dtosolution.it</a>
             </address>
           </section>
         </div>
