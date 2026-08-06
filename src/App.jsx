@@ -9,6 +9,7 @@ import PrivacyPage from './pages/PrivacyPage.jsx'
 import CheckVanProPrivacyPage from './pages/privacy/CheckVanProPrivacyPage.jsx'
 import DriverUtilityPrivacyPage from './pages/privacy/DriverUtilityPrivacyPage.jsx'
 import NacScanPrivacyPage from './pages/privacy/NacScanPrivacyPage.jsx'
+import ShoppingVoicePrivacyPage from './pages/privacy/ShoppingVoicePrivacyPage.jsx'
 import CheckVanProPage from './pages/products/CheckVanProPage.jsx'
 import DriverUtilityPage from './pages/products/DriverUtilityPage.jsx'
 import NacScanPage from './pages/products/NacScanPage.jsx'
@@ -24,6 +25,7 @@ function App() {
         <Route path="applicazioni/nacscan" element={<NacScanPage />} />
         <Route path="applicazioni/nacscan/privacy" element={<NacScanPrivacyPage />} />
         <Route path="applicazioni/shopping-voice" element={<ShoppingVoicePage />} />
+        <Route path="applicazioni/shopping-voice/privacy" element={<ShoppingVoicePrivacyPage />} />
         <Route path="applicazioni/driver-utility" element={<DriverUtilityPage />} />
         <Route path="applicazioni/driver-utility/privacy" element={<DriverUtilityPrivacyPage />} />
         <Route path="applicazioni/checkvan-pro" element={<CheckVanProPage />} />

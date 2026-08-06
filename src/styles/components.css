@@ -98,6 +98,19 @@
   font-size: 0.9rem;
 }
 
+.site-footer__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  margin-top: 0.45rem;
+  font-size: 0.85rem;
+}
+
+.site-footer__contacts a {
+  color: var(--color-text);
+  text-underline-offset: 0.2rem;
+}
+
 .footer-navigation {
   display: flex;
   gap: 1.25rem;
@@ -372,5 +385,9 @@
     align-items: flex-start;
     flex-direction: column;
     justify-content: center;
+  }
+
+  .footer-navigation {
+    width: 100%;
   }
 }
