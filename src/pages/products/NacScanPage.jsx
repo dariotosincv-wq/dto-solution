@@ -46,7 +46,7 @@ function NacScanPromoVideo() {
   }, [])
 
   return (
-    <div className="nacscan-hero-video-panel">
+    <div id="nacscan-video" className="nacscan-hero-video-panel">
       {reduceMotion ? (
         <img
           className="nacscan-hero-video__fallback"
@@ -135,25 +135,6 @@ function NacScanPage() {
               </li>
             ))}
           </ul>
-        </section>
-
-        <section id="nacscan-video" className="product-section nacscan-video-section" aria-labelledby="nacscan-video-title">
-          <div className="product-section__heading">
-            <p className="eyebrow">Dimostrazione</p>
-            <h2 id="nacscan-video-title">Video dimostrativo</h2>
-          </div>
-          <video
-            className="nacscan-video"
-            controls
-            playsInline
-            preload="metadata"
-            poster={nacScanContent.videoPoster}
-            width="1080"
-            height="2400"
-          >
-            <source src={nacScanContent.video} type="video/mp4" />
-            Il browser non supporta la riproduzione del video.
-          </video>
         </section>
 
         <aside className="nacscan-update-note">

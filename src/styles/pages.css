@@ -926,17 +926,6 @@
   height: auto;
 }
 
-.nacscan-video {
-  width: min(100%, 30rem);
-  max-height: 80vh;
-  justify-self: center;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-large);
-  background: #020d20;
-  box-shadow: var(--shadow-soft);
-  object-fit: contain;
-}
-
 .nacscan-gallery {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1135,10 +1124,6 @@
 .nacscan-feature-icon svg {
   width: 1.4rem;
   height: 1.4rem;
-}
-
-.nacscan-video-section {
-  scroll-margin-top: 6rem;
 }
 
 .nacscan-update-note {
