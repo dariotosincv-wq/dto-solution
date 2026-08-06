@@ -1,3 +1,4 @@
+import ApplicationGrid from '../components/applications/ApplicationGrid.jsx'
 import ButtonLink from '../components/common/ButtonLink.jsx'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import SectionHeading from '../components/common/SectionHeading.jsx'
@@ -7,13 +8,6 @@ const methodSteps = [
   ['02', 'Progettazione', 'Trasformiamo il problema in uno strumento semplice e concreto.'],
   ['03', 'Utilizzo sul campo', 'Il software viene provato in situazioni reali.'],
   ['04', 'Miglioramento continuo', 'I feedback degli utenti guidano l’evoluzione del progetto.'],
-]
-
-const projects = [
-  ['NACScan', '/applicazioni/nacscan'],
-  ['Shopping Voice', '/applicazioni/shopping-voice'],
-  ['Driver Utility', '/applicazioni/driver-utility'],
-  ['Observa', '/software/observa-poker'],
 ]
 
 function HomePage() {
@@ -27,16 +21,56 @@ function HomePage() {
       />
 
       <section className="hero hero--compact">
-        <div className="container hero__content">
-          <p className="eyebrow">DTO SOLUTION</p>
-          <h1>Soluzioni digitali nate da problemi reali.</h1>
-          <div className="hero__lead">
-            <p>DTO Solution sviluppa applicazioni e software nati da esigenze concrete, pensati per semplificare il lavoro e le attività quotidiane.</p>
-            <p>Ogni progetto viene utilizzato sul campo e migliorato continuamente grazie ai feedback degli utenti.</p>
+        <div className="container home-hero">
+          <div className="hero__content">
+            <p className="eyebrow">DTO SOLUTION</p>
+            <h1>Soluzioni digitali<br />nate da problemi reali.</h1>
+            <div className="hero__lead">
+              <p>DTO Solution sviluppa applicazioni e software nati da esigenze concrete, pensati per semplificare il lavoro e le attività quotidiane.</p>
+              <p>Ogni progetto viene utilizzato sul campo e migliorato continuamente grazie ai feedback degli utenti.</p>
+            </div>
+            <div className="button-group">
+              <ButtonLink to="/applicazioni">Scopri le applicazioni</ButtonLink>
+              <ButtonLink to="/chi-siamo" variant="secondary">Chi siamo</ButtonLink>
+            </div>
           </div>
-          <div className="button-group">
-            <ButtonLink to="/applicazioni">Scopri le applicazioni</ButtonLink>
-            <ButtonLink to="/chi-siamo" variant="secondary">Chi siamo</ButtonLink>
+
+          <div className="home-hero__visual" aria-label="Prodotti DTO Solution">
+            <figure className="device device--phone device--driver">
+              <img
+                src="/home-hero/driver-utility-screen.jpg"
+                alt="Schermata di Driver Utility"
+                width="921"
+                height="2048"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </figure>
+
+            <figure className="device device--laptop">
+              <div className="device__screen">
+                <img
+                  src="/home-hero/observa-screen.jpg"
+                  alt="Dashboard ufficiale Observa"
+                  width="1200"
+                  height="800"
+                  decoding="async"
+                  fetchPriority="high"
+                />
+              </div>
+              <div className="device__base" aria-hidden="true" />
+            </figure>
+
+            <figure className="device device--phone device--nacscan">
+              <img
+                src="/home-hero/nacscan-screen.jpg"
+                alt="Schermata di NACScan"
+                width="921"
+                height="2048"
+                decoding="async"
+                fetchPriority="high"
+              />
+            </figure>
           </div>
         </div>
       </section>
@@ -49,11 +83,7 @@ function HomePage() {
             </SectionHeading>
             <ButtonLink to="/applicazioni" variant="secondary">Scopri tutte le applicazioni</ButtonLink>
           </div>
-          <div className="project-links" aria-label="Progetti DTO Solution">
-            {projects.map(([name, to]) => (
-              <ButtonLink key={name} to={to} variant="text">{name}</ButtonLink>
-            ))}
-          </div>
+          <ApplicationGrid />
         </div>
       </section>
 
