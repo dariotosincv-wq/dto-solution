@@ -15,7 +15,7 @@ function ApplicationsPage() {
         <PageIntro eyebrow="Applicazioni e software" title="Le soluzioni DTO Solution">
           <p>Applicazioni e software sviluppati per risolvere esigenze concrete nel lavoro e nelle attività quotidiane.</p>
         </PageIntro>
-        <ApplicationGrid descriptions={descriptions} />
+        <ApplicationGrid descriptions={descriptions} highlightAvailability />
       </div>
     </section>
   )

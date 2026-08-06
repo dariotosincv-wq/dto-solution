@@ -297,6 +297,28 @@
   letter-spacing: 0.06em;
 }
 
+.availability-badge {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid #bbdfc8;
+  border-radius: 999px;
+  background: #f0f9f3;
+  color: #17643a;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.availability-badge__icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
 .application-card__body h3,
 .application-card__body p {
   margin-bottom: 0.8rem;
