@@ -978,6 +978,90 @@
   margin-bottom: 0.65rem;
 }
 
+.nacscan-landing .product-layout {
+  gap: clamp(3.5rem, 8vw, 6rem);
+}
+
+.nacscan-hero__actions {
+  margin-top: 1.75rem;
+}
+
+.nacscan-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(18rem, 0.55fr);
+  align-items: center;
+  gap: clamp(2rem, 7vw, 6rem);
+}
+
+.nacscan-showcase .product-section__heading {
+  max-width: 34rem;
+}
+
+.nacscan-showcase__image {
+  overflow: hidden;
+  width: min(100%, 28rem);
+  margin: 0;
+  justify-self: end;
+  border-radius: var(--radius-large);
+  background: #020d20;
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.16);
+}
+
+.nacscan-showcase__image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.nacscan-feature-list--compact .content-panel {
+  padding: 1.5rem;
+  border-color: var(--color-border);
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.nacscan-feature-list--compact .content-panel:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 16px 36px rgba(29, 78, 216, 0.1);
+  transform: translateY(-3px);
+}
+
+.nacscan-feature-icon {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin-bottom: 1.15rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.nacscan-feature-icon svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.nacscan-video-section {
+  scroll-margin-top: 6rem;
+}
+
+.nacscan-update-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+.nacscan-update-note .button {
+  flex: none;
+}
+
 @media (max-width: 52rem) {
   .home-hero,
   .hero__grid,
@@ -1079,6 +1163,15 @@
 
   .privacy-owner-card {
     grid-template-columns: 1fr;
+  }
+
+  .nacscan-showcase {
+    grid-template-columns: 1fr;
+  }
+
+  .nacscan-showcase__image {
+    width: min(100%, 26rem);
+    justify-self: start;
   }
 }
 
@@ -1184,5 +1277,10 @@
 
   .privacy-page .privacy-card {
     min-height: 0;
+  }
+
+  .nacscan-update-note {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
