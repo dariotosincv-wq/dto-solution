@@ -982,6 +982,21 @@
   gap: clamp(3.5rem, 8vw, 6rem);
 }
 
+.nacscan-hero__payoff {
+  margin: -0.55rem 0 1.25rem;
+  color: var(--color-primary-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.nacscan-hero__payoff span {
+  margin-inline: 0.25em;
+  color: #14b8a6;
+}
+
 .nacscan-hero__actions {
   margin-top: 1.75rem;
 }
