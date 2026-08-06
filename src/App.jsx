@@ -10,6 +10,7 @@ import CheckVanProPrivacyPage from './pages/privacy/CheckVanProPrivacyPage.jsx'
 import DriverUtilityPrivacyPage from './pages/privacy/DriverUtilityPrivacyPage.jsx'
 import NacScanPrivacyPage from './pages/privacy/NacScanPrivacyPage.jsx'
 import ShoppingVoicePrivacyPage from './pages/privacy/ShoppingVoicePrivacyPage.jsx'
+import WebsitePrivacyPage from './pages/privacy/WebsitePrivacyPage.jsx'
 import CheckVanProPage from './pages/products/CheckVanProPage.jsx'
 import DriverUtilityPage from './pages/products/DriverUtilityPage.jsx'
 import NacScanPage from './pages/products/NacScanPage.jsx'
@@ -33,6 +34,7 @@ function App() {
         <Route path="software/observa-poker" element={<ObservaPokerPage />} />
         <Route path="chi-siamo" element={<AboutPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
+        <Route path="privacy/sito-web" element={<WebsitePrivacyPage />} />
         <Route path="contatti" element={<ContactPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
