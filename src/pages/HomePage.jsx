@@ -9,14 +9,16 @@ function HomePage() {
       <section className="hero">
         <div className="container hero__grid">
           <div className="hero__content">
-            <p className="eyebrow">DTO Solution</p>
-            <h1>Sito ufficiale in fase di preparazione.</h1>
+            <p className="eyebrow">DTO SOLUTION</p>
+            <h1>Soluzioni digitali nate da problemi reali.</h1>
             <p className="hero__lead">
-              I contenuti ufficiali di presentazione saranno pubblicati dopo la loro approvazione.
+              DTO Solution sviluppa applicazioni Android e software progettati per risolvere problemi concreti nel lavoro e nelle attività quotidiane.
+              <br /><br />
+              Ogni progetto nasce da un'esigenza reale, viene utilizzato sul campo e migliorato continuamente grazie ai feedback degli utenti.
             </p>
             <div className="button-group">
               <ButtonLink to="/applicazioni">Scopri le applicazioni</ButtonLink>
-              <ButtonLink to="/contatti" variant="secondary">Contatti</ButtonLink>
+              <ButtonLink to="/contatti" variant="secondary">Contattaci</ButtonLink>
             </div>
           </div>
           <div className="official-logo-panel">
