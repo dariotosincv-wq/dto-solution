@@ -1,5 +1,4 @@
 import ButtonLink from '../common/ButtonLink.jsx'
-import LinkPlaceholder from '../common/LinkPlaceholder.jsx'
 
 function ApplicationCard({ application }) {
   return (
@@ -19,8 +18,6 @@ function ApplicationCard({ application }) {
             <a className="button button--primary" href={application.playStoreUrl} target="_blank" rel="noopener noreferrer">
               Scarica dal Play Store
             </a>
-          ) : application.slug === 'shopping-voice' ? (
-            <LinkPlaceholder>Link Play Store da inserire</LinkPlaceholder>
           ) : null}
         </div>
       </div>
