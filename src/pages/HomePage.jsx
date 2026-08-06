@@ -10,6 +10,23 @@ const methodSteps = [
   ['04', 'Miglioramento continuo', 'I feedback degli utenti guidano l’evoluzione del progetto.'],
 ]
 
+function MethodIcon({ step }) {
+  const icons = {
+    '01': <><path d="M4 12a8 8 0 0 1 14.7-4.4" /><path d="M20 4v5h-5" /><path d="M20 12a8 8 0 0 1-14.7 4.4" /><path d="M4 20v-5h5" /></>,
+    '02': <><path d="m4 15 9-9 5 5-9 9H4v-5Z" /><path d="m11 8 5 5" /><path d="M14 20h6" /></>,
+    '03': <><rect x="3" y="5" width="18" height="13" rx="2" /><path d="m9 10 2 2 4-4" /><path d="M8 21h8" /></>,
+    '04': <><path d="M4 18V9" /><path d="M10 18V5" /><path d="M16 18v-7" /><path d="M22 18V3" /><path d="m3 6 5-3 6 4 7-5" /></>,
+  }
+
+  return (
+    <span className="home-method__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        {icons[step]}
+      </svg>
+    </span>
+  )
+}
+
 function HomePage() {
   return (
     <>
@@ -87,14 +104,15 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section home-method">
         <div className="container">
           <SectionHeading eyebrow="Il nostro metodo" title="Dal problema reale alla soluzione digitale.">
             <p>Ogni progetto DTO Solution nasce da un’esigenza concreta e viene sviluppato attraverso un processo semplice: osservazione, progettazione, utilizzo sul campo e miglioramento continuo.</p>
           </SectionHeading>
-          <ol className="method-grid">
+          <ol className="method-grid home-method__timeline">
             {methodSteps.map(([number, title, description]) => (
-              <li className="method-card" key={number}>
+              <li className="method-card home-method__step" key={number}>
+                <MethodIcon step={number} />
                 <span className="method-card__number" aria-hidden="true">{number}</span>
                 <h3>{title}</h3>
                 <p>{description}</p>

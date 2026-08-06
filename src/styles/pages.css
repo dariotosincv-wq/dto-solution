@@ -255,6 +255,85 @@
   margin-bottom: 0.65rem;
 }
 
+.home-method {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(37, 99, 235, 0.055), transparent 24rem),
+    linear-gradient(rgba(37, 99, 235, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.025) 1px, transparent 1px);
+  background-size: auto, 2.5rem 2.5rem, 2.5rem 2.5rem;
+}
+
+.home-method__timeline {
+  position: relative;
+  isolation: isolate;
+}
+
+.home-method__timeline::before {
+  position: absolute;
+  z-index: -1;
+  top: 2rem;
+  right: 10%;
+  left: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, #93c5fd, var(--color-primary), #93c5fd);
+  content: "";
+}
+
+.home-method__step {
+  position: relative;
+  min-width: 0;
+  padding-top: 5.25rem;
+  border: 1px solid rgba(209, 213, 219, 0.9);
+  border-radius: var(--radius-medium);
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.07);
+  transition: border-color 260ms ease, box-shadow 260ms ease, transform 260ms ease;
+}
+
+.home-method__step:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 24px 50px rgba(29, 78, 216, 0.14);
+  transform: translateY(-7px);
+}
+
+.home-method__step .method-card__number {
+  position: absolute;
+  z-index: 2;
+  top: 0.65rem;
+  left: 1.5rem;
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin: 0;
+  place-items: center;
+  border: 4px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.28);
+  color: white;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+}
+
+.home-method__icon {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.5rem;
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.home-method__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 .about-hero {
   padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
 }
@@ -857,6 +936,11 @@
   .contact-card:last-child {
     grid-column: 1 / -1;
   }
+
+  .home-method__timeline::before {
+    right: 25%;
+    left: 25%;
+  }
 }
 
 @media (max-width: 38rem) {
@@ -929,5 +1013,29 @@
 
   .contact-callout .button {
     width: 100%;
+  }
+
+  .home-method__timeline {
+    gap: 1rem;
+    padding-left: 1.4rem;
+  }
+
+  .home-method__timeline::before {
+    z-index: 0;
+    top: 1.75rem;
+    right: auto;
+    bottom: 1.75rem;
+    left: 1.38rem;
+    width: 2px;
+    height: auto;
+  }
+
+  .home-method__step {
+    z-index: 1;
+    padding-top: 4.75rem;
+  }
+
+  .home-method__step .method-card__number {
+    left: -2.15rem;
   }
 }
