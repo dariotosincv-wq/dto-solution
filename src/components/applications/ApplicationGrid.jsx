@@ -4,7 +4,7 @@ import ApplicationCard from './ApplicationCard.jsx'
 function ApplicationGrid() {
   return (
     <div className="application-grid">
-      {applications.map((application) => (
+      {applications.filter((application) => application.showInGrid !== false).map((application) => (
         <ApplicationCard key={application.slug} application={application} />
       ))}
     </div>

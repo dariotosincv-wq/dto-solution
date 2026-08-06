@@ -218,11 +218,13 @@
 
 .application-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem;
 }
 
 .application-card {
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-medium);
@@ -230,8 +232,50 @@
   box-shadow: var(--shadow-soft);
 }
 
+.application-card__media,
+.software-card__media,
+.product-image-panel {
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  background: var(--color-background);
+}
+
+.application-card__media {
+  aspect-ratio: 16 / 10;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.application-card__media img,
+.software-card__media img,
+.product-image-panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .application-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   padding: 1.5rem;
+}
+
+.application-card__actions {
+  align-items: stretch;
+  margin-top: auto;
+  padding-top: 0.7rem;
+}
+
+.status-badge {
+  width: fit-content;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
 }
 
 .application-card__body h3,

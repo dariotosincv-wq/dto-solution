@@ -13,6 +13,7 @@ import CheckVanProPage from './pages/products/CheckVanProPage.jsx'
 import DriverUtilityPage from './pages/products/DriverUtilityPage.jsx'
 import NacScanPage from './pages/products/NacScanPage.jsx'
 import ObservaPokerPage from './pages/products/ObservaPokerPage.jsx'
+import ShoppingVoicePage from './pages/products/ShoppingVoicePage.jsx'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="applicazioni" element={<ApplicationsPage />} />
         <Route path="applicazioni/nacscan" element={<NacScanPage />} />
         <Route path="applicazioni/nacscan/privacy" element={<NacScanPrivacyPage />} />
+        <Route path="applicazioni/shopping-voice" element={<ShoppingVoicePage />} />
         <Route path="applicazioni/driver-utility" element={<DriverUtilityPage />} />
         <Route path="applicazioni/driver-utility/privacy" element={<DriverUtilityPrivacyPage />} />
         <Route path="applicazioni/checkvan-pro" element={<CheckVanProPage />} />

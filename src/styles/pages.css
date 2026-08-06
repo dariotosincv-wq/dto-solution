@@ -224,6 +224,17 @@
   padding: clamp(1.5rem, 5vw, 3rem);
 }
 
+.software-card__media {
+  min-height: 18rem;
+  border-right: 1px solid var(--color-border);
+}
+
+.product-image-panel {
+  min-height: 20rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+}
+
 .software-card__body h3,
 .software-card__body p:not(.eyebrow) {
   margin-bottom: 0.8rem;
@@ -414,6 +425,11 @@
 
   .software-card {
     grid-template-columns: 1fr;
+  }
+
+  .software-card__media {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .software-card .media-placeholder--compact {
