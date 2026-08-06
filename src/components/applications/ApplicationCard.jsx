@@ -1,6 +1,6 @@
 import ButtonLink from '../common/ButtonLink.jsx'
 
-function ApplicationCard({ application }) {
+function ApplicationCard({ application, description }) {
   return (
     <article className="application-card">
       <div className="application-card__media">
@@ -9,6 +9,7 @@ function ApplicationCard({ application }) {
       <div className="application-card__body">
         {application.badge && <p className="status-badge">{application.badge}</p>}
         <h3>{application.name}</h3>
+        {description && <p>{description}</p>}
         <p>{application.status}</p>
         <div className="button-group application-card__actions">
           <ButtonLink to={`/applicazioni/${application.slug}`} variant="secondary">

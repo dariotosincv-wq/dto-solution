@@ -1,6 +1,6 @@
 import ButtonLink from '../common/ButtonLink.jsx'
 
-function SoftwareCard({ product }) {
+function SoftwareCard({ product, description }) {
   return (
     <article className="application-card">
       <div className="application-card__media">
@@ -10,7 +10,7 @@ function SoftwareCard({ product }) {
         <p className="eyebrow">Software</p>
         <p className="status-badge">{product.badge}</p>
         <h3>{product.name}</h3>
-        <p>{product.subtitle}</p>
+        <p>{description ?? product.subtitle}</p>
         <p>{product.status}</p>
         <div className="button-group application-card__actions">
           <ButtonLink to={`/software/${product.slug}`} variant="secondary">
