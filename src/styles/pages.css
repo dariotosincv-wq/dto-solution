@@ -983,7 +983,38 @@
 }
 
 .nacscan-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.9fr);
   gap: clamp(2rem, 5vw, 4rem);
+}
+
+.nacscan-hero-video-panel {
+  display: grid;
+  overflow: hidden;
+  width: 100%;
+  max-width: 38rem;
+  aspect-ratio: 2944 / 1248;
+  align-self: center;
+  justify-self: end;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  border-radius: var(--radius-large);
+  background: #020d20;
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.16);
+}
+
+.nacscan-hero-video,
+.nacscan-hero-video__fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.nacscan-hero-video__fallback {
+  width: auto;
+  max-width: 42%;
+  height: auto;
+  max-height: 82%;
 }
 
 .nacscan-title {
@@ -1045,11 +1076,6 @@
 .nacscan-hero__payoff-separator {
   color: #64788b;
   font-size: 0.7em;
-}
-
-.nacscan-landing .nacscan-logo-panel {
-  max-width: 25rem;
-  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.13);
 }
 
 .nacscan-hero__actions {
@@ -1138,6 +1164,11 @@
   .split-section,
   .product-hero {
     grid-template-columns: 1fr;
+  }
+
+  .nacscan-hero-video-panel {
+    width: min(100%, 38rem);
+    justify-self: start;
   }
 
   .home-hero {

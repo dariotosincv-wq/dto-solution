@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import ButtonLink from '../../components/common/ButtonLink.jsx'
 import MetaDescription from '../../components/common/MetaDescription.jsx'
 import { getApplicationBySlug } from '../../data/applications.js'
@@ -33,6 +34,50 @@ function FeatureIcon({ type }) {
   )
 }
 
+function NacScanPromoVideo() {
+  const [reduceMotion, setReduceMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+
+  useEffect(() => {
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handleChange = (event) => setReduceMotion(event.matches)
+
+    motionPreference.addEventListener('change', handleChange)
+    return () => motionPreference.removeEventListener('change', handleChange)
+  }, [])
+
+  return (
+    <div className="nacscan-hero-video-panel">
+      {reduceMotion ? (
+        <img
+          className="nacscan-hero-video__fallback"
+          src={nacScanContent.logo}
+          alt="Logo ufficiale NACScan"
+          width="720"
+          height="720"
+          decoding="async"
+          fetchPriority="high"
+        />
+      ) : (
+        <video
+          className="nacscan-hero-video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={nacScanContent.logo}
+          width="2944"
+          height="1248"
+          aria-label="Video promozionale di NACScan"
+        >
+          <source src={nacScanContent.promoVideo} type="video/mp4" />
+          Il browser non supporta la riproduzione del video promozionale di NACScan.
+        </video>
+      )}
+    </div>
+  )
+}
+
 function NacScanPage() {
   return (
     <article className="page-section nacscan-page nacscan-landing">
@@ -56,17 +101,7 @@ function NacScanPage() {
               <a className="button button--secondary" href="#nacscan-video">Guarda il video</a>
             </div>
           </div>
-          <div className="nacscan-logo-panel">
-            <img
-              className="nacscan-logo"
-              src={nacScanContent.logo}
-              alt="Logo ufficiale NACScan"
-              width="720"
-              height="720"
-              decoding="async"
-              fetchPriority="high"
-            />
-          </div>
+          <NacScanPromoVideo />
         </header>
 
         <section className="nacscan-showcase" aria-labelledby="nacscan-showcase-title">

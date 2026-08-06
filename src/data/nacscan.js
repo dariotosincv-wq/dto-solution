@@ -2,7 +2,8 @@ export const nacScanContent = {
   name: 'NACScan',
   description: 'Scansiona, firma e modifica i tuoi PDF. Tutti gli strumenti in un’unica app.',
   logo: '/nacscan/logo-nacscan.webp',
-  video: '/nacscan/demo-nacscan-hailuo.mp4',
+  video: '/nacscan/demo-nacscan.mp4',
+  promoVideo: '/nacscan/nacscan-promo-founder-2026.mp4',
   videoPoster: '/nacscan/banner-nacscan.webp',
   features: [
     {
