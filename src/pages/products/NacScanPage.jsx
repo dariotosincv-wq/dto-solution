@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ButtonLink from '../../components/common/ButtonLink.jsx'
 import MetaDescription from '../../components/common/MetaDescription.jsx'
+import NacScanPromotion from '../../components/nacscan/NacScanPromotion.jsx'
 import { getApplicationBySlug } from '../../data/applications.js'
 import { nacScanContent } from '../../data/nacscan.js'
 
@@ -66,8 +67,8 @@ function NacScanPromoVideo() {
           playsInline
           preload="metadata"
           poster={nacScanContent.logo}
-          width="2944"
-          height="1248"
+          width="1920"
+          height="1080"
           aria-label="Video promozionale di NACScan"
         >
           <source src={nacScanContent.promoVideo} type="video/mp4" />
@@ -96,6 +97,7 @@ function NacScanPage() {
               <span className="nacscan-hero__payoff-save">SALVA</span>
             </p>
             <p>NACScan è un’app Android pensata per gestire documenti PDF in modo semplice e immediato. Permette di scansionare pagine, aggiungere firme e testo, modificare documenti, estrarre contenuti digitali, coprire dati sensibili e condividere il risultato direttamente dal dispositivo.</p>
+            <p className="nacscan-hero__promotion">Chi scarica NACScan entro il 30 settembre lo avrà gratis per sempre.</p>
             <div className="button-group nacscan-hero__actions">
               <a className="button button--primary" href={application.playStoreUrl} target="_blank" rel="noopener noreferrer">Scarica dal Play Store</a>
               <a className="button button--secondary" href="#nacscan-video">Guarda il video</a>
@@ -103,6 +105,8 @@ function NacScanPage() {
           </div>
           <NacScanPromoVideo />
         </header>
+
+        <NacScanPromotion playStoreUrl={application.playStoreUrl} />
 
         <section className="nacscan-showcase" aria-labelledby="nacscan-showcase-title">
           <div className="product-section__heading">

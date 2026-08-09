@@ -981,7 +981,7 @@
   overflow: hidden;
   width: 100%;
   max-width: 38rem;
-  aspect-ratio: 2944 / 1248;
+  aspect-ratio: 16 / 9;
   align-self: center;
   justify-self: end;
   place-items: center;
@@ -1069,6 +1069,195 @@
 
 .nacscan-hero__actions {
   margin-top: 1.75rem;
+}
+
+.nacscan-hero__promotion {
+  max-width: 36rem;
+  margin-top: 1.4rem;
+  padding: 0.9rem 1rem;
+  border-left: 4px solid #10aee5;
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  background: linear-gradient(90deg, rgba(23, 105, 232, 0.11), rgba(16, 207, 160, 0.08));
+  color: #064d71;
+  font-weight: 800;
+}
+
+.nacscan-promotion {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(1.75rem, 5vw, 3.5rem);
+  border: 1px solid rgba(23, 105, 232, 0.22);
+  border-radius: var(--radius-large);
+  background: linear-gradient(135deg, #f5f9ff 0%, #ecfdf7 100%);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.1);
+}
+
+.nacscan-promotion__copy h2 {
+  max-width: 42rem;
+  margin-bottom: 1rem;
+}
+
+.nacscan-promotion__copy > .button {
+  margin-top: 1.5rem;
+}
+
+.nacscan-promotion__note {
+  max-width: 43rem;
+  margin-top: 0.85rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.nacscan-auth {
+  align-self: center;
+  padding: clamp(1.35rem, 3vw, 2rem);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: var(--radius-medium);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-soft);
+}
+
+.nacscan-auth__label {
+  margin-bottom: 0.65rem;
+  color: var(--color-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nacscan-auth .button {
+  margin-top: 1.2rem;
+}
+
+.button--google {
+  gap: 0.7rem;
+  border-color: var(--color-border);
+  background: #fff;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.button--google:hover:not(:disabled) {
+  border-color: #4285f4;
+  color: #174ea6;
+}
+
+.button:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nacscan-google-mark {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 44%, #fbbc05 0 67%, #ea4335 0 82%, #4285f4 0);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.nacscan-auth__status {
+  width: fit-content;
+  margin-bottom: 0.7rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #e7f8ee;
+  color: #17643a;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.nacscan-auth__user span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.nacscan-auth__pending,
+.nacscan-auth__configuration {
+  margin-top: 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+}
+
+.nacscan-auth__error {
+  margin-top: 0.9rem;
+  color: #a61b1b;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.nacscan-auth__expired {
+  margin-top: 0.9rem;
+  padding: 0.8rem;
+  border-radius: var(--radius-small);
+  background: #fff4e5;
+  color: #8a4b08;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.nacscan-claim {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #bbdfc8;
+  border-radius: var(--radius-small);
+  background: #f0f9f3;
+}
+
+.nacscan-claim--verified {
+  border-color: #86d5a3;
+  background: #e7f8ee;
+}
+
+.nacscan-claim--rejected {
+  border-color: #d5d9df;
+  background: #f5f6f8;
+}
+
+.nacscan-claim__badge {
+  width: fit-content;
+  margin-bottom: 0.65rem;
+  color: #17643a;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nacscan-claim--rejected .nacscan-claim__badge {
+  color: #5e6672;
+}
+
+.nacscan-claim__message {
+  color: var(--color-ink);
+  font-weight: 750;
+}
+
+.nacscan-claim__details {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.nacscan-claim__details dt {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.nacscan-claim__details dd {
+  margin: 0.12rem 0 0;
+  color: var(--color-text);
+  font-size: 0.88rem;
 }
 
 .nacscan-showcase {
@@ -1255,6 +1444,10 @@
     grid-template-columns: 1fr;
   }
 
+  .nacscan-promotion {
+    grid-template-columns: 1fr;
+  }
+
   .nacscan-showcase__image {
     width: min(100%, 26rem);
     justify-self: start;
@@ -1368,6 +1561,15 @@
   .nacscan-update-note {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .nacscan-promotion,
+  .nacscan-auth {
+    padding: 1.25rem;
+  }
+
+  .nacscan-promotion .button {
+    width: 100%;
   }
 
   .nacscan-title {
