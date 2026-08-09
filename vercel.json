@@ -2,43 +2,11 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.dtosolution.com"
-        }
-      ],
-      "destination": "/sitemap-en.xml"
-    },
-    {
-      "source": "/sitemap.xml",
-      "has": [
-        {
-          "type": "host",
-          "value": "dtosolution.com"
-        }
-      ],
-      "destination": "/sitemap-en.xml"
+      "destination": "/api/seo?type=sitemap"
     },
     {
       "source": "/robots.txt",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.dtosolution.com"
-        }
-      ],
-      "destination": "/robots-en.txt"
-    },
-    {
-      "source": "/robots.txt",
-      "has": [
-        {
-          "type": "host",
-          "value": "dtosolution.com"
-        }
-      ],
-      "destination": "/robots-en.txt"
+      "destination": "/api/seo?type=robots"
     },
     {
       "source": "/(.*)",
