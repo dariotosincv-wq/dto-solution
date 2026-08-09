@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import BrandLogo from '../common/BrandLogo.jsx'
+import { useI18n } from '../../i18n/useI18n.js'
 
 const navigation = [
   { label: 'Applicazioni', to: '/applicazioni' },
@@ -11,6 +12,7 @@ const navigation = [
 
 function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const { language, localizedUrl } = useI18n()
 
   const closeMenu = () => setIsOpen(false)
 
@@ -47,6 +49,11 @@ function Header() {
               {item.label}
             </NavLink>
           ))}
+          <div className="language-switcher" aria-label="Selezione lingua">
+            <a className={language === 'it' ? 'language-switcher__link language-switcher__link--active' : 'language-switcher__link'} href={localizedUrl('it')} lang="it" aria-current={language === 'it' ? 'page' : undefined}>IT</a>
+            <span aria-hidden="true">|</span>
+            <a className={language === 'en' ? 'language-switcher__link language-switcher__link--active' : 'language-switcher__link'} href={localizedUrl('en')} lang="en" aria-current={language === 'en' ? 'page' : undefined}>EN</a>
+          </div>
         </nav>
       </div>
     </header>

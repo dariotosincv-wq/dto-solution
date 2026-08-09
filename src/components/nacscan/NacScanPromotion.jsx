@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSupabaseAuth } from '../../auth/useSupabaseAuth.js'
 import { useNacScanPromotion } from '../../hooks/useNacScanPromotion.js'
+import { useI18n } from '../../i18n/useI18n.js'
 
 function getUserName(user) {
   return user?.user_metadata?.full_name
@@ -9,10 +10,10 @@ function getUserName(user) {
     || 'Utente Google'
 }
 
-function formatDate(value) {
+function formatDate(value, language) {
   if (!value) return ''
 
-  return new Intl.DateTimeFormat('it-IT', {
+  return new Intl.DateTimeFormat(language === 'en' ? 'en-GB' : 'it-IT', {
     dateStyle: 'long',
     timeStyle: 'short',
     timeZone: 'Europe/Rome',
@@ -25,7 +26,7 @@ const claimMessages = {
   rejected: 'Adesione non approvata.',
 }
 
-function ClaimStatus({ claim }) {
+function ClaimStatus({ claim, language }) {
   const status = claim.status in claimMessages ? claim.status : 'pending'
 
   return (
@@ -35,12 +36,12 @@ function ClaimStatus({ claim }) {
       <dl className="nacscan-claim__details">
         <div>
           <dt>Adesione richiesta</dt>
-          <dd>{formatDate(claim.requested_at)}</dd>
+          <dd>{formatDate(claim.requested_at, language)}</dd>
         </div>
         {claim.permanent_entitlement_at ? (
           <div>
             <dt>Diritto permanente attivato</dt>
-            <dd>{formatDate(claim.permanent_entitlement_at)}</dd>
+            <dd>{formatDate(claim.permanent_entitlement_at, language)}</dd>
           </div>
         ) : null}
       </dl>
@@ -49,6 +50,7 @@ function ClaimStatus({ claim }) {
 }
 
 function NacScanPromotion({ playStoreUrl }) {
+  const { language } = useI18n()
   const {
     isConfigured,
     isAuthenticated,
@@ -124,7 +126,7 @@ function NacScanPromotion({ playStoreUrl }) {
             </p>
             {isLoadingClaim ? <p className="nacscan-auth__pending">Verifica dell’adesione esistente…</p> : null}
 
-            {!isLoadingClaim && claim ? <ClaimStatus claim={claim} /> : null}
+            {!isLoadingClaim && claim ? <ClaimStatus claim={claim} language={language} /> : null}
 
             {!isLoadingClaim && !claim && !isExpired && errorContext !== 'load' ? (
               <>

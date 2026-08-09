@@ -1,5 +1,6 @@
 import ButtonLink from '../components/common/ButtonLink.jsx'
 import MetaDescription from '../components/common/MetaDescription.jsx'
+import { useI18n } from '../i18n/useI18n.js'
 
 function ContactIcon({ type }) {
   const paths = {
@@ -18,6 +19,12 @@ function ContactIcon({ type }) {
 }
 
 function ContactPage() {
+  const { isEnglish } = useI18n()
+  const primaryWebsite = isEnglish ? 'https://www.dtosolution.com' : 'https://www.dtosolution.it'
+  const primaryLabel = isEnglish ? 'DTOSolution.com' : 'DTOSolution.it'
+  const secondaryWebsite = isEnglish ? 'https://www.dtosolution.it' : 'https://www.dtosolution.com'
+  const secondaryLabel = isEnglish ? 'DTOSolution.it' : 'DTOSolution.com'
+
   return (
     <article className="contact-page">
       <MetaDescription
@@ -52,11 +59,11 @@ function ContactPage() {
             <article className="contact-card">
               <ContactIcon type="website" />
               <h2>Sito ufficiale</h2>
-              <a className="contact-card__domain" href="https://dtosolution.it">DTOSolution.it</a>
+              <a className="contact-card__domain" href={primaryWebsite} data-i18n-ignore="true">{primaryLabel}</a>
               <p className="contact-card__secondary-domain">
-                Disponibile anche su <a href="https://dtosolution.com">DTOSolution.com</a>
+                Disponibile anche su <a href={secondaryWebsite} data-i18n-ignore="true">{secondaryLabel}</a>
               </p>
-              <a className="button button--primary" href="https://dtosolution.it">Visita il sito</a>
+              <a className="button button--primary" href={primaryWebsite}>Visita il sito</a>
             </article>
 
             <article className="contact-card">
