@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useReducer, useRef } from 'react'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import {
-  calculateSha256,
+  checkvanVerificationReducer,
+  initialCheckvanVerificationState,
+  MAX_CHECKVAN_BATCH_FILES,
   MAX_CHECKVAN_PDF_BYTES,
-  validateCheckvanPdf,
+  summarizeCheckvanResults,
+  validateCheckvanBatch,
+  verifyCheckvanFiles,
 } from '../lib/checkvanFileVerification.js'
 import {
   isCheckvanSupabaseConfigured,
@@ -15,61 +19,76 @@ const MAX_SIZE_MIB = MAX_CHECKVAN_PDF_BYTES / 1024 / 1024
 
 function CheckVanVerificationPage() {
   const { t } = useI18n()
-  const [file, setFile] = useState(null)
-  const [localError, setLocalError] = useState('')
-  const [result, setResult] = useState(null)
-  const [isVerifying, setIsVerifying] = useState(false)
+  const fileInputRef = useRef(null)
+  const [state, dispatch] = useReducer(
+    checkvanVerificationReducer,
+    initialCheckvanVerificationState,
+  )
+  const { files, isVerifying, results, selectionError } = state
+  const summary = summarizeCheckvanResults(results)
+  const isBatch = files.length > 1
 
-  const resetResult = () => {
-    setLocalError('')
-    setResult(null)
+  const getValidationMessage = (error) => {
+    if (error.code === 'batch_size') {
+      return t(
+        `Puoi verificare fino a ${MAX_CHECKVAN_BATCH_FILES} documenti alla volta.`,
+        `You can verify up to ${MAX_CHECKVAN_BATCH_FILES} documents at a time.`,
+      )
+    }
+
+    if (error.code === 'size') {
+      return t(
+        `${error.file.name} supera il limite massimo di ${MAX_SIZE_MIB} MB.`,
+        `${error.file.name} exceeds the ${MAX_SIZE_MIB} MB limit.`,
+      )
+    }
+
+    if (error.code === 'empty') {
+      return t(`${error.file.name} è vuoto.`, `${error.file.name} is empty.`)
+    }
+
+    return t(
+      `${error.file.name} non è un file PDF valido.`,
+      `${error.file.name} is not a valid PDF file.`,
+    )
   }
 
   const handleFileChange = (event) => {
-    const selectedFile = event.target.files?.[0] ?? null
-    resetResult()
+    const selectedFiles = Array.from(event.target.files ?? [])
+    const validationError = validateCheckvanBatch(selectedFiles)
 
-    const validationError = validateCheckvanPdf(selectedFile)
     if (validationError) {
-      setFile(null)
       event.target.value = ''
-      if (validationError === 'size') {
-        setLocalError(t(
-          `Il PDF supera il limite massimo di ${MAX_SIZE_MIB} MB. Seleziona un file più piccolo.`,
-          `The PDF exceeds the ${MAX_SIZE_MIB} MB limit. Select a smaller file.`,
-        ))
-      } else if (validationError === 'empty') {
-        setLocalError(t('Il PDF selezionato è vuoto.', 'The selected PDF is empty.'))
-      } else if (validationError !== 'missing') {
-        setLocalError(t('Seleziona un file PDF valido.', 'Select a valid PDF file.'))
-      }
+      dispatch({ type: 'reject', message: getValidationMessage(validationError) })
       return
     }
 
-    setFile(selectedFile)
+    dispatch({ type: 'select', files: selectedFiles })
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    resetResult()
+    const validationError = validateCheckvanBatch(files)
 
-    const validationError = validateCheckvanPdf(file)
-    if (validationError) {
-      setLocalError(t('Seleziona un file PDF valido.', 'Select a valid PDF file.'))
+    if (validationError || files.length === 0) {
+      dispatch({
+        type: 'reject',
+        message: validationError
+          ? getValidationMessage(validationError)
+          : t('Seleziona almeno un file PDF valido.', 'Select at least one valid PDF file.'),
+      })
       return
     }
 
-    setIsVerifying(true)
+    dispatch({ type: 'start' })
+    const verificationResults = await verifyCheckvanFiles(files, verifyCheckvanDocumentHash)
+    dispatch({ type: 'complete', results: verificationResults })
+  }
 
-    try {
-      const sha256 = await calculateSha256(file)
-      const isVerified = await verifyCheckvanDocumentHash(sha256)
-      setResult(isVerified ? 'verified' : 'not_verified')
-    } catch {
-      setResult('unavailable')
-    } finally {
-      setIsVerifying(false)
-    }
+  const resetVerification = () => {
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    dispatch({ type: 'reset' })
+    fileInputRef.current?.focus()
   }
 
   return (
@@ -86,57 +105,74 @@ function CheckVanVerificationPage() {
 
       <section className="page-section checkvan-verification-page">
         <div className="container checkvan-verification-layout">
-          <header className="page-intro">
+          <header className="checkvan-verification-hero">
             <p className="eyebrow">CheckVan · Driver Utility</p>
-            <h1>{t('Verifica documento CheckVan', 'Verify a CheckVan document')}</h1>
-            <div className="page-intro__copy">
-              <p>{t(
-                'Seleziona un PDF generato da Driver Utility per verificare se corrisponde al documento registrato.',
-                'Select a PDF generated by Driver Utility to check whether it matches the registered document.',
-              )}</p>
-            </div>
+            <h1>{t('Verifica documenti CheckVan', 'Verify CheckVan documents')}</h1>
+            <p>{t(
+              'Controlla fino a 10 PDF generati da Driver Utility e verifica se corrispondono ai documenti registrati.',
+              'Check up to 10 PDFs generated by Driver Utility and verify whether they match the registered documents.',
+            )}</p>
           </header>
 
-          <div className="checkvan-privacy-note">
-            <strong>{t('Il PDF rimane sul tuo dispositivo.', 'The PDF remains on your device.')}</strong>
-            <p>{t(
-              'Il PDF non viene caricato sui nostri server. Il controllo SHA-256 viene eseguito direttamente nel tuo browser.',
-              'The PDF is not uploaded to our servers. The SHA-256 check runs directly in your browser.',
-            )}</p>
-          </div>
+          <aside className="checkvan-privacy-note" aria-label={t('Informazioni sulla privacy', 'Privacy information')}>
+            <span className="checkvan-privacy-note__icon" aria-hidden="true">✓</span>
+            <div>
+              <strong>{t('I PDF rimangono sul tuo dispositivo', 'The PDFs remain on your device')}</strong>
+              <p>{t(
+                'Nessun file viene caricato: SHA-256 viene calcolato nel browser e solo il codice risultante viene verificato.',
+                'No file is uploaded: SHA-256 is calculated in the browser and only the resulting code is checked.',
+              )}</p>
+            </div>
+          </aside>
 
           <form className="checkvan-verification-form" onSubmit={handleSubmit}>
             <div className="checkvan-file-field">
-              <label htmlFor="checkvan-pdf">{t('Seleziona il PDF CheckVan', 'Select the CheckVan PDF')}</label>
+              <div>
+                <label htmlFor="checkvan-pdf">{t('Seleziona i PDF CheckVan', 'Select the CheckVan PDFs')}</label>
+                <small>{t(
+                  `Da 1 a ${MAX_CHECKVAN_BATCH_FILES} PDF, massimo ${MAX_SIZE_MIB} MB per file.`,
+                  `From 1 to ${MAX_CHECKVAN_BATCH_FILES} PDFs, maximum ${MAX_SIZE_MIB} MB per file.`,
+                )}</small>
+              </div>
               <input
                 id="checkvan-pdf"
+                ref={fileInputRef}
                 type="file"
                 accept="application/pdf,.pdf"
+                multiple
                 onChange={handleFileChange}
-                disabled={isVerifying}
+                disabled={isVerifying || results.length > 0}
               />
-              <small>{t(
-                `Formato PDF, massimo ${MAX_SIZE_MIB} MB.`,
-                `PDF format, maximum ${MAX_SIZE_MIB} MB.`,
-              )}</small>
             </div>
 
-            {file ? (
-              <p className="checkvan-selected-file">
-                <span>{t('File selezionato', 'Selected file')}</span>
-                <strong>{file.name}</strong>
-              </p>
+            {files.length > 0 ? (
+              <div className="checkvan-selected-files">
+                <p>
+                  <strong>{t(
+                    files.length === 1 ? '1 documento selezionato' : `${files.length} documenti selezionati`,
+                    files.length === 1 ? '1 document selected' : `${files.length} documents selected`,
+                  )}</strong>
+                </p>
+                <ul>
+                  {files.map((file, index) => <li key={`${file.name}-${file.size}-${index}`}>{file.name}</li>)}
+                </ul>
+              </div>
             ) : null}
 
-            <button
-              className="button button--primary"
-              type="submit"
-              disabled={!file || isVerifying || !isCheckvanSupabaseConfigured}
-            >
-              {isVerifying
-                ? t('Verifica in corso…', 'Verification in progress…')
-                : t('Verifica documento', 'Verify document')}
-            </button>
+            <div className="checkvan-form-actions">
+              <button
+                className="button button--primary"
+                type="submit"
+                disabled={!files.length || isVerifying || results.length > 0 || !isCheckvanSupabaseConfigured}
+              >
+                {isVerifying
+                  ? t('Verifica in corso…', 'Verification in progress…')
+                  : t(
+                      files.length > 1 ? 'Verifica documenti' : 'Verifica documento',
+                      files.length > 1 ? 'Verify documents' : 'Verify document',
+                    )}
+              </button>
+            </div>
 
             {!isCheckvanSupabaseConfigured ? (
               <p className="checkvan-local-error" role="alert">
@@ -146,55 +182,81 @@ function CheckVanVerificationPage() {
                 )}
               </p>
             ) : null}
-            {localError ? <p className="checkvan-local-error" role="alert">{localError}</p> : null}
+            {selectionError ? <p className="checkvan-local-error" role="alert">{selectionError}</p> : null}
             {isVerifying ? (
               <p className="checkvan-progress" role="status">
                 {t(
-                  'Calcolo SHA-256 e controllo del registro in corso…',
-                  'Calculating SHA-256 and checking the registry…',
+                  `Controllo di ${files.length} ${files.length === 1 ? 'documento' : 'documenti'} in corso…`,
+                  `Checking ${files.length} ${files.length === 1 ? 'document' : 'documents'}…`,
                 )}
               </p>
             ) : null}
           </form>
 
-          {result === 'verified' ? (
-            <section className="checkvan-result checkvan-result--verified" role="status">
-              <h2>{t('Documento verificato', 'Document verified')}</h2>
-              <p>{t(
-                'Questo PDF corrisponde esattamente a un documento registrato da Driver Utility.',
-                'This PDF exactly matches a document registered by Driver Utility.',
-              )}</p>
-              <p>{t(
-                'Il file selezionato non presenta differenze rispetto alla versione registrata.',
-                'The selected file has no differences from the registered version.',
-              )}</p>
-            </section>
-          ) : null}
+          {results.length > 0 ? (
+            <section className="checkvan-results" aria-labelledby="checkvan-results-title">
+              <div className="checkvan-results__heading">
+                <div>
+                  <p className="eyebrow">{t('Esito del controllo', 'Verification outcome')}</p>
+                  <h2 id="checkvan-results-title">{t(
+                    isBatch ? 'Risultati dei documenti' : 'Risultato del documento',
+                    isBatch ? 'Document results' : 'Document result',
+                  )}</h2>
+                </div>
+                <dl className="checkvan-summary" aria-label={t('Riepilogo', 'Summary')}>
+                  <div><dt>{t('Controllati', 'Checked')}</dt><dd>{results.length}</dd></div>
+                  <div><dt>{t('Verificati', 'Verified')}</dt><dd>{summary.verified}</dd></div>
+                  <div><dt>{t('Non verificati', 'Not verified')}</dt><dd>{summary.not_verified}</dd></div>
+                  {summary.unavailable > 0 ? (
+                    <div><dt>{t('Non completati', 'Not completed')}</dt><dd>{summary.unavailable}</dd></div>
+                  ) : null}
+                </dl>
+              </div>
 
-          {result === 'not_verified' ? (
-            <section className="checkvan-result checkvan-result--not-verified" role="status">
-              <h2>{t('Documento non verificato', 'Document not verified')}</h2>
-              <p>{t(
-                'Questo PDF non corrisponde a nessun documento CheckVan registrato.',
-                'This PDF does not match any registered CheckVan document.',
-              )}</p>
-              <p>{t(
-                'Il file potrebbe essere stato modificato, potrebbe non provenire da Driver Utility oppure potrebbe non essere presente nel registro.',
-                'The file may have been modified, may not come from Driver Utility, or may not be present in the registry.',
-              )}</p>
-            </section>
-          ) : null}
+              <div className="checkvan-result-list" aria-live="polite">
+                {results.map((result, index) => (
+                  <article
+                    className={`checkvan-result checkvan-result--${result.status.replace('_', '-')}`}
+                    key={`${result.name}-${index}`}
+                    role={result.status === 'unavailable' ? 'alert' : 'status'}
+                  >
+                    <span className="checkvan-result__mark" aria-hidden="true">
+                      {result.status === 'verified' ? '✓' : result.status === 'not_verified' ? '×' : '!'}
+                    </span>
+                    <div>
+                      <p className="checkvan-result__file">{result.name}</p>
+                      <h3>{result.status === 'verified'
+                        ? t('Documento verificato', 'Document verified')
+                        : result.status === 'not_verified'
+                          ? t('Documento non verificato', 'Document not verified')
+                          : t('Verifica temporaneamente non disponibile', 'Verification temporarily unavailable')}
+                      </h3>
+                      <p>{result.status === 'verified'
+                        ? t(
+                            'Corrisponde esattamente a un documento registrato da Driver Utility.',
+                            'It exactly matches a document registered by Driver Utility.',
+                          )
+                        : result.status === 'not_verified'
+                          ? t(
+                              'Potrebbe essere stato modificato, non provenire da Driver Utility o non essere presente nel registro.',
+                              'It may have been modified, may not come from Driver Utility, or may not be present in the registry.',
+                            )
+                          : t(
+                              'Non è stato possibile completare questo controllo. Riprova tra poco.',
+                              'This check could not be completed. Please try again shortly.',
+                            )}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
 
-          {result === 'unavailable' ? (
-            <section className="checkvan-result checkvan-result--unavailable" role="alert">
-              <h2>{t(
-                'Verifica temporaneamente non disponibile',
-                'Verification temporarily unavailable',
-              )}</h2>
-              <p>{t(
-                'Non è stato possibile completare il controllo. Riprova tra poco.',
-                'The check could not be completed. Please try again shortly.',
-              )}</p>
+              <button className="button button--secondary" type="button" onClick={resetVerification}>
+                {t(
+                  isBatch ? 'Verifica altri documenti' : 'Verifica un altro documento',
+                  isBatch ? 'Verify other documents' : 'Verify another document',
+                )}
+              </button>
             </section>
           ) : null}
         </div>
