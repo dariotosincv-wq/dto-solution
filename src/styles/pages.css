@@ -648,6 +648,20 @@
   border-color: #9ca3af;
 }
 
+.product-hero__logo { display: grid; place-items: center; min-height: 16rem; padding: 2rem; border-radius: var(--radius-large); background: linear-gradient(145deg, #edf5ff, #fff); }
+.product-hero__logo img { width: min(100%, 13rem); height: auto; border-radius: 22%; box-shadow: var(--shadow-soft); }
+.screenshot-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
+.screenshot-gallery__item { display: grid; gap: .65rem; margin: 0; text-align: center; font-weight: 750; }
+.screenshot-gallery__item button { padding: 0; border: 0; border-radius: 1.2rem; background: none; box-shadow: var(--shadow-soft); cursor: zoom-in; overflow: hidden; }
+.screenshot-gallery__item img { display: block; width: 100%; height: auto; aspect-ratio: 921 / 2048; object-fit: cover; }
+.screenshot-lightbox { position: fixed; z-index: 1100; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(5 12 24 / 88%); }
+.screenshot-lightbox__panel { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1rem; width: min(100%, 58rem); height: min(94vh, 58rem); }
+.screenshot-lightbox__panel figure { display: grid; justify-items: center; gap: .5rem; min-width: 0; height: 100%; margin: 0; color: white; }
+.screenshot-lightbox__panel img { min-height: 0; max-width: 100%; height: calc(100% - 2rem); object-fit: contain; border-radius: 1rem; }
+.screenshot-lightbox__panel button { min-width: 3rem; min-height: 3rem; border: 1px solid rgb(255 255 255 / 35%); border-radius: 50%; background: rgb(255 255 255 / 12%); color: white; font-size: 1.5rem; cursor: pointer; }
+.screenshot-lightbox__panel button:disabled { opacity: .3; cursor: default; }
+.screenshot-lightbox__close { position: absolute; z-index: 1; top: 0; right: 0; }
+
 .checkvan-verification-layout {
   display: grid;
   max-width: 62rem;
@@ -766,6 +780,14 @@
   .comparison-modal__toolbar label { width: 100%; justify-content: center; }
   .comparison-modal--photos-only .comparison-grid { overflow: auto; }
   .comparison-modal--photos-only .comparison-photo { min-height: 42vh; }
+}
+
+@media (max-width: 700px) {
+  .product-hero__logo { min-height: 11rem; }
+  .product-hero__logo img { width: 9rem; }
+  .screenshot-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .screenshot-lightbox__panel { grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem; gap: .35rem; }
+  .screenshot-lightbox__panel button { min-width: 2.75rem; min-height: 2.75rem; }
 }
 
 .checkvan-file-field {

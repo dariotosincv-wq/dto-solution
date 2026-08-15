@@ -8,7 +8,11 @@ function ProductHero({ product }) {
         <h1>{product.name}</h1>
         <p>Testo descrizione da fornire.</p>
       </div>
-      <MediaPlaceholder label={product.logoLabel} compact />
+      {product.logo ? (
+        <div className="product-hero__logo">
+          <img src={product.logo} alt={product.logoAlt} />
+        </div>
+      ) : <MediaPlaceholder label={product.logoLabel} compact />}
     </header>
   )
 }
