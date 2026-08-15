@@ -14,8 +14,6 @@ async function imageObject(page, name) {
 }
 
 export async function readCheckvanPdf(file, onProgress = () => {}) {
-  let phase = 'file-validation'
-  let diagnostic = {}
   const validation = validatePdfFile(file)
   if (validation) throw new Error(validation)
   let loadingTask
@@ -23,33 +21,18 @@ export async function readCheckvanPdf(file, onProgress = () => {}) {
   const images = []
   const photos = {}
   let fullText = ''
-  const report = (details) => {
-    phase = details.phase
-    diagnostic = { ...diagnostic, ...details }
-    console.info('[checkvan-comparison]', diagnostic)
-  }
   try {
-    phase = 'file-array-buffer'
-    report({ phase })
     const data = new Uint8Array(await file.arrayBuffer())
-    phase = 'pdf-open'
-    report({ phase, bufferLength: data.length })
     loadingTask = getDocument({ data })
     const pdf = await loadingTask.promise
-    report({ phase: 'pdf-open-complete', pageCount: pdf.numPages })
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      phase = 'page-read'
-      diagnostic = { pageNumber }
-      report({ phase, page: pageNumber })
       const page = await pdf.getPage(pageNumber)
-      phase = 'text-read'
       const textContent = await page.getTextContent()
       fullText += ` ${textContent.items.map((item) => item.str).join(' | ')}`
       for (const item of textContent.items) {
         const category = recognizeCategory(item.str)
         if (category) labels.push({ category, page: pageNumber, x: item.transform[4], y: item.transform[5] })
       }
-      phase = 'image-object-discovery'
       const operators = await page.getOperatorList()
       let transform = null
       for (let index = 0; index < operators.fnArray.length; index += 1) {
@@ -58,7 +41,6 @@ export async function readCheckvanPdf(file, onProgress = () => {}) {
           images.push({ page: pageNumber, name: operators.argsArray[index][0], x: transform[4], y: transform[5], width: Math.abs(transform[0]), height: Math.abs(transform[3]), pageRef: page })
         }
       }
-      report({ phase: 'page-discovery-complete', page: pageNumber })
       onProgress(pageNumber, pdf.numPages)
     }
     if (!/CHECK\s*VAN/i.test(fullText)) throw new Error('not-checkvan')
@@ -67,21 +49,14 @@ export async function readCheckvanPdf(file, onProgress = () => {}) {
     for (const category of CHECKVAN_CATEGORIES) {
       const match = matches.get(category.id)
       if (match) {
-        diagnostic = { category: category.id, page: match.page, objectId: match.name }
-        report({ phase: 'image-object-resolve', ...diagnostic })
         const image = await imageObject(match.pageRef, match.name)
-        report({ phase: 'image-object-resolved', ...diagnostic, imageKind: image?.kind ?? null, width: image?.width ?? null, height: image?.height ?? null, bufferLength: image?.data?.length ?? null, hasBitmap: Boolean(image?.bitmap) })
-        photos[category.id] = await imageToUrl(image, 1280, (details) => report({ ...diagnostic, ...details }))
+        photos[category.id] = await imageToUrl(image)
       }
     }
-    report({ phase: 'comparison-ready', previewCount: Object.keys(photos).length })
     return { metadata: parseCheckvanMetadata(fullText), photos, loadingTask }
   } catch (error) {
-    console.error('[checkvan-comparison]', { phase, category: diagnostic.category ?? null, page: diagnostic.page ?? null, objectId: diagnostic.objectId ?? null, imageKind: diagnostic.imageKind ?? null, width: diagnostic.width ?? null, height: diagnostic.height ?? null, error, stack: error?.stack })
-    console.info('[checkvan-comparison]', { phase: 'document-cleanup-start', previewCount: Object.keys(photos).length })
     Object.values(photos).forEach((url) => URL.revokeObjectURL(url))
     await loadingTask?.destroy?.()
-    console.info('[checkvan-comparison]', { phase: 'document-cleanup-complete' })
     throw error
   }
 }

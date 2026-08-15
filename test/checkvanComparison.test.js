@@ -72,11 +72,14 @@ test('copies RGBA_32BPP without channel conversion', () => {
   assert.deepEqual(output, input)
 })
 
-test('uses and closes image.bitmap while releasing canvases', async () => {
+test('keeps a PDF.js-owned bitmap alive when it is reused across previews', async () => {
   const mock = installCanvasMock(); let closed = false
   try {
-    assert.equal(await imageToUrl({ width: 100, height: 50, bitmap: { close: () => { closed = true } } }), 'blob:preview')
-    assert.equal(mock.drawCalls.length, 1); assert.equal(closed, true)
+    const bitmap = { close: () => { closed = true } }
+    const image = { width: 100, height: 50, bitmap }
+    assert.equal(await imageToUrl(image), 'blob:preview')
+    assert.equal(await imageToUrl(image), 'blob:preview')
+    assert.equal(mock.drawCalls.length, 2); assert.equal(closed, false)
     assert.equal(mock.canvases.every((canvas) => canvas.width === 0 && canvas.height === 0), true)
   } finally { mock.restore() }
 })
