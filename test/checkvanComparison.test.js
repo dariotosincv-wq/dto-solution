@@ -3,6 +3,22 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import { CHECKVAN_CATEGORIES, matchLabelsToImages, parseCheckvanMetadata, platesDiffer, recognizeCategory, releaseComparison, validatePdfFile } from '../src/lib/checkvanComparisonCore.js'
 import { clampZoom } from '../src/lib/zoom.js'
+import { CHECKVAN_IMAGE_KIND, copyPixelsToRgba, imageToUrl } from '../src/lib/checkvanImagePreview.js'
+
+function installCanvasMock() {
+  const canvases = []
+  const drawCalls = []
+  const originalDocument = globalThis.document
+  const originalCreateObjectURL = URL.createObjectURL
+  const context = {
+    createImageData: (width, height) => ({ data: new Uint8ClampedArray(width * height * 4), width, height }),
+    putImageData: () => {},
+    drawImage: (...args) => drawCalls.push(args),
+  }
+  globalThis.document = { createElement: () => { const canvas = { width: 0, height: 0, getContext: () => context, toBlob: (resolve) => resolve({ preview: true }) }; canvases.push(canvas); return canvas } }
+  URL.createObjectURL = () => 'blob:preview'
+  return { canvases, drawCalls, restore: () => { globalThis.document = originalDocument; URL.createObjectURL = originalCreateObjectURL } }
+}
 
 test('recognizes exactly the 14 canonical categories', () => {
   assert.equal(CHECKVAN_CATEGORIES.length, 14)
@@ -43,6 +59,35 @@ test('reset cleanup revokes every object URL and destroys documents', async () =
 })
 
 test('zoom clamps to supported range', () => { assert.equal(clampZoom(0), 1); assert.equal(clampZoom(2), 2); assert.equal(clampZoom(9), 4) })
+
+test('converts RGB_24BPP pixels to RGBA with opaque alpha', () => {
+  const output = new Uint8ClampedArray(8)
+  copyPixelsToRgba(new Uint8ClampedArray([1, 2, 3, 4, 5, 6]), CHECKVAN_IMAGE_KIND.RGB_24BPP, output, 2)
+  assert.deepEqual([...output], [1, 2, 3, 255, 4, 5, 6, 255])
+})
+
+test('copies RGBA_32BPP without channel conversion', () => {
+  const input = new Uint8ClampedArray([1, 2, 3, 4, 5, 6, 7, 8]); const output = new Uint8ClampedArray(8)
+  copyPixelsToRgba(input, CHECKVAN_IMAGE_KIND.RGBA_32BPP, output, 2)
+  assert.deepEqual(output, input)
+})
+
+test('uses and closes image.bitmap while releasing canvases', async () => {
+  const mock = installCanvasMock(); let closed = false
+  try {
+    assert.equal(await imageToUrl({ width: 100, height: 50, bitmap: { close: () => { closed = true } } }), 'blob:preview')
+    assert.equal(mock.drawCalls.length, 1); assert.equal(closed, true)
+    assert.equal(mock.canvases.every((canvas) => canvas.width === 0 && canvas.height === 0), true)
+  } finally { mock.restore() }
+})
+
+test('rejects unexpected image formats and releases intermediate canvases', async () => {
+  const mock = installCanvasMock()
+  try {
+    await assert.rejects(imageToUrl({ width: 10, height: 10, kind: 99, data: new Uint8ClampedArray(100) }), /Unsupported PDF image format: 99/)
+    assert.equal(mock.canvases.every((canvas) => canvas.width === 0 && canvas.height === 0), true)
+  } finally { mock.restore() }
+})
 
 test('comparison source has navigation and no upload/network/Supabase path', async () => {
   const page = await readFile(new URL('../src/pages/CheckVanComparisonPage.jsx', import.meta.url), 'utf8')

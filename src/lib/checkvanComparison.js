@@ -2,6 +2,7 @@ import { getDocument, OPS } from 'pdfjs-dist'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { GlobalWorkerOptions } from 'pdfjs-dist'
 import { CHECKVAN_CATEGORIES, matchLabelsToImages, parseCheckvanMetadata, recognizeCategory, validatePdfFile } from './checkvanComparisonCore.js'
+import { imageToUrl } from './checkvanImagePreview.js'
 
 export { CHECKVAN_CATEGORIES, matchLabelsToImages, parseCheckvanMetadata, platesDiffer, recognizeCategory, releaseComparison, validatePdfFile } from './checkvanComparisonCore.js'
 
@@ -12,47 +13,34 @@ async function imageObject(page, name) {
   return new Promise((resolve) => page.objs.get(name, resolve))
 }
 
-async function imageToUrl(image, maxDimension = 1280) {
-  const ratio = Math.min(1, maxDimension / Math.max(image.width, image.height))
-  const width = Math.max(1, Math.round(image.width * ratio))
-  const height = Math.max(1, Math.round(image.height * ratio))
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const context = canvas.getContext('2d', { alpha: false })
-  if (image.bitmap) context.drawImage(image.bitmap, 0, 0, width, height)
-  else {
-    const source = document.createElement('canvas')
-    source.width = image.width
-    source.height = image.height
-    source.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(image.data), image.width, image.height), 0, 0)
-    context.drawImage(source, 0, 0, width, height)
-    source.width = source.height = 0
-  }
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88))
-  canvas.width = canvas.height = 0
-  image.bitmap?.close?.()
-  if (!blob) throw new Error('image')
-  return URL.createObjectURL(blob)
-}
-
 export async function readCheckvanPdf(file, onProgress = () => {}) {
+  let phase = 'file-validation'
+  let diagnostic = {}
   const validation = validatePdfFile(file)
   if (validation) throw new Error(validation)
-  const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
-  const pdf = await loadingTask.promise
+  let loadingTask
   const labels = []
   const images = []
+  const photos = {}
   let fullText = ''
   try {
+    phase = 'file-array-buffer'
+    const data = new Uint8Array(await file.arrayBuffer())
+    phase = 'pdf-open'
+    loadingTask = getDocument({ data })
+    const pdf = await loadingTask.promise
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      phase = 'page-read'
+      diagnostic = { pageNumber }
       const page = await pdf.getPage(pageNumber)
+      phase = 'text-read'
       const textContent = await page.getTextContent()
       fullText += ` ${textContent.items.map((item) => item.str).join(' | ')}`
       for (const item of textContent.items) {
         const category = recognizeCategory(item.str)
         if (category) labels.push({ category, page: pageNumber, x: item.transform[4], y: item.transform[5] })
       }
+      phase = 'image-object-discovery'
       const operators = await page.getOperatorList()
       let transform = null
       for (let index = 0; index < operators.fnArray.length; index += 1) {
@@ -66,14 +54,19 @@ export async function readCheckvanPdf(file, onProgress = () => {}) {
     if (!/CHECK\s*VAN/i.test(fullText)) throw new Error('not-checkvan')
     const matches = matchLabelsToImages(labels, images)
     if (!matches.size) throw new Error('no-categories')
-    const photos = {}
     for (const category of CHECKVAN_CATEGORIES) {
       const match = matches.get(category.id)
-      if (match) photos[category.id] = await imageToUrl(await imageObject(match.pageRef, match.name))
+      if (match) {
+        phase = 'preview-create'
+        diagnostic = { category: category.id, pageNumber: match.page, objectName: match.name }
+        photos[category.id] = await imageToUrl(await imageObject(match.pageRef, match.name))
+      }
     }
     return { metadata: parseCheckvanMetadata(fullText), photos, loadingTask }
   } catch (error) {
-    await loadingTask.destroy()
+    if (import.meta.env.DEV) console.error('[CheckVan comparison]', { fileName: file.name, phase, ...diagnostic, error, stack: error?.stack })
+    Object.values(photos).forEach((url) => URL.revokeObjectURL(url))
+    await loadingTask?.destroy?.()
     throw error
   }
 }
