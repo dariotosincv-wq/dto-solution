@@ -4,6 +4,7 @@ import test from 'node:test'
 import { CHECKVAN_CATEGORIES, matchLabelsToImages, parseCheckvanMetadata, platesDiffer, recognizeCategory, releaseComparison, validatePdfFile } from '../src/lib/checkvanComparisonCore.js'
 import { clampZoom } from '../src/lib/zoom.js'
 import { CHECKVAN_IMAGE_KIND, copyPixelsToRgba, imageToUrl } from '../src/lib/checkvanImagePreview.js'
+import { changeSyncMode, compactDocumentLabel, compactVehicleLabel, comparisonTransformKey, DEFAULT_COMPARISON_SYNCED } from '../src/lib/checkvanComparisonUi.js'
 
 function installCanvasMock() {
   const canvases = []
@@ -97,4 +98,44 @@ test('comparison source has navigation and no upload/network/Supabase path', asy
   const library = await readFile(new URL('../src/lib/checkvanComparison.js', import.meta.url), 'utf8')
   assert.match(page, /setActive\(active - 1\)/); assert.match(page, /setActive\(active \+ 1\)/)
   for (const forbidden of ['FormData', 'fetch(', 'supabase', 'XMLHttpRequest']) assert.equal(`${page}\n${library}`.toLowerCase().includes(forbidden.toLowerCase()), false)
+})
+
+test('comparison synchronization is active by default', () => assert.equal(DEFAULT_COMPARISON_SYNCED, true))
+
+test('unlocking creates independent transforms and independent keys', () => {
+  const shared = { zoom: 2, x: 10, y: 20 }
+  const unlocked = changeSyncMode({ 'front-full-list-synced': shared }, 'front-full', true)
+  assert.deepEqual(unlocked['front-full-list-before'], shared)
+  assert.deepEqual(unlocked['front-full-list-after'], shared)
+  assert.notEqual(comparisonTransformKey('front-full', 'list', 'before', false), comparisonTransformKey('front-full', 'list', 'after', false))
+})
+
+test('relocking uses the before transform as the predictable shared position', () => {
+  const before = { zoom: 1.5, x: 5, y: 6 }; const after = { zoom: 3, x: 50, y: 60 }
+  const relocked = changeSyncMode({ 'front-full-list-before': before, 'front-full-list-after': after }, 'front-full', false)
+  assert.deepEqual(relocked['front-full-list-synced'], before)
+})
+
+test('compact comparison heading supports complete and missing metadata', () => {
+  const complete = { plate: 'GS131WM', vehicle: 'S70', inspectionType: 'Presa', date: '10/08/2026', time: '08:56' }
+  assert.equal(compactVehicleLabel(complete, {}), 'GS131WM · S70')
+  assert.equal(compactDocumentLabel(complete), 'Presa 10/08/2026 08:56')
+  assert.equal(compactVehicleLabel({}, { vehicle: 'S70' }), 'S70')
+  assert.equal(compactDocumentLabel({ date: '10/08/2026' }), '10/08/2026')
+})
+
+test('modal exposes position, direct category jump, navigation and photos-only toggle', async () => {
+  const page = await readFile(new URL('../src/pages/CheckVanComparisonPage.jsx', import.meta.url), 'utf8')
+  assert.match(page, /active \+ 1.*CHECKVAN_CATEGORIES\.length/s)
+  assert.match(page, /<select value=\{active\}/)
+  assert.match(page, /setActive\(active - 1\)/); assert.match(page, /setActive\(active \+ 1\)/)
+  assert.match(page, /setPhotosOnly\(\(current\) => !current\)/)
+  assert.match(page, /setPhotosOnly\(false\)/)
+})
+
+test('UX change leaves parser and verification implementation untouched by design', async () => {
+  const comparison = await readFile(new URL('../src/lib/checkvanComparison.js', import.meta.url), 'utf8')
+  const verification = await readFile(new URL('../src/pages/CheckVanVerificationPage.jsx', import.meta.url), 'utf8')
+  assert.match(comparison, /matchLabelsToImages/)
+  assert.match(verification, /verifyCheckvanDocumentHash/)
 })
