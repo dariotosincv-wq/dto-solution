@@ -119,8 +119,8 @@ function CheckVanVerificationPage() {
             <div>
               <strong>{t('I PDF rimangono sul tuo dispositivo', 'The PDFs remain on your device')}</strong>
               <p>{t(
-                'Nessun file viene caricato: SHA-256 viene calcolato nel browser e solo il codice risultante viene verificato.',
-                'No file is uploaded: SHA-256 is calculated in the browser and only the resulting code is checked.',
+                'Nessun file viene caricato. Controlla se i tuoi PDF sono originali e non modificati.',
+                'No file is uploaded. Check whether your PDFs are original and unmodified.',
               )}</p>
             </div>
           </aside>
