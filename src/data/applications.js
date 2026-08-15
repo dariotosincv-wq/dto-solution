@@ -31,13 +31,16 @@ export const applications = [
     detailLabel: 'Scopri Driver Utility',
     logo: '/products/driver-utility/driver-utility-icon.png',
     logoAlt: 'Logo Driver Utility',
+    heroDescription: "Strumenti pratici per semplificare il lavoro quotidiano del driver, dalla gestione del mezzo all'organizzazione della giornata.",
+    heroHighlights: ['Pensata per il lavoro sul campo', 'Strumenti raccolti in un’unica app'],
     hideVideo: true,
     screenshots: [
       { src: '/products/driver-utility/driver-utility-home.jpeg', label: 'Driver Utility', alt: 'Schermata principale Driver Utility' },
       { src: '/products/driver-utility/driver-utility-ispezioni.jpeg', label: 'Controlla Mezzi', alt: 'Controlla Mezzi Driver Utility' },
-      { src: '/products/driver-utility/driver-utility-qr-hub.jpeg', label: 'QR Locali', alt: 'QR Locali Driver Utility' },
-      { src: '/products/driver-utility/driver-utility-turni.jpeg', label: 'Turni Driver', alt: 'Turni Driver' },
       { src: '/products/driver-utility/driver-utility-busta-paga.jpeg', label: 'Busta Paga Driver', alt: 'Busta Paga Driver' },
+      { src: '/products/driver-utility/driver-utility-turni.jpeg', label: 'Turni Driver', alt: 'Turni Driver' },
+      { src: '/products/driver-utility/driver-utility-qr-hub.jpeg', label: 'QR Locali', alt: 'QR Locali Driver Utility' },
+      { src: '/products/driver-utility/driver-utility-scansione-qr.jpg', label: 'Scansione QR', alt: 'Scansione QR Driver Utility' },
     ],
   },
   {
