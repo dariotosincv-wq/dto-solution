@@ -13,10 +13,16 @@ function ProductMedia({ product }) {
   }, [active])
 
   return (
-    <section className="product-section" aria-labelledby={`${product.slug}-media`}>
+    <section
+      className="product-section"
+      aria-label={product.hideMediaTitle ? product.mediaEyebrow : undefined}
+      aria-labelledby={product.hideMediaTitle ? undefined : `${product.slug}-media`}
+    >
       <div className="product-section__heading">
-        <p className="eyebrow">Anteprima</p>
-        <h2 id={`${product.slug}-media`}>{product.hideVideo ? 'Screenshot' : 'Video e screenshot'}</h2>
+        <p className="eyebrow">{product.mediaEyebrow ?? 'Anteprima'}</p>
+        {!product.hideMediaTitle ? (
+          <h2 id={`${product.slug}-media`}>{product.hideVideo ? 'Screenshot' : 'Video e screenshot'}</h2>
+        ) : null}
       </div>
 
       {!product.hideVideo ? <MediaPlaceholder label={product.videoLabel} /> : null}

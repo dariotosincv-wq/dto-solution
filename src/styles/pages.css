@@ -615,6 +615,68 @@
   box-shadow: none;
 }
 
+.product-content--wide {
+  grid-column: 1 / -1;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.product-prose {
+  display: grid;
+  gap: 1rem;
+  color: var(--color-muted);
+}
+
+.product-feature-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: .25rem;
+}
+
+.product-feature-list section {
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.product-feature-list h3 {
+  margin-bottom: .55rem;
+  font-size: 1.05rem;
+}
+
+.product-feature-list p,
+.product-faq-item p {
+  color: var(--color-muted);
+}
+
+.product-technical-list p {
+  padding-left: 1rem;
+  border-left: 3px solid var(--color-primary-soft);
+}
+
+.product-faq-list {
+  display: grid;
+  gap: .75rem;
+}
+
+.product-faq-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.product-faq-item summary {
+  padding: 1.15rem 3.25rem 1.15rem 1.25rem;
+  color: var(--color-ink);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.product-faq-item p {
+  padding: 0 1.25rem 1.25rem;
+}
+
 .faq-placeholder {
   padding: 2rem;
   border: 1px dashed #9ca3af;
@@ -1703,6 +1765,10 @@
   .screenshot-grid,
   .product-information-grid,
   .privacy-index {
+    grid-template-columns: 1fr;
+  }
+
+  .product-feature-list {
     grid-template-columns: 1fr;
   }
 

@@ -34,6 +34,8 @@ export const applications = [
     heroDescription: "Strumenti pratici per semplificare il lavoro quotidiano del driver, dalla gestione del mezzo all'organizzazione della giornata.",
     heroHighlights: ['Pensata per il lavoro sul campo', 'Strumenti raccolti in un’unica app'],
     hideVideo: true,
+    hideMediaTitle: true,
+    mediaEyebrow: 'L’APP IN AZIONE',
     screenshots: [
       { src: '/products/driver-utility/driver-utility-home.jpeg', label: 'Driver Utility', alt: 'Schermata principale Driver Utility' },
       { src: '/products/driver-utility/driver-utility-ispezioni.jpeg', label: 'Controlla Mezzi', alt: 'Controlla Mezzi Driver Utility' },
