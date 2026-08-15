@@ -648,6 +648,112 @@
   border-color: #9ca3af;
 }
 
+.checkvan-verification-layout {
+  display: grid;
+  max-width: 54rem;
+  gap: 1.5rem;
+}
+
+.checkvan-privacy-note,
+.checkvan-verification-form,
+.checkvan-result {
+  padding: clamp(1.4rem, 4vw, 2.25rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.checkvan-privacy-note {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.checkvan-privacy-note strong,
+.checkvan-result h2 {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-ink);
+}
+
+.checkvan-verification-form {
+  display: grid;
+  justify-items: start;
+  gap: 1.25rem;
+}
+
+.checkvan-file-field {
+  display: grid;
+  width: 100%;
+  gap: 0.55rem;
+}
+
+.checkvan-file-field label {
+  color: var(--color-ink);
+  font-weight: 750;
+}
+
+.checkvan-file-field input {
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: white;
+}
+
+.checkvan-file-field input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.checkvan-file-field small,
+.checkvan-selected-file span {
+  color: var(--color-muted);
+}
+
+.checkvan-selected-file {
+  display: grid;
+  max-width: 100%;
+  gap: 0.2rem;
+}
+
+.checkvan-selected-file strong {
+  overflow-wrap: anywhere;
+}
+
+.checkvan-local-error,
+.checkvan-result--unavailable {
+  color: #991b1b;
+}
+
+.checkvan-progress {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.checkvan-result {
+  border-left-width: 0.45rem;
+}
+
+.checkvan-result p + p {
+  margin-top: 0.7rem;
+}
+
+.checkvan-result--verified {
+  border-left-color: #15803d;
+  background: #f0fdf4;
+}
+
+.checkvan-result--not-verified {
+  border-left-color: #b45309;
+  background: #fffbeb;
+}
+
+.checkvan-result--unavailable {
+  border-left-color: #b91c1c;
+  background: #fef2f2;
+}
+
 .software-index {
   margin-top: clamp(5rem, 10vw, 8rem);
   padding-top: clamp(4rem, 8vw, 6rem);

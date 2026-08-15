@@ -9,6 +9,7 @@ const publicPaths = [
   '/applicazioni/driver-utility/privacy',
   '/applicazioni/checkvan-pro',
   '/applicazioni/checkvan-pro/privacy',
+  '/verifica-checkvan',
   '/software/observa-poker',
   '/chi-siamo',
   '/contatti',

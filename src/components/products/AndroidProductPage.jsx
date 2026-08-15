@@ -4,7 +4,7 @@ import ProductFaq from './ProductFaq.jsx'
 import ProductHero from './ProductHero.jsx'
 import ProductMedia from './ProductMedia.jsx'
 
-function AndroidProductPage({ product }) {
+function AndroidProductPage({ children, product }) {
   return (
     <article className="page-section product-page">
       <div className="container product-layout">
@@ -33,6 +33,7 @@ function AndroidProductPage({ product }) {
         </div>
 
         <ProductFaq productName={product.name} />
+        {children}
         <ProductDownload product={product} />
       </div>
     </article>
