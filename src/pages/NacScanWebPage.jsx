@@ -3,6 +3,7 @@ import { PDFDocument, degrees } from 'pdf-lib'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import MetaDescription from '../components/common/MetaDescription.jsx'
+import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
@@ -52,7 +53,9 @@ function PagePreview({ page, selected, onSelect }) {
       await renderTask.promise
     }
 
-    render().catch(() => {})
+    render().catch((error) => {
+      if (import.meta.env.DEV) console.error('[NACScan Web] PDF preview failed', error)
+    })
     return () => {
       cancelled = true
       renderTask?.cancel()
@@ -132,9 +135,8 @@ function NacScanWebPage() {
       for (const file of files) {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
           const bytes = new Uint8Array(await file.arrayBuffer())
-          const pdf = await getDocument({ data: bytes.slice() }).promise
-          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) additions.push({ id: makeId(), kind: 'pdf', bytes, pageNumber, rotation: 0, name: file.name })
-          await pdf.destroy()
+          const { pageCount } = await inspectNacScanPdf(bytes)
+          for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) additions.push({ id: makeId(), kind: 'pdf', bytes, pageNumber, rotation: 0, name: file.name })
         } else if (file.type === 'image/jpeg' || file.type === 'image/png') {
           const bytes = new Uint8Array(await file.arrayBuffer())
           additions.push({ id: makeId(), kind: 'image', bytes, mime: file.type, url: URL.createObjectURL(file), rotation: 0, name: file.name })
@@ -145,7 +147,8 @@ function NacScanWebPage() {
       setPages((current) => [...current, ...additions])
       setSelectedId((current) => current || additions[0]?.id || null)
       setMessage(`${additions.length} ${additions.length === 1 ? 'pagina importata' : 'pagine importate'}.`)
-    } catch {
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('[NACScan Web] Document import failed', error)
       setMessage('Non è stato possibile leggere il documento. Verifica che il file non sia protetto o danneggiato.')
     } finally {
       setBusy(false)
