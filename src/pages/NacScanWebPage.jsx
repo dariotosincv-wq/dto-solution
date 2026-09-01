@@ -71,6 +71,118 @@ function PagePreview({ page, selected, onSelect }) {
   )
 }
 
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
+function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext }) {
+  const canvasRef = useRef(null)
+  const viewportRef = useRef(null)
+  const [zoom, setZoom] = useState(1)
+  const [fitWidth, setFitWidth] = useState(true)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [availableWidth, setAvailableWidth] = useState(900)
+
+  useEffect(() => {
+    const element = viewportRef.current
+    if (!element) return undefined
+    const observer = new ResizeObserver(([entry]) => setAvailableWidth(Math.max(280, entry.contentRect.width - 32)))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [fullscreen])
+
+  useEffect(() => {
+    if (!fullscreen) return undefined
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setFullscreen(false) }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [fullscreen])
+
+  useEffect(() => {
+    let cancelled = false
+    let loadingTask
+    let renderTask
+
+    async function render() {
+      const canvas = canvasRef.current
+      if (!canvas || !page) return
+      const context = canvas.getContext('2d')
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
+
+      if (page.kind === 'image') {
+        const image = new Image()
+        image.onload = () => {
+          if (cancelled) return
+          const rotated = page.rotation % 180 !== 0
+          const sourceWidth = rotated ? image.height : image.width
+          const sourceHeight = rotated ? image.width : image.height
+          const cssWidth = fitWidth ? availableWidth : sourceWidth * zoom
+          const scale = cssWidth / sourceWidth
+          canvas.width = Math.round(cssWidth * pixelRatio)
+          canvas.height = Math.round(sourceHeight * scale * pixelRatio)
+          canvas.style.width = `${cssWidth}px`
+          canvas.style.height = `${sourceHeight * scale}px`
+          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+          context.translate(cssWidth / 2, (sourceHeight * scale) / 2)
+          context.rotate((page.rotation * Math.PI) / 180)
+          context.drawImage(image, -(image.width * scale) / 2, -(image.height * scale) / 2, image.width * scale, image.height * scale)
+        }
+        image.src = page.url
+        return
+      }
+
+      loadingTask = getDocument({ data: page.bytes.slice() })
+      const pdf = await loadingTask.promise
+      const pdfPage = await pdf.getPage(page.pageNumber)
+      const baseViewport = pdfPage.getViewport({ scale: 1, rotation: page.rotation })
+      const scale = fitWidth ? availableWidth / baseViewport.width : zoom
+      const viewport = pdfPage.getViewport({ scale: scale * pixelRatio, rotation: page.rotation })
+      canvas.width = viewport.width
+      canvas.height = viewport.height
+      canvas.style.width = `${viewport.width / pixelRatio}px`
+      canvas.style.height = `${viewport.height / pixelRatio}px`
+      renderTask = pdfPage.render({ canvasContext: context, viewport })
+      await renderTask.promise
+    }
+
+    render().catch((error) => { if (import.meta.env.DEV) console.error('[NACScan Web] Large preview failed', error) })
+    return () => {
+      cancelled = true
+      renderTask?.cancel()
+      loadingTask?.destroy()
+    }
+  }, [page, zoom, fitWidth, availableWidth])
+
+  const changeZoom = (direction) => {
+    const current = fitWidth ? 1 : zoom
+    const index = ZOOM_LEVELS.findIndex((level) => level >= current)
+    const target = Math.min(ZOOM_LEVELS.length - 1, Math.max(0, index + direction))
+    setFitWidth(false)
+    setZoom(ZOOM_LEVELS[target])
+  }
+
+  return (
+    <section className={`nacscan-viewer${fullscreen ? ' is-fullscreen' : ''}`} aria-label="Visualizzatore documento">
+      <div className="nacscan-viewer__toolbar">
+        <button type="button" onClick={onPrevious} disabled={pageNumber <= 1} aria-label="Pagina precedente">←</button>
+        <strong>{pageNumber} / {pageCount}</strong>
+        <button type="button" onClick={onNext} disabled={pageNumber >= pageCount} aria-label="Pagina successiva">→</button>
+        <span className="nacscan-viewer__divider" />
+        <button type="button" onClick={() => changeZoom(-1)} aria-label="Riduci zoom">−</button>
+        <span>{fitWidth ? 'Adatta' : `${Math.round(zoom * 100)}%`}</span>
+        <button type="button" onClick={() => changeZoom(1)} aria-label="Aumenta zoom">+</button>
+        <button type="button" onClick={() => setFitWidth(true)}>Adatta alla larghezza</button>
+        <button className="nacscan-viewer__fullscreen" type="button" onClick={() => setFullscreen((value) => !value)}>{fullscreen ? 'Chiudi schermo intero' : 'Schermo intero'}</button>
+      </div>
+      <div className="nacscan-viewer__viewport" ref={viewportRef}>
+        <canvas ref={canvasRef} aria-label={`Pagina ${pageNumber} del documento`} />
+      </div>
+    </section>
+  )
+}
+
 function SignaturePad({ onSave, onClose }) {
   const canvasRef = useRef(null)
   const drawing = useRef(false)
@@ -267,6 +379,13 @@ function NacScanWebPage() {
               <div className="nacscan-web__pages">
                 {pages.map((page, index) => <div className="nacscan-web__page-item" key={page.id}><span>{index + 1}</span><PagePreview page={page} selected={page.id === selectedId} onSelect={() => setSelectedId(page.id)} /></div>)}
               </div>
+              <DocumentViewer
+                page={pages[selectedIndex]}
+                pageNumber={selectedIndex + 1}
+                pageCount={pages.length}
+                onPrevious={() => setSelectedId(pages[selectedIndex - 1]?.id || selectedId)}
+                onNext={() => setSelectedId(pages[selectedIndex + 1]?.id || selectedId)}
+              />
               <div className="nacscan-web__export">
                 <p>{message || 'Seleziona una pagina per modificarla.'}</p>
                 <button className="button button--primary" type="button" onClick={exportPdf} disabled={busy}>Scarica PDF finale</button>

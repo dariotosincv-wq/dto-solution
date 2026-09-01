@@ -648,6 +648,22 @@
 .nacscan-signature__panel { width: min(46rem, 100%); padding: clamp(1rem, 4vw, 2rem); border-radius: var(--radius-large); background: var(--color-surface); box-shadow: var(--shadow-strong); }
 .nacscan-signature__panel p { margin: .5rem 0 1rem; color: var(--color-muted); }
 .nacscan-signature canvas { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; margin-bottom: 1rem; border: 1px dashed var(--color-border); border-radius: .6rem; background: white; touch-action: none; }
+.nacscan-web__workspace:has(.nacscan-viewer) { display: grid; grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr); }
+.nacscan-web__workspace:has(.nacscan-viewer) > .nacscan-web__import,
+.nacscan-web__workspace:has(.nacscan-viewer) > .nacscan-web__toolbar,
+.nacscan-web__workspace:has(.nacscan-viewer) > .nacscan-web__export { grid-column: 1 / -1; }
+.nacscan-web__workspace:has(.nacscan-viewer) > .nacscan-web__pages { grid-template-columns: 1fr; grid-column: 1; min-height: 36rem; max-height: 70vh; align-content: start; }
+.nacscan-web__workspace:has(.nacscan-viewer) .nacscan-web-page { min-height: 10rem; }
+.nacscan-viewer { grid-column: 2; min-width: 0; background: #dfe5ed; }
+.nacscan-viewer__toolbar { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .55rem; min-height: 3.5rem; padding: .65rem; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+.nacscan-viewer__toolbar button { min-height: 2.5rem; padding: .4rem .7rem; border: 1px solid var(--color-border); border-radius: .5rem; background: white; color: var(--color-ink); font-weight: 700; cursor: pointer; }
+.nacscan-viewer__toolbar button:disabled { opacity: .35; cursor: default; }
+.nacscan-viewer__divider { width: 1px; height: 1.75rem; background: var(--color-border); }
+.nacscan-viewer__fullscreen { margin-left: auto; }
+.nacscan-viewer__viewport { display: grid; justify-items: center; align-items: start; height: 70vh; min-height: 36rem; padding: 1rem; overflow: auto; }
+.nacscan-viewer__viewport canvas { display: block; max-width: none; background: white; box-shadow: 0 8px 30px rgb(16 35 63 / 18%); }
+.nacscan-viewer.is-fullscreen { position: fixed; z-index: 1200; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: #dfe5ed; }
+.nacscan-viewer.is-fullscreen .nacscan-viewer__viewport { width: 100vw; height: auto; min-height: 0; }
 @media (max-width: 640px) {
   .nacscan-web__import .button, .nacscan-web__export .button { width: 100%; }
   .nacscan-web__privacy { width: 100%; margin-left: 0; }
@@ -656,6 +672,12 @@
   .nacscan-web__toolbar button { flex: 1 1 calc(50% - .5rem); }
   .nacscan-web__pages { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
   .nacscan-web-page { min-height: 10rem; }
+  .nacscan-web__workspace:has(.nacscan-viewer) { display: block; }
+  .nacscan-web__workspace:has(.nacscan-viewer) > .nacscan-web__pages { display: flex; min-height: 0; max-height: none; overflow-x: auto; }
+  .nacscan-web__workspace:has(.nacscan-viewer) .nacscan-web__page-item { flex: 0 0 8rem; }
+  .nacscan-viewer__toolbar { justify-content: flex-start; }
+  .nacscan-viewer__fullscreen { margin-left: 0; }
+  .nacscan-viewer__viewport { width: 100%; height: 70vh; min-height: 28rem; }
 }
 
 .product-content--wide {
