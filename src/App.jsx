@@ -17,6 +17,7 @@ import CheckVanVerificationPage from './pages/CheckVanVerificationPage.jsx'
 import CheckVanComparisonPage from './pages/CheckVanComparisonPage.jsx'
 import DriverUtilityPage from './pages/products/DriverUtilityPage.jsx'
 import NacScanPage from './pages/products/NacScanPage.jsx'
+import NacScanWebPage from './pages/NacScanWebPage.jsx'
 import ObservaPokerPage from './pages/products/ObservaPokerPage.jsx'
 import ShoppingVoicePage from './pages/products/ShoppingVoicePage.jsx'
 
@@ -28,6 +29,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="applicazioni" element={<ApplicationsPage />} />
           <Route path="applicazioni/nacscan" element={<NacScanPage />} />
+          <Route path="nacscan" element={<NacScanWebPage />} />
           <Route path="applicazioni/nacscan/privacy" element={<NacScanPrivacyPage />} />
           <Route path="applicazioni/shopping-voice" element={<ShoppingVoicePage />} />
           <Route path="applicazioni/shopping-voice/privacy" element={<ShoppingVoicePrivacyPage />} />

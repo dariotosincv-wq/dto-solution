@@ -99,6 +99,7 @@ function NacScanPage() {
             <p>NACScan è un’app Android pensata per gestire documenti PDF in modo semplice e immediato. Permette di scansionare pagine, aggiungere firme e testo, modificare documenti, estrarre contenuti digitali, coprire dati sensibili e condividere il risultato direttamente dal dispositivo.</p>
             <p className="nacscan-hero__promotion">Chi scarica NACScan entro il 30 settembre lo avrà gratis per sempre.</p>
             <div className="button-group nacscan-hero__actions">
+              <ButtonLink to="/nacscan" variant="primary">Usa NACScan online</ButtonLink>
               <a className="button button--primary" href={application.playStoreUrl} target="_blank" rel="noopener noreferrer">Scarica dal Play Store</a>
               <a className="button button--secondary" href="#nacscan-video">Guarda il video</a>
             </div>
