@@ -288,6 +288,8 @@ function NacScanWebPage() {
   const [activeTool, setActiveTool] = useState('')
   const [textOptions, setTextOptions] = useState({ size: 18, color: 'black' })
   const [extractedText, setExtractedText] = useState('')
+  const [toolsOpen, setToolsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const selectedIndex = pages.findIndex((page) => page.id === selectedId)
 
@@ -358,6 +360,32 @@ function NacScanWebPage() {
     } catch {
       setMessage('Estrazione del testo non riuscita.')
     } finally { setBusy(false) }
+  }
+
+  async function extractTextFile(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setBusy(true)
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const task = getDocument({ data: bytes.slice() })
+      const pdf = await task.promise
+      const chunks = []
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const content = await (await pdf.getPage(pageNumber)).getTextContent()
+        chunks.push(`Pagina ${pageNumber}\n${content.items.map((item) => item.str).join(' ')}`)
+      }
+      await pdf.destroy()
+      setExtractedText(chunks.join('\n\n') || 'Il documento non contiene testo digitale estraibile.')
+    } catch { setMessage('Estrazione del testo non riuscita.') } finally { setBusy(false); event.target.value = '' }
+  }
+
+  function returnHome() {
+    setPages([])
+    setSelectedId(null)
+    setActiveTool('')
+    setToolsOpen(false)
+    setMessage('')
   }
 
   function moveSelected(offset) {
@@ -440,16 +468,17 @@ function NacScanWebPage() {
     <article className="page-section nacscan-web">
       <MetaDescription content="NACScan Web: importa, organizza, firma ed esporta documenti PDF direttamente nel browser." />
       <div className="container nacscan-web__layout">
-        <header className="nacscan-web__header">
-          <p className="eyebrow">NACScan Web</p>
-          <h1>Gestisci i tuoi documenti direttamente dal browser.</h1>
-          <p>PDF e immagini vengono elaborati solo sul tuo dispositivo: nessun file viene caricato o conservato da DTO Solution.</p>
+        <header className="nacscan-app-header">
+          <img src="/nacscan/logo-nacscan.webp" alt="NACScan" />
+          <div><p className="eyebrow">NACScan Web</p><h1>Scansiona · Firma · Salva</h1></div>
+          <span className="nacscan-web__privacy">Elaborazione locale</span>
         </header>
 
         <section className="nacscan-web__workspace" aria-label="Editor documenti">
-          <div className="nacscan-web__import">
+          {pages.length > 0 && <div className="nacscan-internal-header"><button type="button" onClick={returnHome}>← Home</button><strong>{pages[0]?.name || 'Documento PDF'}</strong><span>{pages.length} {pages.length === 1 ? 'pagina' : 'pagine'}</span></div>}
+          {pages.length > 0 && <div className="nacscan-web__import">
             <label className="button button--primary">
-              {busy ? 'Elaborazione…' : 'Carica PDF o immagini'}
+              {busy ? 'Elaborazione…' : 'Aggiungi pagine'}
               <input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} disabled={busy} />
             </label>
             <label className="button button--secondary">
@@ -457,14 +486,20 @@ function NacScanWebPage() {
               <input type="file" accept="image/jpeg,image/png" capture="environment" multiple onChange={importFiles} disabled={busy} />
             </label>
             <span className="nacscan-web__privacy">Elaborazione locale</span>
-          </div>
+          </div>}
 
           {pages.length === 0 ? (
-            <div className="nacscan-web__empty">
-              <span aria-hidden="true">PDF</span>
-              <h2>Inizia caricando un documento</h2>
-              <p>Puoi selezionare un PDF, più immagini oppure usare la fotocamera dello smartphone.</p>
-            </div>
+            <main className="nacscan-home" aria-label="Home NACScan">
+              <img className="nacscan-home__banner" src="/nacscan/banner-nacscan.webp" alt="NACScan: scansiona, firma e salva" />
+              <nav className="nacscan-home__actions" aria-label="Azioni NACScan">
+                <label className="nacscan-home-action nacscan-home-action--scan"><strong>SC</strong><span>Scansiona</span><small>Fotografa un documento</small><input type="file" accept="image/jpeg,image/png" capture="environment" multiple onChange={importFiles} /></label>
+                <label className="nacscan-home-action nacscan-home-action--pdf"><strong>PDF</strong><span>Modifica PDF</span><small>Apri e compila un documento</small><input type="file" accept="application/pdf" onChange={importFiles} /></label>
+                <label className="nacscan-home-action nacscan-home-action--text"><strong>TXT</strong><span>Estrai testo</span><small>Leggi il testo digitale</small><input type="file" accept="application/pdf" onChange={extractTextFile} /></label>
+                <label className="nacscan-home-action nacscan-home-action--archive"><strong>AR</strong><span>Archivio</span><small>Apri dal dispositivo</small><input type="file" accept="application/pdf" onChange={importFiles} /></label>
+                <button className="nacscan-home-action nacscan-home-action--settings" type="button" onClick={() => setSettingsOpen(true)}><strong>IM</strong><span>Impostazioni</span><small>Preferenze editor PDF</small></button>
+              </nav>
+              <p className="nacscan-home__privacy">I documenti rimangono sul dispositivo e non vengono caricati online.</p>
+            </main>
           ) : (
             <>
               <div className="nacscan-web__toolbar" aria-label="Strumenti pagina">
@@ -472,12 +507,6 @@ function NacScanWebPage() {
                 <button type="button" onClick={() => moveSelected(-1)} disabled={selectedIndex <= 0}>← Sposta</button>
                 <button type="button" onClick={() => moveSelected(1)} disabled={selectedIndex === pages.length - 1}>Sposta →</button>
                 <button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Ruota</button>
-                <button type="button" onClick={() => setSignatureOpen(true)}>Firma</button>
-                <button className={activeTool === 'text' ? 'is-active' : ''} type="button" onClick={() => setActiveTool(activeTool === 'text' ? '' : 'text')}>Testo</button>
-                <select aria-label="Dimensione testo" value={textOptions.size} onChange={(event) => setTextOptions((value) => ({ ...value, size: Number(event.target.value) }))}><option>12</option><option>18</option><option>24</option><option>32</option></select>
-                <select aria-label="Colore testo" value={textOptions.color} onChange={(event) => setTextOptions((value) => ({ ...value, color: event.target.value }))}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select>
-                <button className={activeTool === 'cover' ? 'is-active' : ''} type="button" onClick={() => setActiveTool(activeTool === 'cover' ? '' : 'cover')}>Oscura area</button>
-                <button type="button" onClick={extractText}>Estrai testo</button>
                 <button className="is-danger" type="button" onClick={removeSelected}>Elimina</button>
               </div>
               <div className="nacscan-web__pages">
@@ -493,9 +522,18 @@ function NacScanWebPage() {
                 onAddAnnotation={addAnnotation}
                 onUpdateAnnotation={updateAnnotation}
               />
+              <div className="nacscan-viewer-actions">
+                <button type="button" onClick={extractText}>Trova testo</button>
+                <button type="button" onClick={() => setSelectedId(pages[selectedIndex - 1]?.id || selectedId)} disabled={selectedIndex <= 0}>Pagina precedente</button>
+                <button type="button" onClick={() => setSelectedId(pages[selectedIndex + 1]?.id || selectedId)} disabled={selectedIndex >= pages.length - 1}>Pagina successiva</button>
+                <button className="nacscan-tools-button" type="button" onClick={() => setToolsOpen((value) => !value)}>Strumenti</button>
+              </div>
+              {toolsOpen && <aside className="nacscan-tools-panel" aria-label="Strumenti PDF"><h2>Strumenti</h2><button type="button" onClick={exportPdf}>Condividi / Salva</button><button type="button" onClick={() => { setActiveTool('text'); setToolsOpen(false) }}>Compila PDF</button><button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Raddrizza pagina</button><label>Aggiungi pagine<input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} /></label><button type="button" onClick={() => { setActiveTool('cover'); setToolsOpen(false) }}>Copri testo</button><button className="is-primary" type="button" onClick={() => { setSignatureOpen(true); setToolsOpen(false) }}>Firma</button></aside>}
+              {activeTool === 'text' && <div className="nacscan-edit-options"><strong>Compila PDF</strong><span>Clicca sulla pagina per inserire il testo.</span><select aria-label="Dimensione testo" value={textOptions.size} onChange={(event) => setTextOptions((value) => ({ ...value, size: Number(event.target.value) }))}><option>12</option><option>18</option><option>24</option><option>32</option></select><select aria-label="Colore testo" value={textOptions.color} onChange={(event) => setTextOptions((value) => ({ ...value, color: event.target.value }))}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select><button type="button" onClick={() => setActiveTool('')}>Esci</button></div>}
+              {activeTool === 'cover' && <div className="nacscan-edit-options"><strong>Copri testo</strong><span>Clicca sulla pagina per coprire un’area.</span><button type="button" onClick={() => setActiveTool('')}>Esci</button></div>}
               <div className="nacscan-web__export">
                 <p>{message || 'Seleziona una pagina per modificarla.'}</p>
-                <button className="button button--primary" type="button" onClick={exportPdf} disabled={busy}>Scarica PDF finale</button>
+                <button className="button button--primary" type="button" onClick={exportPdf} disabled={busy}>Salva PDF</button>
               </div>
             </>
           )}
@@ -504,6 +542,7 @@ function NacScanWebPage() {
       </div>
       {signatureOpen && <SignaturePad onClose={() => setSignatureOpen(false)} onSave={(signature) => { updateSelected((page) => ({ ...page, signature })); setSignatureOpen(false); setMessage('Firma aggiunta alla pagina selezionata.') }} />}
       {extractedText && <div className="nacscan-signature" role="dialog" aria-modal="true" aria-labelledby="extracted-title"><div className="nacscan-signature__panel"><h2 id="extracted-title">Testo estratto</h2><textarea className="nacscan-extracted-text" readOnly value={extractedText} /><div className="button-group"><button className="button button--secondary" type="button" onClick={() => navigator.clipboard?.writeText(extractedText)}>Copia</button><button className="button button--primary" type="button" onClick={() => setExtractedText('')}>Chiudi</button></div></div></div>}
+      {settingsOpen && <div className="nacscan-signature" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div className="nacscan-signature__panel"><h2 id="settings-title">Impostazioni</h2><div className="nacscan-settings-row"><label>Dimensione testo predefinita<select value={textOptions.size} onChange={(event) => setTextOptions((value) => ({ ...value, size: Number(event.target.value) }))}><option>12</option><option>18</option><option>24</option><option>32</option></select></label><label>Colore testo predefinito<select value={textOptions.color} onChange={(event) => setTextOptions((value) => ({ ...value, color: event.target.value }))}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select></label></div><p>I file sono elaborati localmente e non vengono archiviati da DTO Solution.</p><button className="button button--primary" type="button" onClick={() => setSettingsOpen(false)}>Chiudi</button></div></div>}
     </article>
   )
 }
