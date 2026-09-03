@@ -32,6 +32,7 @@ function DocumentPublicationPage({ document }) {
     map.set(item.page, [...(map.get(item.page) ?? []), item])
     return map
   }, new Map()), [document.index])
+  const unitLabel = document.unitLabel ?? t('Pagina', 'Page')
 
   return (
     <article className="page-section contract-publication" id="document-top">
@@ -53,7 +54,7 @@ function DocumentPublicationPage({ document }) {
               <label htmlFor={`${document.slug}-search`}>{document.searchLabel}</label>
               <input id={`${document.slug}-search`} type="search" value={query} onChange={(event) => setQuery(event.target.value)} />
               <p aria-live="polite">{query.trim() ? t(`${results.length} pagine pertinenti`, `${results.length} matching pages`) : t('Inserisci una parola o espressione.', 'Enter a word or phrase.')}</p>
-              {results.length > 0 && <ol className="contract-search__results">{results.map((page) => <li key={page.page}><a href={`#${document.slug}-page-${page.page}`}>{t(`Pagina ${page.page}`, `Page ${page.page}`)}</a></li>)}</ol>}
+              {results.length > 0 && <ol className="contract-search__results">{results.map((page) => <li key={page.page}><a href={`#${document.slug}-page-${page.page}`}>{unitLabel} {page.page}</a></li>)}</ol>}
             </form>
             <details className="contract-index" open>
               <summary>{t('Indice del documento', 'Document contents')}</summary>
@@ -64,7 +65,7 @@ function DocumentPublicationPage({ document }) {
           <main className="contract-text" aria-label={t('Testo del documento', 'Document text')}>
             {document.pages.map((page) => <section className="contract-page" id={`${document.slug}-page-${page.page}`} key={page.page}>
               {(anchorsByPage.get(page.page) ?? []).map((item) => <span className="contract-anchor" id={item.id} key={item.id} />)}
-              <p className="contract-page__number">{t(`Pagina ${page.page} del documento originale`, `Original document page ${page.page}`)}</p>
+              <p className="contract-page__number">{document.unitLabel ? `${unitLabel} ${page.page}` : t(`Pagina ${page.page} del documento originale`, `Original document page ${page.page}`)}</p>
               {page.lines.map((line, index) => typeof line === 'object'
                 ? <h2 id={line.id} key={`${page.page}-${index}`}><HighlightedLine line={line} query={query} /></h2>
                 : <p key={`${page.page}-${index}`}><HighlightedLine line={line} query={query} /></p>)}

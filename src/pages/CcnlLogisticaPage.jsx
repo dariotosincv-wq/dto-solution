@@ -1,5 +1,5 @@
 import DocumentPublicationPage from '../components/driver/DocumentPublicationPage.jsx'
-import { ccnlIndex, ccnlPages } from '../data/driverDocuments.js'
+import { ccnlIndex, ccnlPages } from '../data/ccnlMaster.js'
 
 const document = {
   slug: 'ccnl',
@@ -9,10 +9,11 @@ const document = {
   description: 'Consulta online il testo del CCNL Logistica, Trasporto Merci e Spedizione rinnovato il 6 dicembre 2024.',
   canonical: 'https://www.dtosolution.it/area-driver/ccnl-logistica-trasporto-merci-spedizione',
   searchLabel: 'Cerca nel CCNL',
+  unitLabel: 'Sezione',
   facts: [['Documento', 'Testo unico del CCNL'], ['Rinnovo', '6 dicembre 2024'], ['Verbale del testo unico', '25 settembre 2025'], ['Scadenza indicata', '31 dicembre 2027'], ['Fonte', 'PDF fornito per la pubblicazione nell’Area Driver']],
   notice: 'Il testo è pubblicato a fini informativi e di consultazione. Per interpretazioni relative a casi individuali è opportuno rivolgersi alle organizzazioni sindacali o a un professionista qualificato.',
   pages: ccnlPages,
-  index: ccnlIndex.filter((item) => item.page < 135),
+  index: ccnlIndex,
 }
 
 export default function CcnlLogisticaPage() {
