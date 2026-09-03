@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib'
+import { PDFDocument, degrees, rgb } from 'pdf-lib'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
-import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, pageToVisualPoint, visualToPagePoint } from '../lib/nacscanAnnotations.js'
+import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageToVisualPoint, updateTextAnnotation, visualToPagePoint } from '../lib/nacscanAnnotations.js'
+import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
@@ -74,7 +75,7 @@ function PagePreview({ page, selected, onSelect }) {
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
-function AnnotationOverlay({ annotation, onUpdate, rotation }) {
+function AnnotationOverlay({ annotation, onUpdate, rotation, selected, onSelect }) {
   const dragRef = useRef(null)
   const visual = pageToVisualPoint(annotation.x, annotation.y, rotation)
 
@@ -86,36 +87,44 @@ function AnnotationOverlay({ annotation, onUpdate, rotation }) {
 
   const moveDrag = (event) => {
     if (!dragRef.current) return
-    const stage = event.currentTarget.parentElement.getBoundingClientRect()
-    const x = Math.max(0, Math.min(1, dragRef.current.x + (event.clientX - dragRef.current.clientX) / stage.width))
-    const y = Math.max(0, Math.min(1, dragRef.current.y + (event.clientY - dragRef.current.clientY) / stage.height))
+    const stage = event.currentTarget.closest('.nacscan-viewer__stage').getBoundingClientRect()
+    const pixelDeltaX = event.clientX - dragRef.current.clientX
+    const pixelDeltaY = event.clientY - dragRef.current.clientY
+    if (!dragRef.current.moved && Math.hypot(pixelDeltaX, pixelDeltaY) < 3) return
+    const deltaX = pixelDeltaX / stage.width
+    const deltaY = pixelDeltaY / stage.height
     dragRef.current.moved = true
-    onUpdate(annotation.id, { ...annotation, ...visualToPagePoint(x, y, rotation) })
+    onUpdate(annotation.id, { ...annotation, ...movePagePointFromVisualDelta(annotation, deltaX, deltaY, rotation) })
   }
 
   const finishDrag = (event) => {
     event.stopPropagation()
     const moved = dragRef.current?.moved
     dragRef.current = null
-    if (!moved && window.confirm('Eliminare questo elemento?')) onUpdate(annotation.id, null)
+    if (!moved) {
+      if (annotation.type === 'text') onSelect(annotation.id)
+      else if (window.confirm('Eliminare questo elemento?')) onUpdate(annotation.id, null)
+    }
   }
 
   return (
+    <div className="nacscan-annotation-anchor" style={{ left: `${visual.x * 100}%`, top: `${visual.y * 100}%`, width: annotation.width ? `${annotation.width * 100}%` : undefined, height: annotation.height ? `${annotation.height * 100}%` : undefined }}>
     <div
-      className={`nacscan-annotation nacscan-annotation--${annotation.type}`}
-      style={{ left: `${visual.x * 100}%`, top: `${visual.y * 100}%`, fontSize: annotation.fontSize ? `${annotation.fontSize}px` : undefined, color: annotation.color, width: annotation.width ? `${annotation.width * 100}%` : undefined, transform: `translateY(-100%) rotate(${rotation}deg)` }}
+      className={`nacscan-annotation nacscan-annotation--${annotation.type}${selected ? ' is-selected' : ''}`}
+      style={{ fontSize: annotation.fontSize ? `${annotation.fontSize}px` : undefined, color: annotation.color, fontWeight: annotation.fontWeight, fontStyle: annotation.fontStyle, textDecoration: annotation.textDecoration, transform: `rotate(${rotation}deg)` }}
       role="button"
       tabIndex="0"
       onPointerDown={startDrag}
       onPointerMove={moveDrag}
       onPointerUp={finishDrag}
       onPointerCancel={() => { dragRef.current = null }}
-      aria-label="Elemento PDF; trascina per spostare o tocca per eliminare"
+      aria-label={annotation.type === 'text' ? 'Testo PDF; trascina per spostare o tocca per modificare' : 'Elemento PDF; trascina per spostare o tocca per eliminare'}
     >{annotation.type === 'text' ? annotation.text : annotation.type === 'signature' ? <img src={annotation.image} alt="Firma" /> : ''}{annotation.type === 'signature' && <span className="nacscan-signature-size" onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()}><button type="button" aria-label="Riduci firma" onClick={(event) => { event.stopPropagation(); onUpdate(annotation.id, { ...annotation, width: Math.max(.12, annotation.width - .05) }) }}>−</button><button type="button" aria-label="Ingrandisci firma" onClick={(event) => { event.stopPropagation(); onUpdate(annotation.id, { ...annotation, width: Math.min(.65, annotation.width + .05) }) }}>+</button></span>}</div>
+    </div>
   )
 }
 
-function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation }) {
+function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation, selectedAnnotationId, onSelectAnnotation }) {
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
   const [zoom, setZoom] = useState(1)
@@ -229,7 +238,7 @@ function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activ
       <div className={`nacscan-viewer__viewport${activeTool ? ' is-editing' : ''}`} ref={viewportRef}>
         <div className="nacscan-viewer__stage" onClick={handlePageClick}>
           <canvas ref={canvasRef} aria-label={`Pagina ${pageNumber} del documento`} />
-          {(page.annotations || []).map((annotation) => <AnnotationOverlay annotation={annotation} key={annotation.id} onUpdate={onUpdateAnnotation} rotation={page.rotation} />)}
+          {(page.annotations || []).map((annotation) => <AnnotationOverlay annotation={annotation} key={annotation.id} onUpdate={onUpdateAnnotation} rotation={page.rotation} selected={annotation.id === selectedAnnotationId} onSelect={onSelectAnnotation} />)}
         </div>
       </div>
     </section>
@@ -324,8 +333,10 @@ function NacScanWebPage() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [pendingSignature, setPendingSignature] = useState('')
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState(null)
 
   const selectedIndex = pages.findIndex((page) => page.id === selectedId)
+  const selectedText = (pages[selectedIndex]?.annotations || []).find((annotation) => annotation.id === selectedAnnotationId && annotation.type === 'text') || null
 
   async function importFiles(event) {
     const files = [...event.target.files]
@@ -367,7 +378,9 @@ function NacScanWebPage() {
     if (activeTool === 'text') {
       const text = window.prompt('Testo da inserire')?.trim()
       if (!text) return
-      updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), createTextAnnotation(x, y, text, textOptions.size, textOptions.color)] }))
+      const annotation = createTextAnnotation(x, y, text, textOptions.size, textOptions.color)
+      updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), annotation] }))
+      setSelectedAnnotationId(annotation.id)
     } else if (activeTool === 'cover') {
       updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), createCoverAnnotation(x, y)] }))
     } else if (activeTool === 'signature' && pendingSignature) {
@@ -386,6 +399,11 @@ function NacScanWebPage() {
 
   function updateAnnotation(id, value) {
     updateSelected((page) => ({ ...page, annotations: value ? (page.annotations || []).map((item) => item.id === id ? value : item) : (page.annotations || []).filter((item) => item.id !== id) }))
+    if (!value) setSelectedAnnotationId((current) => current === id ? null : current)
+  }
+
+  function updateSelectedText(changes) {
+    if (selectedText) updateAnnotation(selectedText.id, updateTextAnnotation(selectedText, changes))
   }
 
   async function extractText() {
@@ -459,7 +477,7 @@ function NacScanWebPage() {
     setMessage('Creazione PDF in corso…')
     try {
       const output = await PDFDocument.create()
-      const font = await output.embedFont(StandardFonts.Helvetica)
+      const textFonts = await embedNacScanTextFonts(output)
       for (const page of pages) {
         let targetPage
         if (page.kind === 'pdf') {
@@ -477,8 +495,7 @@ function NacScanWebPage() {
         for (const annotation of page.annotations || []) {
           const { width, height } = targetPage.getSize()
           if (annotation.type === 'text') {
-            const colors = { black: rgb(0, 0, 0), blue: rgb(0.05, 0.25, 0.75), red: rgb(0.75, 0.08, 0.08) }
-            targetPage.drawText(annotation.text, { x: annotation.x * width, y: (1 - annotation.y) * height, size: annotation.fontSize, font, color: colors[annotation.color] || colors.black })
+            drawNacScanText(targetPage, annotation, textFonts)
           } else if (annotation.type === 'cover') {
             targetPage.drawRectangle({ x: annotation.x * width, y: (1 - annotation.y) * height, width: annotation.width * width, height: annotation.height * height, color: rgb(0, 0, 0) })
           } else if (annotation.type === 'signature') {
@@ -559,7 +576,10 @@ function NacScanWebPage() {
                 activeTool={activeTool}
                 onAddAnnotation={addAnnotation}
                 onUpdateAnnotation={updateAnnotation}
+                selectedAnnotationId={selectedAnnotationId}
+                onSelectAnnotation={setSelectedAnnotationId}
               />
+              {selectedText && <div className="nacscan-text-toolbar" aria-label="Modifica testo selezionato"><label>Testo<input type="text" value={selectedText.text} onChange={(event) => updateSelectedText({ text: event.target.value })} /></label><label>Dimensione<input type="number" min="8" max="72" value={selectedText.fontSize} onChange={(event) => updateSelectedText({ fontSize: Math.max(8, Math.min(72, Number(event.target.value) || 8)) })} /></label><button className={selectedText.fontWeight === 'bold' ? 'is-active' : ''} type="button" aria-pressed={selectedText.fontWeight === 'bold'} aria-label="Grassetto" onClick={() => updateSelectedText({ fontWeight: selectedText.fontWeight === 'bold' ? 'normal' : 'bold' })}>B</button><button className={selectedText.fontStyle === 'italic' ? 'is-active' : ''} type="button" aria-pressed={selectedText.fontStyle === 'italic'} aria-label="Corsivo" onClick={() => updateSelectedText({ fontStyle: selectedText.fontStyle === 'italic' ? 'normal' : 'italic' })}><em>I</em></button><button className={selectedText.textDecoration === 'underline' ? 'is-active' : ''} type="button" aria-pressed={selectedText.textDecoration === 'underline'} aria-label="Sottolineato" onClick={() => updateSelectedText({ textDecoration: selectedText.textDecoration === 'underline' ? 'none' : 'underline' })}><u>U</u></button><select aria-label="Colore testo selezionato" value={selectedText.color} onChange={(event) => updateSelectedText({ color: event.target.value })}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select><button className="is-danger" type="button" onClick={() => updateAnnotation(selectedText.id, null)}>Elimina</button></div>}
               <div className="nacscan-viewer-actions">
                 <button type="button" onClick={extractText}>Trova testo</button>
                 <button type="button" onClick={() => setSelectedId(pages[selectedIndex - 1]?.id || selectedId)} disabled={selectedIndex <= 0}>Pagina precedente</button>

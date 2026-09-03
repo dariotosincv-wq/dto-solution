@@ -15,7 +15,18 @@ export function pageToVisualPoint(x, y, rotation = 0) {
 }
 
 export function createTextAnnotation(x, y, text, fontSize = 18, color = 'black') {
-  return { id: crypto.randomUUID(), type: 'text', x, y, text, fontSize, color }
+  return { id: crypto.randomUUID(), type: 'text', x, y, text, fontSize, color, fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none' }
+}
+
+const clampPoint = (value) => Math.max(0, Math.min(1, value))
+
+export function movePagePointFromVisualDelta(point, deltaX, deltaY, rotation = 0) {
+  const visual = pageToVisualPoint(point.x, point.y, rotation)
+  return visualToPagePoint(clampPoint(visual.x + deltaX), clampPoint(visual.y + deltaY), rotation)
+}
+
+export function updateTextAnnotation(annotation, changes) {
+  return { ...annotation, ...changes, id: annotation.id, type: 'text' }
 }
 
 export function createCoverAnnotation(x, y) {
