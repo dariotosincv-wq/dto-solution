@@ -719,6 +719,18 @@
 .nacscan-text-toolbar button { min-width: 2.5rem; font-weight: 800; cursor: pointer; }
 .nacscan-text-toolbar button.is-active { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-dark); }
 .nacscan-text-toolbar button.is-danger { color: #a52020; }
+.nacscan-search-panel { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem; grid-column: 2; padding: .75rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+.nacscan-search-panel input { flex: 1 1 14rem; min-height: 2.6rem; padding: .5rem .7rem; border: 1px solid var(--color-border); border-radius: .5rem; }
+.nacscan-search-panel button { min-height: 2.6rem; padding: .5rem .7rem; border: 1px solid var(--color-border); border-radius: .5rem; background: white; font-weight: 700; }
+.nacscan-search-highlight { position: absolute; z-index: 1; min-width: .5rem; min-height: .8rem; transform: translateY(-100%); border: 1px solid #d9a21b; background: rgb(255 224 112 / 25%); pointer-events: none; }
+.nacscan-search-highlight.is-current { z-index: 2; border-width: 2px; border-color: #ef8f00; background: rgb(255 199 44 / 58%); }
+.nacscan-settings-panel { max-height: min(88vh, 52rem); overflow: auto; }
+.nacscan-settings-panel section { display: grid; gap: .55rem; padding: .8rem 0; border-top: 1px solid var(--color-border); }
+.nacscan-settings-panel section h3 { margin: 0; }
+.nacscan-settings-panel section button, .nacscan-settings-panel section select { min-height: 2.5rem; padding: .45rem .65rem; border: 1px solid var(--color-border); border-radius: .5rem; background: white; }
+.nacscan-saved-signatures { display: grid; gap: .5rem; }
+.nacscan-saved-signatures article { display: grid; grid-template-columns: 5rem 1fr auto auto auto; align-items: center; gap: .5rem; }
+.nacscan-saved-signatures img { width: 5rem; height: 2.5rem; object-fit: contain; border: 1px solid var(--color-border); }
 .nacscan-settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
 .nacscan-settings-row label { display: grid; gap: .45rem; font-weight: 700; }
 .nacscan-viewer.is-fullscreen { position: fixed; z-index: 1200; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: #dfe5ed; }
@@ -743,7 +755,8 @@
   .nacscan-home { grid-template-columns: 1fr; padding: 1rem; }
   .nacscan-home__banner { max-height: 15rem; object-position: center 30%; }
   .nacscan-home__actions { grid-template-columns: 1fr; }
-  .nacscan-viewer-actions, .nacscan-edit-options, .nacscan-text-toolbar { grid-column: auto; }
+  .nacscan-viewer-actions, .nacscan-edit-options, .nacscan-text-toolbar, .nacscan-search-panel { grid-column: auto; }
+  .nacscan-saved-signatures article { grid-template-columns: 4rem 1fr; }
   .nacscan-viewer-actions button { flex: 1 1 calc(50% - .5rem); }
   .nacscan-settings-row { grid-template-columns: 1fr; }
 }

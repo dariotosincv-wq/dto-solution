@@ -6,6 +6,11 @@ import MetaDescription from '../components/common/MetaDescription.jsx'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
 import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageToVisualPoint, updateTextAnnotation, visualToPagePoint } from '../lib/nacscanAnnotations.js'
 import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
+import { searchNacScanPages } from '../lib/nacscanPdfSearch.js'
+import { loadNacScanWebPreferences, nacScanText, resolveNacScanLanguage, saveNacScanWebPreferences } from '../lib/nacscanWebPreferences.js'
+import { createNacScanSignature, deleteNacScanSignature, loadNacScanSignatures, saveNacScanSignatures } from '../lib/nacscanWebSignatures.js'
+import { chooseSaveDirectory, loadSaveDirectory, resetSaveDirectory, saveNacScanFile, supportsDirectoryPicker } from '../lib/nacscanWebStorage.js'
+import { connectGoogleDrive, createAndroidCompatiblePdfName, disconnectGoogleDrive, driveIsConfigured, loadDriveState, resolveDriveArchivePath, uploadNacScanPdf } from '../lib/nacscanGoogleDrive.js'
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
@@ -124,7 +129,7 @@ function AnnotationOverlay({ annotation, onUpdate, rotation, selected, onSelect 
   )
 }
 
-function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation, selectedAnnotationId, onSelectAnnotation }) {
+function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation, selectedAnnotationId, onSelectAnnotation, searchHighlights }) {
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
   const [zoom, setZoom] = useState(1)
@@ -238,6 +243,7 @@ function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activ
       <div className={`nacscan-viewer__viewport${activeTool ? ' is-editing' : ''}`} ref={viewportRef}>
         <div className="nacscan-viewer__stage" onClick={handlePageClick}>
           <canvas ref={canvasRef} aria-label={`Pagina ${pageNumber} del documento`} />
+          {searchHighlights.map((result) => { const point = pageToVisualPoint(result.x, result.y, page.rotation); return <span key={result.resultIndex} className={`nacscan-search-highlight${result.current ? ' is-current' : ''}`} style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%`, width: `${result.width * 100}%`, height: `${result.height * 100}%` }} /> })}
           {(page.annotations || []).map((annotation) => <AnnotationOverlay annotation={annotation} key={annotation.id} onUpdate={onUpdateAnnotation} rotation={page.rotation} selected={annotation.id === selectedAnnotationId} onSelect={onSelectAnnotation} />)}
         </div>
       </div>
@@ -321,22 +327,79 @@ function CameraCapture({ onCapture, onClose }) {
 }
 
 function NacScanWebPage() {
+  const [preferences, setPreferences] = useState(() => loadNacScanWebPreferences())
   const [pages, setPages] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [signatureOpen, setSignatureOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [activeTool, setActiveTool] = useState('')
-  const [textOptions, setTextOptions] = useState({ size: 18, color: 'black' })
+  const [textOptions, setTextOptions] = useState(() => ({ size: preferences.defaultTextFontSize, color: preferences.defaultTextColor }))
   const [extractedText, setExtractedText] = useState('')
   const [toolsOpen, setToolsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
   const [pendingSignature, setPendingSignature] = useState('')
   const [selectedAnnotationId, setSelectedAnnotationId] = useState(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchIndex, setSearchIndex] = useState(0)
+  const [savedSignatures, setSavedSignatures] = useState(() => loadNacScanSignatures())
+  const [saveDirectory, setSaveDirectory] = useState(null)
+  const [driveState, setDriveState] = useState(() => loadDriveState())
+  const [signatureForSettings, setSignatureForSettings] = useState(false)
 
   const selectedIndex = pages.findIndex((page) => page.id === selectedId)
   const selectedText = (pages[selectedIndex]?.annotations || []).find((annotation) => annotation.id === selectedAnnotationId && annotation.type === 'text') || null
+  const language = resolveNacScanLanguage(preferences.languagePreference)
+  const tr = (key) => nacScanText(language, key)
+  useEffect(() => { loadSaveDirectory().then(setSaveDirectory) }, [])
+
+  async function runSearch() {
+    setBusy(true)
+    try {
+      const result = await searchNacScanPages(pages, searchQuery, getDocument)
+      setSearchResults(result.results)
+      setSearchIndex(0)
+      if (result.results[0]) setSelectedId(result.results[0].pageId)
+      setMessage(!result.searchable ? tr('noText') : result.results.length ? `${result.results.length} risultati` : tr('noResults'))
+    } catch { setMessage('Ricerca nel PDF non riuscita.') } finally { setBusy(false) }
+  }
+
+  function moveSearch(direction) {
+    if (!searchResults.length) return
+    const index = (searchIndex + direction + searchResults.length) % searchResults.length
+    setSearchIndex(index)
+    setSelectedId(searchResults[index].pageId)
+  }
+
+  function updatePreferences(changes) {
+    const next = saveNacScanWebPreferences({ ...preferences, ...changes })
+    setPreferences(next)
+    if ('defaultTextFontSize' in changes || 'defaultTextColor' in changes) setTextOptions({ size: next.defaultTextFontSize, color: next.defaultTextColor })
+  }
+
+  function storeSignature(imageData) {
+    const created = createNacScanSignature(imageData, savedSignatures, window.prompt('Nome firma', `Firma ${savedSignatures.length + 1}`))
+    const next = saveNacScanSignatures([...savedSignatures, created])
+    setSavedSignatures(next)
+  }
+
+  function removeSavedSignature(id) {
+    const next = saveNacScanSignatures(deleteNacScanSignature(savedSignatures, id))
+    setSavedSignatures(next)
+  }
+
+  async function selectSaveDirectory() {
+    try { setSaveDirectory(await chooseSaveDirectory()); setMessage('Cartella di salvataggio aggiornata.') }
+    catch (error) { if (error?.name !== 'AbortError') setMessage('Impossibile selezionare la cartella.') }
+  }
+
+  async function connectDrive() {
+    try { setDriveState(await connectGoogleDrive()); setMessage('Google Drive collegato.') }
+    catch (error) { setMessage(error?.message === 'GOOGLE_CLIENT_ID_MISSING' ? tr('driveMissing') : 'Collegamento Google Drive non riuscito.') }
+  }
 
   async function importFiles(event) {
     const files = [...event.target.files]
@@ -507,13 +570,21 @@ function NacScanWebPage() {
         }
       }
       const blob = new Blob([await output.save()], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `NACScan-${new Date().toISOString().slice(0, 10)}.pdf`
-      link.click()
-      setTimeout(() => URL.revokeObjectURL(url), 1000)
-      setMessage('PDF creato e scaricato sul dispositivo.')
+      const fileName = createAndroidCompatiblePdfName(pages)
+      const saved = await saveNacScanFile(blob, fileName, saveDirectory)
+      if (driveState.connected && driveState.enabled) {
+        const company = window.prompt('Azienda / soggetto', '')
+        const documentType = company !== null ? window.prompt('Che tipo di documento vuoi salvare?', 'Documenti') : null
+        if (company !== null && documentType !== null) {
+          const now = new Date()
+          const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+          const requestedDate = window.prompt('Data del documento (AAAA-MM-GG)', today)
+          const candidateDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? new Date(`${requestedDate}T12:00:00`) : null
+          const parsedDate = candidateDate && !Number.isNaN(candidateDate.getTime()) ? candidateDate : now
+          await uploadNacScanPdf(blob, fileName, resolveDriveArchivePath(company, documentType, parsedDate, language))
+          setMessage(`PDF salvato in ${saved.label} e archiviato su Google Drive.`)
+        } else setMessage(`PDF salvato in ${saved.label}. Archiviazione Drive annullata.`)
+      } else setMessage(`PDF creato e salvato in ${saved.label}.`)
     } catch {
       setMessage('Esportazione non riuscita. Prova con un documento diverso.')
     } finally {
@@ -578,15 +649,18 @@ function NacScanWebPage() {
                 onUpdateAnnotation={updateAnnotation}
                 selectedAnnotationId={selectedAnnotationId}
                 onSelectAnnotation={setSelectedAnnotationId}
+                searchHighlights={searchResults.map((result, resultIndex) => ({ ...result, resultIndex, current: resultIndex === searchIndex })).filter((result) => result.pageId === selectedId)}
               />
               {selectedText && <div className="nacscan-text-toolbar" aria-label="Modifica testo selezionato"><label>Testo<input type="text" value={selectedText.text} onChange={(event) => updateSelectedText({ text: event.target.value })} /></label><label>Dimensione<input type="number" min="8" max="72" value={selectedText.fontSize} onChange={(event) => updateSelectedText({ fontSize: Math.max(8, Math.min(72, Number(event.target.value) || 8)) })} /></label><button className={selectedText.fontWeight === 'bold' ? 'is-active' : ''} type="button" aria-pressed={selectedText.fontWeight === 'bold'} aria-label="Grassetto" onClick={() => updateSelectedText({ fontWeight: selectedText.fontWeight === 'bold' ? 'normal' : 'bold' })}>B</button><button className={selectedText.fontStyle === 'italic' ? 'is-active' : ''} type="button" aria-pressed={selectedText.fontStyle === 'italic'} aria-label="Corsivo" onClick={() => updateSelectedText({ fontStyle: selectedText.fontStyle === 'italic' ? 'normal' : 'italic' })}><em>I</em></button><button className={selectedText.textDecoration === 'underline' ? 'is-active' : ''} type="button" aria-pressed={selectedText.textDecoration === 'underline'} aria-label="Sottolineato" onClick={() => updateSelectedText({ textDecoration: selectedText.textDecoration === 'underline' ? 'none' : 'underline' })}><u>U</u></button><select aria-label="Colore testo selezionato" value={selectedText.color} onChange={(event) => updateSelectedText({ color: event.target.value })}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select><button className="is-danger" type="button" onClick={() => updateAnnotation(selectedText.id, null)}>Elimina</button></div>}
               <div className="nacscan-viewer-actions">
+                <button type="button" onClick={() => setSearchOpen((value) => !value)}>⌕ {tr('search')}</button>
                 <button type="button" onClick={extractText}>Trova testo</button>
                 <button type="button" onClick={() => setSelectedId(pages[selectedIndex - 1]?.id || selectedId)} disabled={selectedIndex <= 0}>Pagina precedente</button>
                 <button type="button" onClick={() => setSelectedId(pages[selectedIndex + 1]?.id || selectedId)} disabled={selectedIndex >= pages.length - 1}>Pagina successiva</button>
                 <button className="nacscan-tools-button" type="button" onClick={() => setToolsOpen((value) => !value)}>Strumenti</button>
               </div>
-              {toolsOpen && <aside className="nacscan-tools-panel" aria-label="Strumenti PDF"><h2>Strumenti</h2><button type="button" onClick={exportPdf}>Condividi / Salva</button><button type="button" onClick={() => { setActiveTool('text'); setToolsOpen(false) }}>Compila PDF</button><button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Raddrizza pagina</button><label>Aggiungi pagine<input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} /></label><button type="button" onClick={() => { setActiveTool('cover'); setToolsOpen(false) }}>Copri testo</button><button className="is-primary" type="button" onClick={() => { setSignatureOpen(true); setToolsOpen(false) }}>Firma</button></aside>}
+              {searchOpen && <div className="nacscan-search-panel" aria-label="Cerca testo nel PDF"><input type="search" placeholder={tr('searchPlaceholder')} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') runSearch() }} /><button type="button" onClick={runSearch} disabled={!searchQuery.trim()}>{tr('search')}</button><strong>{searchResults.length ? `${searchIndex + 1}/${searchResults.length}` : '0/0'}</strong><button type="button" onClick={() => moveSearch(-1)} disabled={!searchResults.length}>{tr('previous')}</button><button type="button" onClick={() => moveSearch(1)} disabled={!searchResults.length}>{tr('next')}</button></div>}
+              {toolsOpen && <aside className="nacscan-tools-panel" aria-label="Strumenti PDF"><h2>Strumenti</h2><button type="button" onClick={exportPdf}>Condividi / Salva</button><button type="button" onClick={() => { setActiveTool('text'); setToolsOpen(false) }}>Compila PDF</button><button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Raddrizza pagina</button><label>Aggiungi pagine<input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} /></label><button type="button" onClick={() => { setActiveTool('cover'); setToolsOpen(false) }}>Copri testo</button>{savedSignatures.map((signature) => <button key={signature.id} type="button" onClick={() => { setPendingSignature(signature.imageData); setActiveTool('signature'); setToolsOpen(false) }}>Usa {signature.name}{signature.isDefault ? ' (predefinita)' : ''}</button>)}<button className="is-primary" type="button" onClick={() => { setSignatureForSettings(false); setSignatureOpen(true); setToolsOpen(false) }}>Disegna nuova firma</button></aside>}
               {activeTool === 'text' && <div className="nacscan-edit-options"><strong>Compila PDF</strong><span>Clicca sulla pagina per inserire il testo.</span><select aria-label="Dimensione testo" value={textOptions.size} onChange={(event) => setTextOptions((value) => ({ ...value, size: Number(event.target.value) }))}><option>12</option><option>18</option><option>24</option><option>32</option></select><select aria-label="Colore testo" value={textOptions.color} onChange={(event) => setTextOptions((value) => ({ ...value, color: event.target.value }))}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select><button type="button" onClick={() => setActiveTool('')}>Esci</button></div>}
               {activeTool === 'cover' && <div className="nacscan-edit-options"><strong>Copri testo</strong><span>Clicca sulla pagina per coprire un’area.</span><button type="button" onClick={() => setActiveTool('')}>Esci</button></div>}
               <div className="nacscan-web__export">
@@ -598,10 +672,17 @@ function NacScanWebPage() {
           {message && pages.length === 0 && <p className="nacscan-web__message" role="status">{message}</p>}
         </section>
       </div>
-      {signatureOpen && <SignaturePad onClose={() => setSignatureOpen(false)} onSave={(signature) => { setPendingSignature(signature); setActiveTool('signature'); setSignatureOpen(false); setMessage('Clicca sulla pagina nel punto in cui vuoi inserire la firma.') }} />}
+      {signatureOpen && <SignaturePad onClose={() => { setSignatureOpen(false); if (signatureForSettings) setSettingsOpen(true) }} onSave={(signature) => { if (signatureForSettings) { storeSignature(signature); setSettingsOpen(true) } else { setPendingSignature(signature); setActiveTool('signature'); setMessage('Clicca sulla pagina nel punto in cui vuoi inserire la firma.') }; setSignatureForSettings(false); setSignatureOpen(false) }} />}
       {cameraOpen && <CameraCapture onClose={() => setCameraOpen(false)} onCapture={addCapturedFile} />}
       {extractedText && <div className="nacscan-signature" role="dialog" aria-modal="true" aria-labelledby="extracted-title"><div className="nacscan-signature__panel"><h2 id="extracted-title">Testo estratto</h2><textarea className="nacscan-extracted-text" readOnly value={extractedText} /><div className="button-group"><button className="button button--secondary" type="button" onClick={() => navigator.clipboard?.writeText(extractedText)}>Copia</button><button className="button button--primary" type="button" onClick={() => setExtractedText('')}>Chiudi</button></div></div></div>}
-      {settingsOpen && <div className="nacscan-signature" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div className="nacscan-signature__panel"><h2 id="settings-title">Impostazioni</h2><div className="nacscan-settings-row"><label>Dimensione testo predefinita<select value={textOptions.size} onChange={(event) => setTextOptions((value) => ({ ...value, size: Number(event.target.value) }))}><option>12</option><option>18</option><option>24</option><option>32</option></select></label><label>Colore testo predefinito<select value={textOptions.color} onChange={(event) => setTextOptions((value) => ({ ...value, color: event.target.value }))}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select></label></div><p>I file sono elaborati localmente e non vengono archiviati da DTO Solution.</p><button className="button button--primary" type="button" onClick={() => setSettingsOpen(false)}>Chiudi</button></div></div>}
+      {settingsOpen && <div className="nacscan-signature" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div className="nacscan-signature__panel nacscan-settings-panel"><h2 id="settings-title">Impostazioni</h2>
+        <section><h3>{tr('language')}</h3><select value={preferences.languagePreference} onChange={(event) => updatePreferences({ languagePreference: event.target.value })}><option value="auto">{tr('automatic')}</option><option value="it">Italiano</option><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option></select></section>
+        <section><h3>PDF / modifica</h3><div className="nacscan-settings-row"><label>Dimensione testo predefinita<select value={textOptions.size} onChange={(event) => updatePreferences({ defaultTextFontSize: Number(event.target.value) })}><option>12</option><option>18</option><option>24</option><option>32</option></select></label><label>Colore testo predefinito<select value={textOptions.color} onChange={(event) => updatePreferences({ defaultTextColor: event.target.value })}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select></label></div></section>
+        <section><h3>{tr('signatures')}</h3>{savedSignatures.length ? <div className="nacscan-saved-signatures">{savedSignatures.map((signature) => <article key={signature.id}><img src={signature.imageData} alt={signature.name} /><span>{signature.name}{signature.isDefault ? ' (predefinita)' : ''}</span><button type="button" disabled={signature.isDefault} onClick={() => { const next = savedSignatures.map((item) => ({ ...item, isDefault: item.id === signature.id })); saveNacScanSignatures(next); setSavedSignatures(next) }}>Predefinita</button><button type="button" onClick={() => { const name = window.prompt('Nuovo nome firma', signature.name)?.trim(); if (name) { const next = savedSignatures.map((item) => item.id === signature.id ? { ...item, name } : item); saveNacScanSignatures(next); setSavedSignatures(next) } }}>Rinomina</button><button type="button" onClick={() => removeSavedSignature(signature.id)}>Elimina</button></article>)}</div> : <p>Nessuna firma salvata.</p>}<button type="button" onClick={() => { setSignatureForSettings(true); setSettingsOpen(false); setSignatureOpen(true) }}>{tr('manageSignatures')} / aggiungi</button></section>
+        <section><h3>{tr('saveFolder')}</h3><p>{saveDirectory?.name || tr('defaultFolder')}</p>{supportsDirectoryPicker() ? <><button type="button" onClick={selectSaveDirectory}>{tr('chooseFolder')}</button><button type="button" onClick={async () => { await resetSaveDirectory(); setSaveDirectory(null) }}>{tr('resetFolder')}</button></> : <p>Questo browser usa il download standard e non consente una cartella persistente.</p>}</section>
+        <section><h3>{tr('drive')}</h3>{driveState.connected ? <><p>Account: {driveState.name || driveState.email}</p><p>Cartella principale: NACScan</p><button type="button" onClick={() => { setDriveState(disconnectGoogleDrive()); setMessage('Google Drive scollegato. Le funzioni locali restano disponibili.') }}>{tr('disconnectDrive')}</button></> : <><button type="button" disabled={!driveIsConfigured()} onClick={connectDrive}>{tr('connectDrive')}</button>{!driveIsConfigured() && <p>{tr('driveMissing')}</p>}</>}</section>
+        <section><h3>Privacy</h3><p>I documenti sono elaborati localmente. Solo su richiesta una copia viene inviata direttamente dal browser al Google Drive collegato; DTO Solution non riceve il file.</p></section>
+        <button className="button button--primary" type="button" onClick={() => setSettingsOpen(false)}>Chiudi</button></div></div>}
     </article>
   )
 }
