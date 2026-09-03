@@ -3,6 +3,7 @@ import { PDFDocument, degrees, rgb } from 'pdf-lib'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import MetaDescription from '../components/common/MetaDescription.jsx'
+import { getApplicationBySlug } from '../data/applications.js'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
 import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageToVisualPoint, updateTextAnnotation, visualToPagePoint } from '../lib/nacscanAnnotations.js'
 import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
@@ -15,6 +16,7 @@ import { connectGoogleDrive, createAndroidCompatiblePdfName, disconnectGoogleDri
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`
+const nacScanPlayStoreUrl = getApplicationBySlug('nacscan').playStoreUrl
 
 function PagePreview({ page, selected, onSelect }) {
   const canvasRef = useRef(null)
@@ -623,6 +625,7 @@ function NacScanWebPage() {
                 <label className="nacscan-home-action nacscan-home-action--text"><strong>TXT</strong><span>Estrai testo</span><small>Leggi il testo digitale</small><input type="file" accept="application/pdf" onChange={extractTextFile} /></label>
                 <label className="nacscan-home-action nacscan-home-action--archive"><strong>AR</strong><span>Archivio</span><small>Apri dal dispositivo</small><input type="file" accept="application/pdf" onChange={importFiles} /></label>
                 <button className="nacscan-home-action nacscan-home-action--settings" type="button" onClick={() => setSettingsOpen(true)}><strong>IM</strong><span>Impostazioni</span><small>Preferenze editor PDF</small></button>
+                <a className="nacscan-home-action nacscan-home-action--play" href={nacScanPlayStoreUrl} target="_blank" rel="noopener noreferrer"><strong aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M7 4.7v14.6l8.9-7.3L7 4.7Zm1.4-2.1 9.8 8a1.8 1.8 0 0 1 0 2.8l-9.8 8A2.1 2.1 0 0 1 5 19.8V4.2a2.1 2.1 0 0 1 3.4-1.6Z" /></svg></strong><span>NACScan su Google Play</span><small>Scarica l’app gratuita per Android</small></a>
               </nav>
               <p className="nacscan-home__privacy">I documenti rimangono sul dispositivo e non vengono caricati online.</p>
             </main>

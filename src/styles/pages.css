@@ -689,6 +689,7 @@
 .nacscan-home__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .85rem; }
 .nacscan-home-action { position: relative; display: grid; grid-template-columns: 3rem 1fr; grid-template-rows: auto auto; gap: .1rem .8rem; min-height: 6.5rem; padding: 1rem; border: 1px solid rgb(91 180 255 / 25%); border-radius: 1rem; background: #0d2442; color: white; text-align: left; cursor: pointer; }
 .nacscan-home-action:hover { border-color: #29b6f6; transform: translateY(-1px); }
+.nacscan-home-action:focus-visible { outline: 3px solid #67d8ff; outline-offset: 3px; }
 .nacscan-home-action > strong { grid-row: 1 / 3; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .8rem; background: #1268d5; color: white; }
 .nacscan-home-action > span { align-self: end; font-size: 1.05rem; font-weight: 800; }
 .nacscan-home-action > small { color: #b8c9dd; }
@@ -696,6 +697,10 @@
 .nacscan-home-action--text > strong { background: #6a48c8; }
 .nacscan-home-action--archive > strong { background: #16866f; }
 .nacscan-home-action--settings > strong { background: #596779; }
+.nacscan-home-action--play { border-color: rgb(66 224 207 / 55%); background: linear-gradient(135deg, #0d2442, #103452); text-decoration: none; }
+.nacscan-home-action--play:hover { border-color: #42e0cf; background: linear-gradient(135deg, #102a4b, #12506b); }
+.nacscan-home-action--play > strong { background: #16866f; }
+.nacscan-home-action--play svg { width: 1.7rem; fill: currentColor; }
 .nacscan-home__privacy { grid-column: 1 / -1; margin: 0; color: #b8c9dd; text-align: center; }
 .nacscan-internal-header { display: flex; align-items: center; gap: 1rem; grid-column: 1 / -1; padding: .8rem 1rem; border-bottom: 1px solid var(--color-border); background: #07172d; color: white; }
 .nacscan-internal-header button { min-height: 2.5rem; border: 1px solid #35577d; border-radius: .5rem; background: #102b4c; color: white; cursor: pointer; }
