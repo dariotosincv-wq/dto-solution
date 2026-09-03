@@ -4,6 +4,7 @@ import PageLayout from './components/layout/PageLayout.jsx'
 import AboutPage from './pages/AboutPage.jsx'
 import ApplicationsPage from './pages/ApplicationsPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
+import DriverAreaPage from './pages/DriverAreaPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import PrivacyPage from './pages/PrivacyPage.jsx'
@@ -13,8 +14,6 @@ import NacScanPrivacyPage from './pages/privacy/NacScanPrivacyPage.jsx'
 import ShoppingVoicePrivacyPage from './pages/privacy/ShoppingVoicePrivacyPage.jsx'
 import WebsitePrivacyPage from './pages/privacy/WebsitePrivacyPage.jsx'
 import CheckVanProPage from './pages/products/CheckVanProPage.jsx'
-import CheckVanVerificationPage from './pages/CheckVanVerificationPage.jsx'
-import CheckVanComparisonPage from './pages/CheckVanComparisonPage.jsx'
 import DriverUtilityPage from './pages/products/DriverUtilityPage.jsx'
 import NacScanPage from './pages/products/NacScanPage.jsx'
 import NacScanWebPage from './pages/NacScanWebPage.jsx'
@@ -35,10 +34,9 @@ function App() {
           <Route path="applicazioni/shopping-voice/privacy" element={<ShoppingVoicePrivacyPage />} />
           <Route path="applicazioni/driver-utility" element={<DriverUtilityPage />} />
           <Route path="applicazioni/driver-utility/privacy" element={<DriverUtilityPrivacyPage />} />
+          <Route path="area-driver" element={<DriverAreaPage />} />
           <Route path="applicazioni/checkvan-pro" element={<CheckVanProPage />} />
           <Route path="applicazioni/checkvan-pro/privacy" element={<CheckVanProPrivacyPage />} />
-          <Route path="verifica-checkvan" element={<CheckVanVerificationPage />} />
-          <Route path="confronta-checkvan" element={<CheckVanComparisonPage />} />
           <Route path="software/observa-poker" element={<ObservaPokerPage />} />
           <Route path="chi-siamo" element={<AboutPage />} />
           <Route path="privacy" element={<PrivacyPage />} />

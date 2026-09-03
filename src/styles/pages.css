@@ -861,6 +861,32 @@
   border-color: #9ca3af;
 }
 
+.driver-area { background: linear-gradient(180deg, #f8fbff 0, var(--color-background) 28rem); }
+.driver-area__hero { max-width: 52rem; }
+.driver-area__hero h1 { font-size: clamp(2.6rem, 7vw, 4.8rem); }
+.driver-area__lead { max-width: 46rem; color: var(--color-ink); font-size: clamp(1.15rem, 2.4vw, 1.45rem); font-weight: 700; }
+.driver-area__notice { max-width: 44rem; padding-left: 1rem; border-left: 3px solid var(--color-primary); color: var(--color-muted); font-size: .95rem; }
+.driver-area__section { padding-block: clamp(2.5rem, 6vw, 4.5rem); border-top: 1px solid var(--color-border); }
+.driver-area__section--future { padding-bottom: 0; }
+.driver-area__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.driver-area__grid--future { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.driver-area-card { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: .85rem; padding: clamp(1.35rem, 3vw, 2rem); border: 1px solid var(--color-border); border-radius: var(--radius-medium); background: var(--color-surface); box-shadow: var(--shadow-soft); }
+.driver-area-card h3, .driver-area-card p { margin: 0; }
+.driver-area-card p { color: var(--color-muted); }
+.driver-area-card button { min-height: 2.75rem; margin-top: auto; padding: .6rem .9rem; border: 1px solid var(--color-border); border-radius: .55rem; background: var(--color-background); color: var(--color-muted); font-weight: 750; }
+.driver-area-card button:disabled { cursor: not-allowed; opacity: .75; }
+.driver-area-card--future { box-shadow: none; }
+.driver-area-card--future .status-badge { margin-bottom: .15rem; }
+.driver-area__status { margin: 1rem 0 0; color: var(--color-muted); font-size: .9rem; }
+
+@media (max-width: 900px) {
+  .driver-area__grid, .driver-area__grid--future { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .driver-area__grid, .driver-area__grid--future { grid-template-columns: 1fr; }
+}
+
 .product-hero--branded { display: grid; grid-template-columns: 1fr; justify-items: start; max-width: 56rem; gap: 1.25rem; padding: clamp(1.5rem, 4vw, 2.5rem); border: 1px solid var(--color-border); border-radius: var(--radius-large); background: var(--color-surface); box-shadow: var(--shadow-soft); }
 .product-hero--branded > .eyebrow { margin: 0; }
 .product-hero__identity { display: flex; align-items: center; gap: clamp(1.25rem, 3vw, 2rem); }
