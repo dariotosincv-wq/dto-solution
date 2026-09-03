@@ -669,6 +669,13 @@
 .nacscan-annotation { position: absolute; z-index: 2; transform: translateY(-100%); padding: 0; border: 1px dashed transparent; background: transparent; white-space: nowrap; cursor: move; touch-action: none; }
 .nacscan-annotation:hover { border-color: var(--color-primary); }
 .nacscan-annotation--cover { width: 24%; height: 6%; transform: none; border: 0; background: #000; }
+.nacscan-annotation--signature { min-width: 5rem; border-color: rgb(18 104 213 / 55%); }
+.nacscan-annotation--signature img { display: block; width: 100%; height: auto; }
+.nacscan-signature-size { position: absolute; top: 100%; left: 50%; display: flex; transform: translateX(-50%) rotate(var(--signature-counter-rotation, 0deg)); }
+.nacscan-signature-size button { width: 2rem; height: 2rem; border: 1px solid #35577d; background: white; color: #07172d; font-weight: 800; }
+.nacscan-hidden-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.nacscan-camera-preview { display: block; width: 100%; max-height: 65vh; margin: 1rem 0; border-radius: .75rem; background: #07172d; object-fit: contain; }
+.nacscan-web__progress { margin: 0; padding: .75rem 1rem; border-radius: .6rem; background: var(--color-primary-soft); color: var(--color-primary-dark); font-weight: 700; }
 .nacscan-extracted-text { width: 100%; min-height: 18rem; margin: 1rem 0; padding: 1rem; border: 1px solid var(--color-border); border-radius: .6rem; resize: vertical; }
 .nacscan-app-header { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-radius: var(--radius-large); background: linear-gradient(135deg, #06152c, #0b2850); color: white; box-shadow: var(--shadow-soft); }
 .nacscan-app-header img { width: 4.5rem; height: 4.5rem; border-radius: 1rem; object-fit: cover; }
