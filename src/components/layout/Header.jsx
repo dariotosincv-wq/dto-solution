@@ -5,6 +5,7 @@ import { useI18n } from '../../i18n/useI18n.js'
 
 const navigation = [
   { label: 'Applicazioni', to: '/applicazioni' },
+  { label: 'Area Driver', to: '/area-driver' },
   { label: 'Chi siamo', to: '/chi-siamo' },
   { label: 'Privacy', to: '/privacy' },
   { label: 'Contatti', to: '/contatti' },

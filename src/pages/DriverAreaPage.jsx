@@ -1,10 +1,11 @@
+import { Link } from 'react-router-dom'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import { useI18n } from '../i18n/useI18n.js'
 
 const documents = [
-  ['CCNL Logistica, Trasporto Merci e Spedizione', 'Logistics, Freight Transport and Shipping National Agreement', 'Consulta il contratto collettivo nazionale di riferimento del settore.', 'Consult the national collective agreement for the sector.', 'Consulta il CCNL', 'View the agreement'],
-  ['Contrattazione di secondo livello', 'Second-level collective bargaining', 'Accordi e documenti integrativi relativi all’attività dei driver.', 'Supplementary agreements and documents concerning drivers’ work.', 'Consulta gli accordi', 'View agreements'],
-  ['Normativa di riferimento', 'Reference legislation', 'Leggi e disposizioni utili per gli aspetti non disciplinati direttamente dal contratto collettivo.', 'Relevant laws and provisions for matters not directly governed by the collective agreement.', 'Consulta la normativa', 'View legislation'],
+  ['CCNL Logistica, Trasporto Merci e Spedizione', 'Logistics, Freight Transport and Shipping National Agreement', 'Consulta il contratto collettivo nazionale di riferimento del settore.', 'Consult the national collective agreement for the sector.', 'Consulta il CCNL', 'View the agreement', '/area-driver/ccnl-logistica-trasporto-merci-spedizione'],
+  ['Contrattazione di secondo livello', 'Second-level collective bargaining', 'Accordo nazionale Assoespressi 2025 per la distribuzione ultimo miglio.', '2025 Assoespressi national agreement for last-mile distribution.', 'Consulta l’accordo Assoespressi 2025', 'View the 2025 Assoespressi agreement', '/area-driver/accordo-asso-espressi-ultimo-miglio-2025'],
+  ['Normativa di riferimento', 'Reference legislation', 'Leggi e disposizioni utili per gli aspetti non disciplinati direttamente dal contratto collettivo.', 'Relevant laws and provisions for matters not directly governed by the collective agreement.', 'Consulta la normativa', 'View legislation', null],
 ]
 
 const futureTools = [
@@ -30,11 +31,11 @@ function DriverAreaPage() {
         </header>
 
         <section className="driver-area__section" aria-labelledby="driver-documents-title">
-          <div className="section-heading"><p className="eyebrow">{t('Documentazione', 'Documentation')}</p><h2 id="driver-documents-title">{t('Contratti e documenti', 'Contracts and documents')}</h2><p className="section-heading__copy">{t('Le fonti ufficiali saranno collegate dopo una verifica editoriale. Nessun documento provvisorio viene presentato come definitivo.', 'Official sources will be linked after editorial verification. No provisional document is presented as final.')}</p></div>
+          <div className="section-heading"><p className="eyebrow">{t('Documentazione', 'Documentation')}</p><h2 id="driver-documents-title">{t('Contratti e documenti', 'Contracts and documents')}</h2><p className="section-heading__copy">{t('Documenti di riferimento pubblicati in formato HTML per una consultazione accessibile e ricercabile.', 'Reference documents published as accessible, searchable HTML pages.')}</p></div>
           <div className="driver-area__grid">
-            {documents.map(([itTitle, enTitle, itDescription, enDescription, itCta, enCta]) => <article className="driver-area-card" key={itTitle}><h3>{t(itTitle, enTitle)}</h3><p>{t(itDescription, enDescription)}</p><button type="button" disabled aria-describedby="driver-documents-status">{t(itCta, enCta)}</button></article>)}
+            {documents.map(([itTitle, enTitle, itDescription, enDescription, itCta, enCta, to]) => <article className="driver-area-card" key={itTitle}><h3>{t(itTitle, enTitle)}</h3><p>{t(itDescription, enDescription)}</p>{to ? <Link className="button button--secondary" to={to}>{t(itCta, enCta)}</Link> : <button type="button" disabled aria-describedby="driver-documents-status">{t(itCta, enCta)}</button>}</article>)}
           </div>
-          <p className="driver-area__status" id="driver-documents-status">{t('Fonti ufficiali in fase di selezione.', 'Official sources are being selected.')}</p>
+          <p className="driver-area__status" id="driver-documents-status">{t('La normativa di riferimento sarà collegata dopo la verifica delle fonti.', 'Reference legislation will be linked after its sources have been verified.')}</p>
         </section>
 
         <section className="driver-area__section driver-area__section--future" aria-labelledby="driver-tools-title">
