@@ -1,0 +1,6 @@
+export const ROLES = Object.freeze({ COMPANY_ADMIN: 'COMPANY_ADMIN', UNION_GUEST: 'UNION_GUEST', COMPANY_OPERATOR: 'COMPANY_OPERATOR' })
+export const canUseTools = (access) => Boolean(access?.capabilities?.useTools)
+export const canManageDevices = (access) => Boolean(access?.capabilities?.manageDevices)
+export const canViewInspections = (access) => Boolean(access?.capabilities?.viewInspections)
+export const canDeleteInspections = (access) => Boolean(access?.capabilities?.deleteInspections)
+export const canManageVehicles = (access) => access?.role === ROLES.COMPANY_ADMIN && Boolean(access?.capabilities?.useTools)

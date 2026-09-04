@@ -50,6 +50,12 @@ function Header() {
               {item.label}
             </NavLink>
           ))}
+          <Link className="navigation__company-cta" to="/azienda/login" onClick={closeMenu}>
+            Area Aziende
+          </Link>
+          <Link className="navigation__company-cta navigation__company-cta--secondary" to="/enti/login" onClick={closeMenu}>
+            Area Enti
+          </Link>
           <div className="language-switcher" aria-label="Selezione lingua">
             <a className={language === 'it' ? 'language-switcher__link language-switcher__link--active' : 'language-switcher__link'} href={localizedUrl('it')} lang="it" aria-current={language === 'it' ? 'page' : undefined}>IT</a>
             <span aria-hidden="true">|</span>

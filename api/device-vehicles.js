@@ -1,0 +1,4 @@
+import { clientsFromEnvironment,sendError,sendJson } from './_lib/companyLicensing.js'
+import { authenticateDeviceRequest,resolveDeviceContext } from './_lib/deviceAuthentication.js'
+import { publicVehicle } from './_lib/companyVehicles.js'
+export default async function handler(request,response){if(request.method!=='POST')return sendJson(response,405,{error:'METHOD_NOT_ALLOWED'});try{const clients=clientsFromEnvironment(),device=await authenticateDeviceRequest(request,clients),context=await resolveDeviceContext(device,clients);const{data,error}=await clients.checkvan.from('checkvan_vehicles').select('id,internal_code,plate,silhouette_category,status').eq('organization_id',context.organization.id).eq('status','active').order('internal_code');if(error)throw new Error('VEHICLES_UNAVAILABLE');return sendJson(response,200,{items:(data??[]).map(publicVehicle)})}catch(error){return sendError(response,error)}}

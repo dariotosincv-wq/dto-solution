@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "dev:company": "vite --config vite.company.config.js",
+    "dev:admin": "vite --config vite.admin.config.js",
+    "build": "vite build && vite build --config vite.admin.config.js",
+    "build:company": "vite build --config vite.company.config.js",
+    "build:admin": "vite build --config vite.admin.config.js",
     "lint": "eslint .",
     "test": "node --test",
     "preview": "vite preview"
@@ -15,6 +19,7 @@
     "@supabase/supabase-js": "^2.112.2",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
+    "qrcode": "1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"

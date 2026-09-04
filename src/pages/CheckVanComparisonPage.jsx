@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import ZoomablePhoto from '../components/checkvan/ZoomablePhoto.jsx'
 import { clampZoom } from '../lib/zoom.js'
@@ -7,10 +8,11 @@ import { changeSyncMode, compactDocumentLabel, compactVehicleLabel, comparisonTr
 import { useI18n } from '../i18n/useI18n.js'
 
 function CheckVanComparisonPage() {
+  const location = useLocation()
   const { language, t } = useI18n()
   const firstInput = useRef(null)
   const secondInput = useRef(null)
-  const [files, setFiles] = useState([null, null])
+  const [files, setFiles] = useState(() => location.state?.files?.length === 2 ? location.state.files : [null, null])
   const [documents, setDocuments] = useState([])
   const documentsRef = useRef([])
   const [progress, setProgress] = useState('')

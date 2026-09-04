@@ -62,6 +62,14 @@ function DriverUtilityPage() {
       technicalInformation={<div className="product-prose product-technical-list">{technicalInformation.map(([it, en]) => <p key={it}>{t(it, en)}</p>)}</div>}
       faqItems={faqItems.map(([itQuestion, enQuestion, itAnswer, enAnswer]) => ({ question: t(itQuestion, enQuestion), answer: t(itAnswer, enAnswer) }))}
     >
+      <section className="product-download" aria-labelledby="checkvan-verification-title">
+        <div><p className="eyebrow">{t('Verifica CheckVan', 'CheckVan verification')}</p><h2 id="checkvan-verification-title">{t('Controlla un documento CheckVan', 'Check a CheckVan document')}</h2><p>{t('Verifica localmente se un PDF corrisponde a un documento registrato da Driver Utility.', 'Check locally whether a PDF matches a document registered by Driver Utility.')}</p></div>
+        <ButtonLink to="/azienda/login">{t('Accedi all’Area Aziende', 'Sign in to the Company Area')}</ButtonLink>
+      </section>
+      <section className="product-download" aria-labelledby="checkvan-comparison-title">
+        <div><p className="eyebrow">{t('Confronto CheckVan', 'CheckVan comparison')}</p><h2 id="checkvan-comparison-title">{t('Confronta due ispezioni CheckVan', 'Compare two CheckVan inspections')}</h2><p>{t('Visualizza affiancate le fotografie guidate di due ispezioni, direttamente nel browser.', 'View guided photographs from two inspections side by side, directly in your browser.')}</p></div>
+        <ButtonLink to="/azienda/login">{t('Accedi all’Area Aziende', 'Sign in to the Company Area')}</ButtonLink>
+      </section>
       <section className="product-download" aria-labelledby="driver-area-link-title">
         <div><p className="eyebrow">{t('Per chi lavora su strada', 'For people working on the road')}</p><h2 id="driver-area-link-title">{t('Area Driver', 'Driver Area')}</h2><p>{t('Contratti, guide e futuri strumenti pratici dedicati ai driver, in una sezione pubblica distinta dall’app.', 'Contracts, guides and future practical tools for drivers, in a public section separate from the app.')}</p></div>
         <ButtonLink to="/area-driver">{t("Scopri l’Area Driver", 'Explore the Driver Area')}</ButtonLink>

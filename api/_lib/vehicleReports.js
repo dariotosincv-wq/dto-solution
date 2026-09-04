@@ -1,0 +1,13 @@
+import { uuid } from './companyVehicles.js'
+export const REPORT_TYPES = new Set(['TIRE_LOW_PRESSURE','TIRE_WORN','TIRE_DAMAGE','BRAKES','ENGINE_OIL','ADBLUE','COOLANT','LIGHT','WIPERS','WASHER_FLUID','MIRROR','DOOR_LOCK','BATTERY_STARTING','WARNING_LIGHT','NOISE_ANOMALY','OTHER'])
+export const publicVehicleReport = row => ({report_id:row.id,vehicle_id:row.vehicle_id,reporter_device_id:row.reporter_device_id,driver_id:row.driver_id,report_type:row.report_type,description:row.description,status:row.status,client_generated_id:row.client_generated_id,reported_at:row.reported_at,resolved_at:row.resolved_at,resolved_by:row.resolved_by})
+export function vehicleReportInput(body={}){const report_type=String(body.report_type??'').toUpperCase(),description=typeof body.description==='string'?body.description.trim():'';if(!REPORT_TYPES.has(report_type))throw Object.assign(new Error('INVALID_REPORT_TYPE'),{status:400});if(report_type==='OTHER'&&!description)throw Object.assign(new Error('REPORT_DESCRIPTION_REQUIRED'),{status:400});if(description.length>1000)throw Object.assign(new Error('REPORT_DESCRIPTION_TOO_LONG'),{status:400});return{report_type,description:description||null}}
+export async function assertCompanyVehicle(clients,organizationId,vehicleId,activeOnly=false){if(!uuid(vehicleId))throw Object.assign(new Error('INVALID_VEHICLE_ID'),{status:400});let query=clients.checkvan.from('checkvan_vehicles').select('id').eq('id',vehicleId).eq('organization_id',organizationId);if(activeOnly)query=query.eq('status','active');const{data,error}=await query.maybeSingle();if(error)throw new Error('VEHICLES_UNAVAILABLE');if(!data)throw Object.assign(new Error('VEHICLE_NOT_FOUND'),{status:404})}
+export const companyDate = (now=new Date(),timeZone='Europe/Rome') => new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now)
+export async function assignedReportContext(clients,organizationId,driverId,vehicleId,now=new Date()){
+ if(!uuid(driverId)||!uuid(vehicleId))throw Object.assign(new Error('INVALID_REPORT_ASSIGNMENT'),{status:400})
+ const date=companyDate(now),{data,error}=await clients.checkvan.from('checkvan_daily_assignments').select('driver_id,vehicle_id,checkvan_drivers!inner(status),checkvan_vehicles!inner(status)').eq('organization_id',organizationId).eq('assignment_date',date).eq('driver_id',driverId).maybeSingle()
+ if(error)throw new Error('DRIVER_ASSIGNMENTS_UNAVAILABLE')
+ if(!data||data.vehicle_id!==vehicleId||data.checkvan_drivers?.status!=='active'||data.checkvan_vehicles?.status!=='active')throw Object.assign(new Error('VEHICLE_NOT_ASSIGNED_TO_DRIVER'),{status:403})
+ return{driverId:data.driver_id,vehicleId:data.vehicle_id,date}
+}

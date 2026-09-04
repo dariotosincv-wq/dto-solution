@@ -1,13 +1,84 @@
 {
+  "headers": [
+    {
+      "source": "/azienda",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    },
+    {
+      "source": "/azienda/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    },
+    {
+      "source": "/enti",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    },
+    {
+      "source": "/enti/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
+      ]
+    },
+    {
+      "source": "/super-admin",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self' https://*.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+      ]
+    },
+    {
+      "source": "/super-admin/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "private, no-store, max-age=0" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self' https://*.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+      ]
+    }
+  ],
   "rewrites": [
+    { "source": "/api/super-admin", "destination": "/api/platform?resource=super-admin" },
+    { "source": "/api/super-admin/:resource", "destination": "/api/platform?resource=super-admin&adminResource=:resource" },
+    { "source": "/super-admin", "destination": "/super-admin/index.html" },
+    { "source": "/super-admin/(.*)", "destination": "/super-admin/index.html" },
+    { "source": "/api/company-vehicles", "destination": "/api/platform?resource=company-vehicles" },
+    { "source": "/api/company-vehicle", "destination": "/api/platform?resource=company-vehicle" },
+    { "source": "/api/company-vehicle-damages", "destination": "/api/platform?resource=company-damages" },
+    { "source": "/api/company-damage-photo", "destination": "/api/platform?resource=company-damage-photo" },
+    { "source": "/api/device-vehicles", "destination": "/api/platform?resource=device-vehicles" },
+    { "source": "/api/device-vehicle-damages", "destination": "/api/platform?resource=device-damages" },
+    { "source": "/api/device-vehicle-reports", "destination": "/api/platform?resource=device-vehicle-reports" },
+    { "source": "/api/company-vehicle-reports", "destination": "/api/platform?resource=company-vehicle-reports" },
+    { "source": "/api/company-drivers", "destination": "/api/platform?resource=company-drivers" },
+    { "source": "/api/company-assignments", "destination": "/api/platform?resource=company-assignments" },
+    { "source": "/api/device-driver-assignments", "destination": "/api/platform?resource=device-driver-assignments" },
     {
       "source": "/sitemap.xml",
-      "destination": "/api/seo?type=sitemap"
+      "destination": "/api/platform?resource=seo&type=sitemap"
     },
     {
       "source": "/robots.txt",
-      "destination": "/api/seo?type=robots"
+      "destination": "/api/platform?resource=seo&type=robots"
     },
+    { "source": "/azienda", "destination": "/index.html" },
+    { "source": "/azienda/(.*)", "destination": "/index.html" },
+    { "source": "/enti", "destination": "/index.html" },
+    { "source": "/enti/(.*)", "destination": "/index.html" },
     {
       "source": "/(.*)",
       "destination": "/index.html"

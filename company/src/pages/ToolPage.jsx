@@ -1,0 +1,1 @@
+export default function ToolPage({ title, children }) { return <div className="company-page company-tool"><header><p className="company-kicker">Strumenti CheckVan</p><h1>{title}</h1></header>{children}</div> }

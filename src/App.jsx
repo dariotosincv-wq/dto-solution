@@ -21,11 +21,15 @@ import NacScanPage from './pages/products/NacScanPage.jsx'
 import NacScanWebPage from './pages/NacScanWebPage.jsx'
 import ObservaPokerPage from './pages/products/ObservaPokerPage.jsx'
 import ShoppingVoicePage from './pages/products/ShoppingVoicePage.jsx'
+import CompanyApp from '../company/src/App.jsx'
+import EntitiesApp from '../entities/src/App.jsx'
 
 function App() {
   return (
     <SupabaseAuthProvider>
       <Routes>
+        <Route path="azienda/*" element={<CompanyApp />} />
+        <Route path="enti/*" element={<EntitiesApp />} />
         <Route element={<PageLayout />}>
           <Route index element={<HomePage />} />
           <Route path="applicazioni" element={<ApplicationsPage />} />

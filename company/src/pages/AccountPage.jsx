@@ -1,0 +1,2 @@
+import { useAuth } from '../auth/AuthContext.jsx'
+export default function AccountPage() { const { session, access } = useAuth(); return <div className="company-page"><header><p className="company-kicker">Profilo</p><h1>Account</h1></header><section className="table-card"><dl><div><dt>Email</dt><dd>{session?.user?.email}</dd></div><div><dt>Ruolo</dt><dd>{access?.role || 'Non assegnato'}</dd></div><div><dt>Organizzazione</dt><dd>{access?.organization?.name || 'Non assegnata'}</dd></div></dl></section></div> }

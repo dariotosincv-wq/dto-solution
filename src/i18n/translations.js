@@ -21,6 +21,8 @@ export const englishTranslations = {
   'Applicazioni e software': 'Applications and software',
   'Chi siamo': 'About us',
   'Contatti': 'Contact',
+  'Area Aziende': 'Company Area',
+  'Area Enti': 'Organizations Area',
   'Applicazioni e software nati da problemi reali.': 'Applications and software born from real problems.',
   'Soluzioni digitali': 'Digital solutions',
   'nate da problemi reali.': 'born from real problems.',

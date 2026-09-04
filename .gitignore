@@ -9,11 +9,19 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-company/
 dist-ssr
 *.local
 .env
 .env.*
 !.env.example
+
+.vercel/
+*.bak
+*.backup
+*.tmp
+*.temp
+*~
 
 # Editor directories and files
 .vscode/*

@@ -1,0 +1,15 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import '@fontsource-variable/manrope'
+import App from './App.jsx'
+import { I18nProvider } from '../../src/i18n/I18nProvider.jsx'
+import '../../src/styles/reset.css'
+import '../../src/styles/variables.css'
+import '../../src/styles/global.css'
+import '../../src/styles/components.css'
+import '../../src/styles/pages.css'
+import './styles.css'
+import { COMPANY_ROUTES } from './routes.js'
+
+createRoot(document.getElementById('root')).render(<StrictMode><BrowserRouter><I18nProvider><Routes><Route path="azienda/*" element={<App />} /><Route path="*" element={<Navigate to={COMPANY_ROUTES.dashboard} replace />} /></Routes></I18nProvider></BrowserRouter></StrictMode>)
