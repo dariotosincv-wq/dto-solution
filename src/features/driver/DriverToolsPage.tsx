@@ -14,6 +14,7 @@ export default function DriverToolsPage({ tool }: { tool: 'turni' | 'busta-paga'
       <Link to="/area-driver/turni" aria-current={tool === 'turni' ? 'page' : undefined}>Turni Driver</Link>
       <Link to="/area-driver/busta-paga" aria-current={tool === 'busta-paga' ? 'page' : undefined}>Busta Paga Driver</Link>
       <Link to="/area-driver/contratto">Profilo contrattuale</Link>
+      <Link to="/area-driver/backup">Backup e ripristino</Link>
     </nav>
     <p className="driver-tools__privacy">I dati restano in questo browser. I PDF delle buste paga vengono letti localmente e non vengono archiviati.</p>
     <Suspense fallback={<p role="status">Caricamento strumento…</p>}>

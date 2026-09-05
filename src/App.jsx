@@ -6,6 +6,8 @@ import ApplicationsPage from './pages/ApplicationsPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
 import CcnlLogisticaPage from './pages/CcnlLogisticaPage.jsx'
 import DriverAreaPage from './pages/DriverAreaPage.jsx'
+import DriverBackupPage from './pages/DriverBackupPage.jsx'
+import DriverLegislationPage from './pages/DriverLegislationPage.jsx'
 import AccordoAssoespressiPage from './pages/AccordoAssoespressiPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
@@ -45,6 +47,8 @@ function App() {
           <Route path="applicazioni/driver-utility" element={<DriverUtilityPage />} />
           <Route path="applicazioni/driver-utility/privacy" element={<DriverUtilityPrivacyPage />} />
           <Route path="area-driver" element={<DriverAreaPage />} />
+          <Route path="area-driver/backup" element={<DriverBackupPage />} />
+          <Route path="area-driver/normativa" element={<DriverLegislationPage />} />
           <Route path="area-driver/turni" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverToolsPage tool="turni" /></Suspense>} />
           <Route path="area-driver/busta-paga" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverToolsPage tool="busta-paga" /></Suspense>} />
           <Route path="area-driver/contratto" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverContractPage /></Suspense>} />

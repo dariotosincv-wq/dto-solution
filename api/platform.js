@@ -244,6 +244,8 @@ const publicPaths = [
   '/applicazioni/driver-utility',
   '/applicazioni/driver-utility/privacy',
   '/area-driver',
+  '/area-driver/normativa',
+  '/area-driver/backup',
   '/area-driver/ccnl-logistica-trasporto-merci-spedizione',
   '/area-driver/accordo-asso-espressi-ultimo-miglio-2025',
   '/applicazioni/checkvan-pro',

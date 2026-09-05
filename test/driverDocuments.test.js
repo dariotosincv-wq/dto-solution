@@ -20,10 +20,10 @@ test('public router exposes both document publications and no legacy CheckVan to
   assert.doesNotMatch(app, /verifica-checkvan|confronta-checkvan/)
 })
 
-test('Area Driver links the two verified documents and leaves legislation disabled', () => {
+test('Area Driver links verified documents and reference legislation', () => {
   assert.match(area, /'\/area-driver\/ccnl-logistica-trasporto-merci-spedizione'/)
   assert.match(area, /'\/area-driver\/accordo-asso-espressi-ultimo-miglio-2025'/)
-  assert.match(area, /<button type="button" disabled/)
+  assert.match(area, /'\/area-driver\/normativa'/)
 })
 
 test('main navigation contains Area Driver in desktop and mobile shared navigation', () => {

@@ -23,13 +23,14 @@ test('legacy CheckVan tools are not registered in the public router', () => {
 
 test('Area Driver route contains the requested document and future sections', () => {
   assert.match(app, /path="area-driver" element={<DriverAreaPage \/>}/)
-  for (const text of ['Contratti e documenti', 'CCNL Logistica, Trasporto Merci e Spedizione', 'Contrattazione di secondo livello', 'Normativa di riferimento', 'Guide e spiegazioni', 'Turni di lavoro', 'Busta paga', 'Assistente CCNL']) assert.match(driverArea, new RegExp(text))
+  for (const text of ['Contratti e documenti', 'CCNL Logistica, Trasporto Merci e Spedizione', 'Accordo Assoespressi – Ultimo miglio Amazon', 'Normativa di riferimento', 'Guide e spiegazioni', 'Turni di lavoro', 'Busta paga', 'Assistente CCNL', 'Backup e ripristino']) assert.match(driverArea, new RegExp(text))
   assert.equal((driverArea.match(/Prossimamente/g) || []).length, 1)
   assert.doesNotMatch(driverArea, /href=|\.pdf/)
 })
 
-test('Area Driver has responsive grids and intentionally disabled document CTAs', () => {
-  assert.match(driverArea, /<button type="button" disabled/)
+test('Area Driver has responsive grids and active document CTAs', () => {
+  assert.doesNotMatch(driverArea, /<button type="button" disabled/)
+  assert.match(driverArea, /'\/area-driver\/normativa'/)
   assert.match(styles, /\.driver-area__grid \{[^}]*repeat\(3,/s)
   assert.match(styles, /@media \(max-width: 900px\)[\s\S]*\.driver-area__grid[^}]*repeat\(2,/)
   assert.match(styles, /@media \(max-width: 620px\)[\s\S]*\.driver-area__grid[^}]*grid-template-columns: 1fr/)
