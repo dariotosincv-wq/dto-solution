@@ -12,6 +12,6 @@ export default function LoginPage() {
   return <main className="login-page"><section className="login-card"><img src="/brand/dto-solution-horizontal.svg" alt="DTO Solution" /><p className="company-kicker">Area Aziende</p><h1>Accedi a CheckVan Pro</h1><p>Strumenti operativi riservati ad aziende e organizzazioni invitate.</p>
     {!configured && <p className="notice notice--error">Configura le variabili Supabase dell’Area Aziende.</p>}
     <form onSubmit={submit}><label>Email<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label><label>Password<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label><button disabled={!configured || busy}>{busy ? 'Accesso…' : 'Accedi'}</button></form>
-    <div className="login-divider"><span>oppure</span></div><button className="button-secondary" disabled={!configured} onClick={signInWithGoogle}>Continua con Google</button>{error && <p className="notice notice--error" role="alert">{error}</p>}
+    <div className="login-divider"><span>oppure</span></div><button className="button-secondary" disabled={!configured} onClick={() => signInWithGoogle()}>Continua con Google</button>{error && <p className="notice notice--error" role="alert">{error}</p>}
   </section></main>
 }
