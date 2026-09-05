@@ -17,6 +17,16 @@ try {
     await page.goto('http://127.0.0.1:5173/area-driver')
     await page.getByRole('heading', { level: 1, name: 'AREA DRIVER' }).waitFor()
     await page.evaluate(() => document.fonts.ready)
+    await page.locator('.driver-dashboard__art img').evaluate(image => image.decode())
+    const faq = page.locator('.driver-dashboard__faq')
+    await faq.locator('summary').click()
+    assert.equal(await faq.getAttribute('open'), '')
+    assert(await faq.locator('div').evaluate(element => {
+      const box = element.getBoundingClientRect()
+      return box.left >= 0 && box.right <= innerWidth
+    }), `FAQ overflow ${width}`)
+    await faq.locator('summary').click()
+    await page.evaluate(() => scrollTo(0, 0))
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `overflow ${width}`)
     const cards = await page.locator('.driver-dashboard__tool').evaluateAll(elements => elements.map(element => ({ height: element.getBoundingClientRect().height, x: element.getBoundingClientRect().x })))
     assert.equal(cards.length, 4)
