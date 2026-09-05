@@ -24,7 +24,7 @@ const upload = text => page.getByLabel('Seleziona il file di backup').setInputFi
 try {
   await page.goto(base + '/area-driver')
   await page.getByRole('heading', { name: 'Accordo Assoespressi – Ultimo miglio Amazon', exact: true }).waitFor()
-  await page.getByRole('link', { name: 'Consulta la normativa', exact: true }).click()
+  await page.getByRole('link', { name: 'Vai alla normativa', exact: true }).click()
   await page.getByRole('heading', { level: 1, name: 'Normativa di riferimento', exact: true }).waitFor()
   assert.equal(await page.locator('.driver-area-card[id]').count(), 6)
   for (const link of await page.locator('.driver-area-card[id] a').evaluateAll(links => links.map(link => link.href))) assert(['www.normattiva.it', 'www.lavoro.gov.it'].includes(new URL(link).hostname))

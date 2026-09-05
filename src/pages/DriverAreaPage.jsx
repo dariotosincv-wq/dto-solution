@@ -1,59 +1,50 @@
 import { Link } from 'react-router-dom'
+import { CalendarDays, FileText, Download, Settings2, BookOpen, Scale, ShieldCheck, Check, Clock3, MessageCircle } from 'lucide-react'
 import MetaDescription from '../components/common/MetaDescription.jsx'
+import DriverDashboardIllustration from '../components/driver/DriverDashboardIllustration.jsx'
 import { useI18n } from '../i18n/useI18n.js'
+import './driver-dashboard.css'
 
+const tools = [
+  { icon: CalendarDays, tone: 'blue', title: ['Turni Driver', 'Driver Shifts'], text: ['Registra giornate lavorate, ferie, malattia, riposi e note. Tieni sempre sotto controllo il tuo diario lavorativo.', 'Record workdays, holidays, sickness, rest and notes. Keep track of your working diary.'], cta: ['Apri Turni', 'Open Shifts'], to: '/area-driver/turni' },
+  { icon: FileText, tone: 'green', title: ['Busta Paga Driver', 'Driver Payroll'], text: ['Importa il cedolino, controlla le voci, confronta i mesi e conserva lo storico dei tuoi dati retributivi.', 'Import payslips, review entries, compare months and keep your pay history.'], cta: ['Apri Busta Paga', 'Open Payroll'], to: '/area-driver/busta-paga' },
+  { icon: Download, tone: 'purple', title: ['Backup e ripristino', 'Backup and restore'], text: ['Metti al sicuro turni, storico e impostazioni. Esporta i tuoi dati in un file locale e ripristinali quando vuoi.', 'Keep shifts, history and settings safe. Export your data to a local file and restore it when needed.'], cta: ['Gestisci backup', 'Manage backup'], to: '/area-driver/backup' },
+  { icon: Settings2, tone: 'orange', title: ['Profilo contrattuale', 'Contract profile'], text: ['Imposta i tuoi parametri contrattuali, ore settimanali, giornate previste e altre informazioni utilizzate nei calcoli.', 'Set your contract details, weekly hours, scheduled days and other information used in calculations.'], cta: ['Configura', 'Configure'], to: '/area-driver/contratto' },
+]
 const documents = [
-  ['CCNL Logistica, Trasporto Merci e Spedizione', 'Logistics, Freight Transport and Shipping National Agreement', 'Consulta il contratto collettivo nazionale di riferimento del settore.', 'Consult the national collective agreement for the sector.', 'Consulta il CCNL', 'View the agreement', '/area-driver/ccnl-logistica-trasporto-merci-spedizione'],
-  ['Accordo Assoespressi – Ultimo miglio Amazon', 'Assoespressi Agreement – Amazon Last Mile', 'Accordo del 26 maggio 2025 per il personale interessato delle aziende aderenti ad Assoespressi che operano nell’ultimo miglio per Amazon Italia Transport S.r.l.; non è il CCNL generale.', 'Agreement of 26 May 2025 for the relevant staff of Assoespressi member companies providing last-mile services for Amazon Italia Transport S.r.l.; this is not the general national collective agreement.', 'Consulta l’accordo Assoespressi 2025', 'View the 2025 Assoespressi agreement', '/area-driver/accordo-asso-espressi-ultimo-miglio-2025'],
-  ['Normativa di riferimento', 'Reference legislation', 'Leggi e disposizioni utili per gli aspetti non disciplinati direttamente dal contratto collettivo.', 'Relevant laws and provisions for matters not directly governed by the collective agreement.', 'Consulta la normativa', 'View legislation', '/area-driver/normativa'],
+  { icon: BookOpen, title: ['CCNL Logistica', 'Logistics collective agreement'], text: ['Il contratto nazionale del settore trasporto merci e logistica, con indice completo e consultazione per argomenti.', 'The national freight transport and logistics agreement, with a full index and browsing by topic.'], cta: ['Consulta il CCNL', 'Read the agreement'], to: '/area-driver/ccnl-logistica-trasporto-merci-spedizione' },
+  { icon: FileText, title: ['Accordo Assoespressi – Ultimo miglio Amazon', 'Accordo Assoespressi – Ultimo miglio Amazon'], text: ['La contrattazione specifica per il personale interessato dall’accordo dell’ultimo miglio Amazon.', 'The specific agreement for staff covered by the Amazon last-mile agreement.'], cta: ['Leggi l’accordo', 'Read the agreement'], to: '/area-driver/accordo-asso-espressi-ultimo-miglio-2025' },
+  { icon: Scale, title: ['Normativa di riferimento', 'Reference legislation'], text: ['Leggi italiane su orario di lavoro, sicurezza, mansioni, Statuto dei lavoratori e altre disposizioni utili per il driver.', 'Italian laws on working time, safety, duties, workers’ rights and other provisions relevant to drivers.'], cta: ['Vai alla normativa', 'View legislation'], to: '/area-driver/normativa' },
 ]
 
-const futureTools = [
-  ['Guide e spiegazioni', 'Guides and explanations', 'Contenuti pratici per orientarsi nelle attività quotidiane.', 'Practical content for navigating everyday work.'],
-  ['Assistente CCNL', 'National agreement assistant', 'Uno strumento per orientarsi tra contratto collettivo, accordi e normativa di riferimento.', 'A tool for navigating the collective agreement, supplementary agreements and reference legislation.'],
-]
-
-function DriverAreaPage() {
+export default function DriverAreaPage() {
   const { t } = useI18n()
-
-  return (
-    <article className="page-section driver-area">
-      <MetaDescription content={t('Area Driver DTO Solution: contratti, informazioni e futuri strumenti pratici per driver e lavoratori della logistica.', 'DTO Solution Driver Area: contracts, information and future practical tools for drivers and logistics workers.')} />
-      <div className="container">
-        <header className="page-intro driver-area__hero">
-          <p className="eyebrow">DTO Solution</p>
-          <h1>{t('Area Driver', 'Driver Area')}</h1>
-          <p className="driver-area__lead">{t('Contratti, informazioni e strumenti utili per il lavoro quotidiano.', 'Contracts, information and useful tools for everyday work.')}</p>
-          <p>{t('Una sezione pubblica pensata per raccogliere documenti contrattuali, guide e strumenti pratici dedicati a chi lavora nella logistica e nel trasporto.', 'A public section designed to collect contractual documents, guides and practical tools for people working in logistics and transport.')}</p>
-          <p className="driver-area__notice">{t('I contenuti hanno finalità esclusivamente informativa e non costituiscono consulenza legale o sindacale.', 'Content is provided for information only and does not constitute legal or trade union advice.')}</p>
-        </header>
-
-        <section className="driver-area__section" aria-labelledby="driver-documents-title">
-          <div className="section-heading"><p className="eyebrow">{t('Documentazione', 'Documentation')}</p><h2 id="driver-documents-title">{t('Contratti e documenti', 'Contracts and documents')}</h2><p className="section-heading__copy">{t('Documenti di riferimento pubblicati in formato HTML per una consultazione accessibile e ricercabile.', 'Reference documents published as accessible, searchable HTML pages.')}</p></div>
-          <div className="driver-area__grid">
-            {documents.map(([itTitle, enTitle, itDescription, enDescription, itCta, enCta, to]) => <article className="driver-area-card" key={itTitle}><h3>{t(itTitle, enTitle)}</h3><p>{t(itDescription, enDescription)}</p><Link className="button button--secondary" to={to}>{t(itCta, enCta)}</Link></article>)}
-          </div>
-          <p className="driver-area__status">{t('Consulta separatamente il CCNL, l’accordo specifico ultimo miglio Amazon e le sintesi normative con fonti ufficiali.', 'Consult the national agreement, the specific Amazon last-mile agreement and legislation summaries with official sources separately.')}</p>
-        </section>
-
-        <section className="driver-area__section" aria-labelledby="driver-local-tools-title">
-          <div className="section-heading"><h2 id="driver-local-tools-title">Turni e Busta Paga</h2><p className="section-heading__copy">Strumenti personali con dati salvati localmente in questo browser.</p></div>
-          <div className="driver-area__grid">
-            <article className="driver-area-card"><h2>Turni Driver</h2><p>Turni di lavoro: registra presenze e note, consulta il riepilogo mensile ed esporta il PDF.</p><Link className="button button--primary" to="/area-driver/turni">Apri Turni Driver</Link></article>
-            <article className="driver-area-card"><h2>Busta Paga Driver</h2><p>Busta paga: importa i cedolini nel browser e confrontali con i tuoi turni.</p><Link className="button button--primary" to="/area-driver/busta-paga">Apri Busta Paga Driver</Link></article>
-            <article className="driver-area-card"><h2>Backup e ripristino</h2><p>Esporta i dati locali di Turni e Busta Paga in un file JSON e ripristinali con anteprima e conferma.</p><Link className="button button--primary" to="/area-driver/backup">Apri Backup e ripristino</Link></article>
-          </div>
-        </section>
-
-        <section className="driver-area__section driver-area__section--future" aria-labelledby="driver-tools-title">
-          <div className="section-heading"><p className="eyebrow">{t('In evoluzione', 'In development')}</p><h2 id="driver-tools-title">{t('Strumenti per il lavoro quotidiano', 'Tools for everyday work')}</h2><p className="section-heading__copy">{t('Questi spazi sono predisposti per sviluppi futuri e non contengono ancora funzionalità operative.', 'These areas are prepared for future developments and do not yet contain operational features.')}</p></div>
-          <div className="driver-area__grid driver-area__grid--future">
-            {futureTools.map(([itTitle, enTitle, itDescription, enDescription]) => <article className="driver-area-card driver-area-card--future" key={itTitle}><span className="status-badge">{t('Prossimamente', 'Coming soon')}</span><h3>{t(itTitle, enTitle)}</h3><p>{t(itDescription, enDescription)}</p></article>)}
-          </div>
-        </section>
-      </div>
-    </article>
-  )
+  return <article className="driver-dashboard">
+    <MetaDescription content={t('Area Driver DTO Solution: turni, buste paga, contratti e normativa. Strumenti personali con elaborazione locale nel browser.', 'DTO Solution Driver Area: shifts, payslips, contracts and legislation. Personal tools processed locally in your browser.')} />
+    <div className="container">
+      <header className="driver-dashboard__hero">
+        <div className="driver-dashboard__intro">
+          <p className="driver-dashboard__eyebrow">{t('LAVORO. DIRITTI. STRUMENTI. SEMPRE CON TE.', 'WORK. RIGHTS. TOOLS. ALWAYS WITH YOU.')}</p>
+          <h1>{t('AREA', 'YOUR')} <span>DRIVER</span></h1>
+          <p className="driver-dashboard__subtitle">{t('Tutto quello che serve al driver, in un unico posto.', 'Everything a driver needs, all in one place.')}</p>
+          <p className="driver-dashboard__description">{t('Turni, buste paga, contratti e normativa per tenere sotto controllo il proprio lavoro, in modo semplice e sicuro.', 'Shifts, payslips, contracts and legislation to keep track of your work, simply and securely.')}</p>
+          <ul className="driver-dashboard__benefits">{[[Check, 'Semplice da usare', 'Easy to use'], [ShieldCheck, 'I tuoi dati restano tuoi', 'Your data stays yours'], [Clock3, 'Sempre a disposizione', 'Always available']].map(([Icon, it, en]) => <li key={it}><Icon size={17} aria-hidden="true" />{t(it, en)}</li>)}</ul>
+        </div>
+        <DriverDashboardIllustration />
+      </header>
+      <section className="driver-dashboard__section" aria-labelledby="driver-tools-title">
+        <div className="driver-dashboard__section-heading"><p className="driver-dashboard__eyebrow">{t('IL TUO SPAZIO DI LAVORO', 'YOUR WORKSPACE')}</p><h2 id="driver-tools-title">{t('I tuoi strumenti', 'Your tools')}</h2><p>{t('Strumenti pratici per organizzare il lavoro e tenere sotto controllo i tuoi dati.', 'Practical tools to organise your work and keep track of your data.')}</p></div>
+        <div className="driver-dashboard__tools">{tools.map(({ icon: Icon, tone, title, text, cta, to }) => <article className={`driver-dashboard__tool driver-dashboard__tool--${tone}`} key={to}><span className="driver-dashboard__icon"><Icon size={30} strokeWidth={1.7} aria-hidden="true" /></span><h3>{t(...title)}</h3><p>{t(...text)}</p><Link className="driver-dashboard__cta" to={to}>{t(...cta)}</Link></article>)}</div>
+      </section>
+    </div>
+    <section className="driver-dashboard__rights" aria-labelledby="driver-rights-title"><div className="container">
+      <div className="driver-dashboard__section-heading"><p className="driver-dashboard__eyebrow">{t('INFORMATI, OGNI GIORNO', 'STAY INFORMED, EVERY DAY')}</p><h2 id="driver-rights-title">{t('Conosci i tuoi diritti', 'Know your rights')}</h2><p>{t('Contratti, accordi e normativa sempre a disposizione, con testi ufficiali e spiegazioni semplici.', 'Contracts, agreements and legislation at hand, with official texts and straightforward explanations.')}</p></div>
+      <div className="driver-dashboard__documents">{documents.map(({ icon: Icon, title, text, cta, to }) => <article className="driver-dashboard__document" key={to}><Icon size={27} strokeWidth={1.7} aria-hidden="true" /><h3>{t(...title)}</h3><p>{t(...text)}</p><Link to={to}>{t(...cta)}</Link></article>)}</div>
+      <p className="driver-dashboard__legal">{t('Contenuti informativi: non sostituiscono il testo ufficiale né una consulenza legale o sindacale.', 'Informational content: not a substitute for official texts or legal or trade union advice.')}</p>
+    </div></section>
+    <div className="container">
+      <section className="driver-dashboard__privacy" aria-labelledby="driver-privacy-title"><span className="driver-dashboard__shield"><ShieldCheck size={35} strokeWidth={1.6} aria-hidden="true" /></span><div><h2 id="driver-privacy-title">{t('I tuoi dati restano tuoi', 'Your data stays yours')}</h2><p>{t('Turni e buste paga vengono elaborati localmente nel browser. Nessun archivio cloud DTO Solution. Puoi creare un backup locale quando vuoi.', 'Shifts and payslips are processed locally in your browser. No DTO Solution cloud archive. Create a local backup whenever you want.')}</p><ul>{[['Elaborazione locale', 'Local processing'], ['Nessun cloud DTO', 'No DTO cloud'], ['Backup disponibile', 'Backup available']].map(([it, en]) => <li key={it}><Check size={15} aria-hidden="true" />{t(it, en)}</li>)}</ul></div></section>
+      <section className="driver-dashboard__help" aria-labelledby="driver-help-title"><MessageCircle size={26} aria-hidden="true" /><div><h2 id="driver-help-title">{t('Hai bisogno di aiuto?', 'Need help?')}</h2><p>{t('Consulta le informazioni disponibili oppure contatta DTO Solution.', 'Browse the available information or contact DTO Solution.')}</p></div><Link className="driver-dashboard__contact" to="/contatti">{t('Contattaci', 'Contact us')}</Link></section>
+    </div>
+  </article>
 }
-
-export default DriverAreaPage
