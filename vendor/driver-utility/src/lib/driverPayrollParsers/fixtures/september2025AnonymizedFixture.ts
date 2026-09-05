@@ -1,0 +1,102 @@
+import { reconstructPdfLines, type PdfTextItem, type StructuredPdfText } from '../../driverPayrollPdfLayout';
+
+const cell = (text: string, x: number, y: number, width = text.length * 4.8): PdfTextItem => ({
+  text,
+  page: 1,
+  x,
+  y,
+  width,
+  height: 6.5,
+});
+
+export const september2025AnonymizedItems: PdfTextItem[] = [
+  cell('VECTUM SRL', 20, 810),
+  cell('LIVELLO', 250, 800, 42),
+  cell('SEDE', 220, 689.8807, 30),
+  cell('03', 255, 690.4),
+  cell('C/COSTO', 282.9623, 689.8807, 42),
+  cell('5M', 180, 785), cell('O', 220, 785), cell('G1', 255, 785), cell('A', 290, 785),
+  cell('00', 315, 785), cell('BS', 345, 785), cell('100,00', 380, 785),
+  cell('03', 327.51, 690.75), cell('DL05 - AMAZON', 411.68, 690.99),
+  cell('CODICE', 282.9623, 678.2), cell('5500', 327.51, 678.8),
+  cell('PERIODO DI PAGA SETTEMBRE 2025', 20, 760),
+
+  cell('COD. VOCE', 20, 630, 45),
+  cell('DESCRIZIONE', 80, 630, 65),
+  cell('VALORE UNITARIO', 340, 630, 72),
+  cell('ORE/GG/MESI', 420, 630, 62),
+  cell('TRATTENUTE', 485, 630, 55),
+  cell('COMPETENZE', 550, 630, 58),
+
+  cell('0169', 20, 610), cell('ORE LAVORATE MESE', 80, 610), cell('151,20', 430, 610),
+  cell('0170', 20, 590), cell('GG LAVORATI', 80, 590), cell('18,00', 430, 590),
+  cell('0779', 20, 570), cell('MONTE ORE TEORICO FT/PT', 80, 570), cell('193,20', 430, 570),
+  cell('0785', 20, 550), cell('MONTE ORE EFFETTIVO', 80, 550), cell('159,60', 430, 550),
+  cell('1000', 20, 530), cell('RETRIBUZIONE/STIPENDIO', 80, 530), cell('85,68', 350, 530), cell('22,00', 430, 530), cell('1.885,06', 560, 530),
+  cell('1052', 20, 510), cell('E.D.R.EX ACCORDO 18.05.2021', 80, 510), cell('9,32', 560, 510),
+  cell('2050', 20, 490), cell('MAGGIORAZIONE', 80, 490), cell('47,13', 560, 490),
+  cell('2310', 20, 470), cell('TRASFERTA', 80, 470), cell('20,50', 350, 470), cell('12,00', 430, 470), cell('246,00', 560, 470),
+  cell('2315', 20, 450), cell('INDENNITA DOMENICALE', 80, 450), cell('7,00', 560, 450),
+  cell('6633', 20, 430), cell('CTR. C/DIP. EBILOG', 80, 430), cell('0,50', 495, 430),
+  cell('7033', 20, 410), cell('CTR. C/AZ. EBILOG', 80, 410), cell('0,50', 350, 410),
+  cell('8128', 20, 390), cell('ULT. DETRAZIONE', 80, 390), cell('169,85', 430, 390),
+  cell('8146', 20, 370), cell('CREDITO D.L.3/20', 80, 370), cell('1.927,48', 430, 370),
+  cell('8320', 20, 350), cell('ADDIZIONALE REGIONALE', 80, 350), cell('26,70', 495, 350),
+  cell('8420', 20, 330), cell('ADDIZIONALE COMUNALE SALDO', 80, 330), cell('6,60', 495, 330),
+  cell('8460', 20, 310), cell('ADDIZIONALE COMUNALE ACCONTO', 80, 310), cell('2,42', 495, 310),
+  cell('9300', 20, 290), cell('TRATTENUTA SINDACALE', 80, 290), cell('9,00', 495, 290),
+  cell('9531', 20, 270), cell('ONERI DEDUCIBILI', 80, 270), cell('75,00', 430, 270),
+
+  cell('SOCIALI', 20, 225.9655), cell('I.N.P.S.', 75, 226.87),
+  cell('IMPONIBILE', 35, 213.9655), cell('1.942,00', 150, 213.99),
+  cell('TRATTENUTE', 270, 201.9629), cell('184,30', 390, 202.89), cell('184,30', 520, 202.89),
+  cell('FISCALI', 20, 189.9629), cell('IRPEF M.O.', 75, 190.38),
+  cell('IMPONIBILE', 35, 177.9629), cell('1.760,71', 150, 179.24),
+  cell('TRATTENUTE', 270, 165.9629), cell('152,92', 390, 167.06),
+  cell('GG. DETRAZIONE', 35, 153), cell('ALTRE DETRAZIONI', 270, 153),
+  cell('30', 150, 143), cell('169,85', 390, 143),
+
+  cell('RETR. UTILE TFR', 20, 130),
+  cell('MAT. MESE AL NETTO DELLO 0,5 %', 170, 130),
+  cell('PROGRESSIVO MATURATO A.C. NETTO', 345, 130),
+  cell('ACCANT. T.F.R. DAL 01/01/2001', 500, 130),
+  cell('1.894,38', 90, 120), cell('130,61', 275, 120), cell('1.297,43', 430, 120), cell('1.378,72', 560, 120),
+
+  cell('PROGRESSIVI', 20, 100),
+  cell('GG. DETRAZIONE', 15, 85, 52),
+  cell('ALTRE DETRAZIONI', 80, 85, 64),
+  cell('IMPONIBILE SOCIALE', 165, 85, 70),
+  cell('TRATTENUTE SOCIALI', 250, 85, 72),
+  cell('IMP.LE FISCALE', 330, 85, 54),
+  cell('IMPOSTA VERSATA', 352.6445, 85, 38.0105286),
+  cell('TOTALE TRATTENUTE', 400.8804, 85, 42.3315),
+  cell('TOTALE COMPETENZE', 484.1595, 85, 44.1321),
+  cell('273', 55, 75, 12),
+  cell('2.291,70', 120, 75, 28),
+  cell('21.014,00', 205, 75, 31),
+  cell('1.994,24', 290, 75, 28),
+  cell('19.022,34', 345, 75, 31),
+  cell('2.083,45', 374.51, 75, 23.352),
+  cell('382,44', 462.32, 75, 18.348),
+  cell('2.194,51', 538.58, 75, 23.352),
+
+  cell('PAGAMENTO IN', 20, 50),
+  cell('PERIODO DI PAGA', 165, 50),
+  cell('DATA VALUTA', 315, 50),
+  cell('ARROTONDAMENTO', 415, 50),
+  cell('NETTO', 520, 50),
+  cell('C/C', 20, 40),
+  cell('SETTEMBRE 2025', 190, 40),
+  cell('15/10/2025', 330, 40),
+  cell('1.812,07', 545, 40),
+];
+
+export const september2025AnonymizedFixture = (): StructuredPdfText => {
+  const reconstructedLines = reconstructPdfLines(september2025AnonymizedItems);
+  return {
+    pages: 1,
+    items: september2025AnonymizedItems,
+    reconstructedLines,
+    plainText: reconstructedLines.map((line) => line.text).join('\n'),
+  };
+};

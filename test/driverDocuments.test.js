@@ -27,7 +27,10 @@ test('Area Driver links the two verified documents and leaves legislation disabl
 })
 
 test('main navigation contains Area Driver in desktop and mobile shared navigation', () => {
-  assert.match(header, /\{ label: 'Applicazioni'[^]*\{ label: 'Area Driver', to: '\/area-driver' \}[^]*\{ label: 'Chi siamo'/)
+  const informational = header.match(/const navigation = \[([^]*?)\]/)[1]
+  assert.doesNotMatch(informational, /Area Driver/)
+  assert.match(header, /const areas = \[[^]*Area Driver[^]*Area Aziende[^]*Area Enti[^]*?\]/)
+  assert.match(header, /label: 'Area Driver', to: '\/area-driver'/)
   assert.equal((header.match(/navigation\.map/g) || []).length, 1)
   assert.match(header, /navigation--open/)
 })

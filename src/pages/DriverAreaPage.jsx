@@ -10,8 +10,6 @@ const documents = [
 
 const futureTools = [
   ['Guide e spiegazioni', 'Guides and explanations', 'Contenuti pratici per orientarsi nelle attività quotidiane.', 'Practical content for navigating everyday work.'],
-  ['Turni di lavoro', 'Work shifts', 'Uno spazio personale dedicato all’organizzazione dei turni.', 'A personal space dedicated to shift organization.'],
-  ['Busta paga', 'Payslip', 'Strumenti informativi per organizzare e consultare i documenti di lavoro.', 'Informational tools for organizing and viewing work documents.'],
   ['Assistente CCNL', 'National agreement assistant', 'Uno strumento per orientarsi tra contratto collettivo, accordi e normativa di riferimento.', 'A tool for navigating the collective agreement, supplementary agreements and reference legislation.'],
 ]
 
@@ -36,6 +34,14 @@ function DriverAreaPage() {
             {documents.map(([itTitle, enTitle, itDescription, enDescription, itCta, enCta, to]) => <article className="driver-area-card" key={itTitle}><h3>{t(itTitle, enTitle)}</h3><p>{t(itDescription, enDescription)}</p>{to ? <Link className="button button--secondary" to={to}>{t(itCta, enCta)}</Link> : <button type="button" disabled aria-describedby="driver-documents-status">{t(itCta, enCta)}</button>}</article>)}
           </div>
           <p className="driver-area__status" id="driver-documents-status">{t('La normativa di riferimento sarà collegata dopo la verifica delle fonti.', 'Reference legislation will be linked after its sources have been verified.')}</p>
+        </section>
+
+        <section className="driver-area__section" aria-labelledby="driver-local-tools-title">
+          <div className="section-heading"><h2 id="driver-local-tools-title">Turni e Busta Paga</h2><p className="section-heading__copy">Strumenti personali con dati salvati localmente in questo browser.</p></div>
+          <div className="driver-area__grid">
+            <article className="driver-area-card"><h2>Turni Driver</h2><p>Turni di lavoro: registra presenze e note, consulta il riepilogo mensile ed esporta il PDF.</p><Link className="button button--primary" to="/area-driver/turni">Apri Turni Driver</Link></article>
+            <article className="driver-area-card"><h2>Busta Paga Driver</h2><p>Busta paga: importa i cedolini nel browser e confrontali con i tuoi turni.</p><Link className="button button--primary" to="/area-driver/busta-paga">Apri Busta Paga Driver</Link></article>
+          </div>
         </section>
 
         <section className="driver-area__section driver-area__section--future" aria-labelledby="driver-tools-title">

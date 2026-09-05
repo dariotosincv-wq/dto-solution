@@ -8,6 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.cache/
+artifacts/driver/
+test-results/
 dist
 dist-company/
 dist-ssr

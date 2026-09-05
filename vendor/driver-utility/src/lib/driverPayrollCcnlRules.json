@@ -1,0 +1,131 @@
+[
+  {
+    "id": "travel-allowance-mismatch",
+    "title": "Trasferta differente",
+    "description": "La differenza potrebbe dipendere da una o piu trasferte conteggiate diversamente tra turni previsti e busta reale.",
+    "priority": 95,
+    "confidence": "Alta",
+    "category": "allowance",
+    "conditions": {
+      "metricKeys": ["travelDays"],
+      "causeKinds": ["travel_allowance"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "overtime-mismatch",
+    "title": "Straordinario",
+    "description": "La differenza potrebbe dipendere da ore di straordinario autorizzate, maggiorate o liquidate in modo diverso.",
+    "priority": 90,
+    "confidence": "Alta",
+    "category": "overtime",
+    "conditions": {
+      "metricKeys": ["overtimeHours"],
+      "causeKinds": ["overtime"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "holiday-mismatch",
+    "title": "Festivita",
+    "description": "La differenza potrebbe dipendere da una festivita lavorata, non lavorata o trattata con regola diversa.",
+    "priority": 86,
+    "confidence": "Media",
+    "category": "holiday",
+    "conditions": {
+      "metricKeys": ["holidayDays"],
+      "causeKinds": ["holiday"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "permit-mismatch",
+    "title": "Permesso",
+    "description": "La differenza potrebbe dipendere da permessi, PAR o ore assenza non allineate ai turni previsti.",
+    "priority": 82,
+    "confidence": "Media",
+    "category": "absence",
+    "conditions": {
+      "metricKeys": ["permitHours"],
+      "causeKinds": ["permit"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "sickness-mismatch",
+    "title": "Malattia",
+    "description": "La differenza potrebbe dipendere da giornate di malattia o relativo trattamento retributivo.",
+    "priority": 80,
+    "confidence": "Media",
+    "category": "sickness",
+    "conditions": {
+      "metricKeys": ["sicknessDays"],
+      "causeKinds": ["sickness"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "vacation-mismatch",
+    "title": "Ferie",
+    "description": "La differenza potrebbe dipendere da ferie godute, maturate o liquidate diversamente.",
+    "priority": 78,
+    "confidence": "Media",
+    "category": "absence",
+    "conditions": {
+      "metricKeys": ["vacationDays"],
+      "causeKinds": ["ccnl_rule"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "bonus-company-line",
+    "title": "Premio o voce aziendale",
+    "description": "La differenza potrebbe dipendere da un premio, PDR, fringe benefit o altra voce aziendale non prevista.",
+    "priority": 74,
+    "confidence": "Media",
+    "category": "bonus",
+    "conditions": {
+      "metricKeys": ["bonusAmount"],
+      "causeKinds": ["bonus"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "sunday-rule",
+    "title": "Domenica",
+    "description": "La differenza potrebbe dipendere da lavoro domenicale, indennita domenicale o maggiorazioni collegate.",
+    "priority": 68,
+    "confidence": "Bassa",
+    "category": "holiday",
+    "conditions": {
+      "metricKeys": ["grossAmount", "netAmount"],
+      "causeKinds": ["gross", "net", "ccnl_rule"],
+      "severities": ["large"]
+    }
+  },
+  {
+    "id": "abort-or-unpaid-absence",
+    "title": "Abort o assenza non retribuita",
+    "description": "La differenza potrebbe dipendere da abort, assenza non pagata o evento presenza non ancora collegato al confronto.",
+    "priority": 58,
+    "confidence": "Bassa",
+    "category": "absence",
+    "conditions": {
+      "metricKeys": ["grossAmount", "netAmount"],
+      "causeKinds": ["gross", "net", "ccnl_rule"],
+      "severities": ["large"],
+      "directions": ["negative"]
+    }
+  },
+  {
+    "id": "generic-ccnl-rule",
+    "title": "Regola CCNL",
+    "description": "La differenza potrebbe dipendere da una regola CCNL non ancora collegata automaticamente alla voce.",
+    "priority": 40,
+    "confidence": "Bassa",
+    "category": "ccnl_rule",
+    "conditions": {
+      "severities": ["large"]
+    }
+  }
+]

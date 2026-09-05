@@ -1,0 +1,2 @@
+# Preserve the byte-identical reference snapshot and its SHA-256 provenance.
+vendor/driver-utility/** -text

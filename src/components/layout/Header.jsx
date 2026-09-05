@@ -5,10 +5,15 @@ import { useI18n } from '../../i18n/useI18n.js'
 
 const navigation = [
   { label: 'Applicazioni', to: '/applicazioni' },
-  { label: 'Area Driver', to: '/area-driver' },
   { label: 'Chi siamo', to: '/chi-siamo' },
   { label: 'Privacy', to: '/privacy' },
   { label: 'Contatti', to: '/contatti' },
+]
+
+const areas = [
+  { label: 'Area Driver', to: '/area-driver' },
+  { label: 'Area Aziende', to: '/azienda/login' },
+  { label: 'Area Enti', to: '/enti/login' },
 ]
 
 function Header() {
@@ -50,12 +55,18 @@ function Header() {
               {item.label}
             </NavLink>
           ))}
-          <Link className="navigation__company-cta" to="/azienda/login" onClick={closeMenu}>
-            Area Aziende
-          </Link>
-          <Link className="navigation__company-cta navigation__company-cta--secondary" to="/enti/login" onClick={closeMenu}>
-            Area Enti
-          </Link>
+          <div className="navigation__areas" role="group" aria-label="Aree DTO Solution">
+            {areas.map((area) => (
+              <NavLink
+                key={area.to}
+                to={area.to}
+                onClick={closeMenu}
+                className={({ isActive }) => `navigation__area-cta${isActive ? ' navigation__area-cta--active' : ''}`}
+              >
+                {area.label}
+              </NavLink>
+            ))}
+          </div>
           <div className="language-switcher" aria-label="Selezione lingua">
             <a className={language === 'it' ? 'language-switcher__link language-switcher__link--active' : 'language-switcher__link'} href={localizedUrl('it')} lang="it" aria-current={language === 'it' ? 'page' : undefined}>IT</a>
             <span aria-hidden="true">|</span>

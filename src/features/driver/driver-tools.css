@@ -1,0 +1,51 @@
+@import './driver-tools.generated.css';
+
+.driver-tools {
+  --background: 220 15% 96%; --foreground: 220 20% 10%;
+  --card: 0 0% 100%; --card-foreground: 220 20% 10%;
+  --popover: 0 0% 100%; --popover-foreground: 220 20% 10%;
+  --primary: 221 83% 53%; --primary-foreground: 0 0% 100%;
+  --secondary: 220 15% 90%; --secondary-foreground: 220 20% 15%;
+  --muted: 220 10% 92%; --muted-foreground: 220 10% 40%;
+  --accent: 145 60% 40%; --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%; --destructive-foreground: 0 0% 100%;
+  --border: 220 15% 85%; --input: 220 15% 85%; --ring: 221 83% 53%;
+  --warning: 38 92% 50%; --warning-foreground: 0 0% 100%;
+  --success: 145 60% 40%; --success-foreground: 0 0% 100%;
+  --info: 200 80% 50%; --info-foreground: 0 0% 100%; --radius: 0.75rem;
+  padding-top: 1.5rem; padding-bottom: 3rem; color: hsl(var(--foreground));
+}
+.driver-tools *, .driver-tools *::before, .driver-tools *::after {
+  border-style: solid; border-width: 0; border-color: hsl(var(--border));
+  /* Local Tailwind defaults: no global preflight that could affect DTO pages. */
+  --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0;
+  --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1;
+  --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / .5); --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000;
+}
+.driver-tools button, .driver-tools input, .driver-tools select, .driver-tools textarea { font: inherit; }
+.driver-tools button { cursor: pointer; }
+.driver-tools button:disabled { cursor: not-allowed; }
+.driver-tools svg { display: inline-block; flex-shrink: 0; vertical-align: middle; }
+.driver-tools .page-container { width: 100%; max-width: 56rem; margin: auto; padding: 1rem 0; }
+.driver-tools .driver-card { padding: 1.25rem; background: white; border: 1px solid hsl(var(--border)); border-radius: 1rem; }
+.driver-tools .driver-btn-primary { display: flex; justify-content: center; align-items: center; gap: .75rem; padding: 1rem 1.5rem; border-radius: .75rem; background: hsl(var(--primary)); color: white; font-weight: 650; }
+.driver-tools .driver-input { width: 100%; padding: .875rem 1rem; border-radius: .75rem; border: 1px solid hsl(var(--input)); background: white; color: hsl(var(--foreground)); }
+.driver-tools :is(button, input, select, textarea, a):focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.driver-tools .status-badge { display: inline-flex; padding: .375rem .75rem; border-radius: 999px; font-weight: 500; }
+.driver-tools [role=alertdialog] { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+.driver-tools__navigation { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.driver-tools__navigation a { padding: .4rem 0; font-weight: 650; }
+.driver-tools__navigation [aria-current] { text-decoration: underline; text-underline-offset: .3rem; }
+.driver-tools__privacy { margin: 1rem 0; color: var(--color-muted); font-size: .9rem; }
+.driver-tools__back { display: inline-block; margin-bottom: 1rem; }
+.driver-contract { display: grid; gap: 1rem; max-width: 36rem; margin: 0 auto; }
+.driver-contract__weekdays { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.driver-contract__weekdays button { padding: .65rem; border-radius: .65rem; background: hsl(var(--muted)); }
+.driver-contract__weekdays [aria-pressed=true] { background: hsl(var(--primary)); color: white; }
+@media (max-width: 620px) {
+  .driver-tools [role=tablist] { height: auto; flex-wrap: wrap; gap: .25rem; }
+  .driver-tools [role=alertdialog] { max-width: calc(100vw - 2rem); }
+  .driver-tools .page-container { overflow-wrap: anywhere; }
+}

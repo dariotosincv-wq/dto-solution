@@ -44,10 +44,10 @@ test('public header exposes the company login CTA for desktop and mobile navigat
     readFile(new URL('../src/components/layout/Header.jsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/styles/components.css', import.meta.url), 'utf8'),
   ])
-  assert.match(header, /className="navigation__company-cta" to="\/azienda\/login"/)
-  assert.match(header, />\s*Area Aziende\s*</)
-  assert.match(styles, /\.navigation__company-cta\s*\{[^}]*display:\s*inline-flex/s)
-  assert.match(styles, /@media \(max-width: 52rem\)[\s\S]*\.navigation__company-cta\s*\{[^}]*width:\s*100%/)
+  assert.match(header, /label: 'Area Aziende', to: '\/azienda\/login'/)
+  assert.match(header, /navigation__areas[\s\S]*areas\.map[\s\S]*navigation__area-cta/)
+  assert.match(styles, /\.navigation__area-cta\s*\{[^}]*display:\s*inline-flex/s)
+  assert.match(styles, /@media \(max-width: 68rem\)[\s\S]*\.navigation__area-cta\s*\{[^}]*width:\s*100%/)
 })
 
 test('public sitemap uses the platform gateway and advertises only current public routes', async () => {

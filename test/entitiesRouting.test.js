@@ -46,8 +46,8 @@ test('public desktop and mobile navigation exposes Area Enti login', async () =>
     readFile(new URL('../src/styles/components.css', import.meta.url), 'utf8'),
   ])
   assert.match(app, /<Route path="enti\/\*" element=\{<EntitiesApp \/>\} \/>/)
-  assert.match(header, /to="\/enti\/login"[\s\S]*Area Enti/)
-  assert.match(styles, /@media \(max-width: 52rem\)[\s\S]*\.navigation__company-cta\s*\{[^}]*width:\s*100%/)
+  assert.match(header, /label: 'Area Enti', to: '\/enti\/login'/)
+  assert.match(styles, /@media \(max-width: 68rem\)[\s\S]*\.navigation__area-cta\s*\{[^}]*width:\s*100%/)
 })
 
 test('UNION_GUEST is rejected by company routes while trial-eligible users without membership remain allowed', async () => {

@@ -23,6 +23,10 @@ import ObservaPokerPage from './pages/products/ObservaPokerPage.jsx'
 import ShoppingVoicePage from './pages/products/ShoppingVoicePage.jsx'
 import CompanyApp from '../company/src/App.jsx'
 import EntitiesApp from '../entities/src/App.jsx'
+import { lazy, Suspense } from 'react'
+
+const DriverToolsPage = lazy(() => import('./features/driver/DriverToolsPage.tsx'))
+const DriverContractPage = lazy(() => import('./features/driver/DriverToolsPage.tsx').then(module => ({ default: module.DriverContractPage })))
 
 function App() {
   return (
@@ -41,6 +45,9 @@ function App() {
           <Route path="applicazioni/driver-utility" element={<DriverUtilityPage />} />
           <Route path="applicazioni/driver-utility/privacy" element={<DriverUtilityPrivacyPage />} />
           <Route path="area-driver" element={<DriverAreaPage />} />
+          <Route path="area-driver/turni" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverToolsPage tool="turni" /></Suspense>} />
+          <Route path="area-driver/busta-paga" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverToolsPage tool="busta-paga" /></Suspense>} />
+          <Route path="area-driver/contratto" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverContractPage /></Suspense>} />
           <Route path="area-driver/ccnl-logistica-trasporto-merci-spedizione" element={<CcnlLogisticaPage />} />
           <Route path="area-driver/accordo-asso-espressi-ultimo-miglio-2025" element={<AccordoAssoespressiPage />} />
           <Route path="applicazioni/checkvan-pro" element={<CheckVanProPage />} />

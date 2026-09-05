@@ -1,0 +1,1029 @@
+{
+  "sourceRoot": "C:/Users/dario/Desktop/PROGETTI APP/APP FINITE/DRIVER UTILITY",
+  "portedAt": "2026-09-05T14:13:43.490Z",
+  "policy": "Reference read-only. Original files copied byte-for-byte; browser adaptations live outside vendor.",
+  "copyOrder": "Original tests and fixtures first; functional modules second.",
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.1",
+    "pdfjs-dist": "6.1.200",
+    "jspdf": "4.2.1",
+    "vitest": "3.2.4",
+    "jsdom": "20.0.3",
+    "@capacitor/preferences": "8.0.1"
+  },
+  "files": [
+    {
+      "source": "package-lock.json",
+      "destination": "vendor/driver-utility/reference/package-lock.json",
+      "sha256": "d05293ddd3842695423308739e9118a73fe3b96df24fc989f9cd0ba0adf94ccd",
+      "kind": "original-source"
+    },
+    {
+      "source": "package.json",
+      "destination": "vendor/driver-utility/reference/package.json",
+      "sha256": "289b491bd4515a30d136227d4ea811c38bee3f8bbc42bc235617f2cd7d6b45b3",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/PageHeader.tsx",
+      "destination": "vendor/driver-utility/src/components/PageHeader.tsx",
+      "sha256": "95ab827ed3e6822bb2190bb7cf101677cdb2871188006240b98b0640cef68f4d",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/payroll/AttendancePayrollVerificationReport.test.tsx",
+      "destination": "vendor/driver-utility/src/components/payroll/AttendancePayrollVerificationReport.test.tsx",
+      "sha256": "cd41e434d366fd5da483493bdf4c6cb6f9e6c2c0079f2554b54c4dcf98cb6919",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/components/payroll/AttendancePayrollVerificationReport.tsx",
+      "destination": "vendor/driver-utility/src/components/payroll/AttendancePayrollVerificationReport.tsx",
+      "sha256": "ae329bf2af544b8066af4f7e02167f7a74666731264bac0b0a5da2044c7f8f8b",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/payroll/PayrollValidationReport.test.tsx",
+      "destination": "vendor/driver-utility/src/components/payroll/PayrollValidationReport.test.tsx",
+      "sha256": "f1352d2add8a5d4fe6d85b9183af0aa349e4104abe13df4e08bd7f3408042c79",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/components/payroll/PayrollValidationReport.tsx",
+      "destination": "vendor/driver-utility/src/components/payroll/PayrollValidationReport.tsx",
+      "sha256": "31c38103bc941e74db2756cec3b75eec41261728d884fe86cb1212c08bdd74b9",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/alert-dialog.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/alert-dialog.tsx",
+      "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/alert.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/alert.tsx",
+      "sha256": "6352c232d36b2aeb20cce9692fecd98a472c8bb0b8c3f8a45446c433382e2da7",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/button.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/button.tsx",
+      "sha256": "99e5091c618896c9a46eba931d23814039709f9a1d150c4ac99217c1bba044fd",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/input.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/input.tsx",
+      "sha256": "aacef8933fe99ab553e12a82c874a23c97e2b5602eb6f00018454fa0a8d4f7f2",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/label.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/label.tsx",
+      "sha256": "d5dc9497cbb28a5401b864bd44a15f010c302584fbe8e07e015dbe443f103753",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/tabs.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/tabs.tsx",
+      "sha256": "b313d08a8c85e586a282b615cf30ce0b6ec1eca3ea92149b731f14b4082f4d71",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/components/ui/textarea.tsx",
+      "destination": "vendor/driver-utility/src/components/ui/textarea.tsx",
+      "sha256": "2f5b24d28dc5c41817ca69653a396adcb2fe495200f8184777d086a62fc70461",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/hooks/useLocalStorage.ts",
+      "destination": "vendor/driver-utility/src/hooks/useLocalStorage.ts",
+      "sha256": "490d45a7afe9b16c71eeddf370ad4b74f100314f8c00ae7361749e2b429b431d",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/index.css",
+      "destination": "vendor/driver-utility/reference/src/index.css",
+      "sha256": "5e8a039e63429dfdcf7a390c286cdb4d236754f555dd01b7a7885ae99a624d11",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/attendancePdfExport.ts",
+      "destination": "vendor/driver-utility/src/lib/attendancePdfExport.ts",
+      "sha256": "6775ff0dfe4966ff61fcf201086b43f2e5cd7024d34ccfda84c32cf7f2b9ef30",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverContractProfile.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverContractProfile.test.ts",
+      "sha256": "b84e07dd920f23be5d104db4d7ead0c5cd665114082318d48cd1a3039616457a",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverContractProfile.ts",
+      "destination": "vendor/driver-utility/src/lib/driverContractProfile.ts",
+      "sha256": "2977b0883fbb2a16d2fabded069210e9d761443809976a00210d9cc665290f29",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollAnalysis.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollAnalysis.test.ts",
+      "sha256": "76b17cbb714e33c2b4f0f29609dc27eb22d26891c4c2d0d94f249a259801ec21",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollAnalysis.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollAnalysis.ts",
+      "sha256": "650b7ac90929d3bf1335d2bdad3aa0aca043285b76747df83260a17d92f1047a",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollAssistant.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollAssistant.test.ts",
+      "sha256": "0358d78560fe457b414171e137399db41594e576226194fe60ee86ed1f43bb84",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollAssistant.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollAssistant.ts",
+      "sha256": "d5931e1fda0043747894fe21f03a877bdb6e02b01f825341fa9f5b464a93815a",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollAttendance.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollAttendance.test.ts",
+      "sha256": "98be7fbafc74f6323c7573dc815ce93856f5f6999c044eff9fd05bc68f2ba74c",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollAttendance.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollAttendance.ts",
+      "sha256": "207122eb4a3deb24205c24de93e161c4424c135e89523ee7e1e0042658893934",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollCcnlRules.json",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollCcnlRules.json",
+      "sha256": "b318d12ef48fd1c8c8d15b8780f7b5313f8fedf0ee3a007c8bd60336cee33a06",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollCodeCatalog.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollCodeCatalog.test.ts",
+      "sha256": "eacf298bd4f27a7a40eb5b7f3c6430d22bfed5e71a1f6f4140206c2bf7afbd6a",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollCodeCatalog.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollCodeCatalog.ts",
+      "sha256": "b34086b69397848f6f14576d3feea7b278ddef84d57eb91bf62577310ffdba89",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollCodes.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollCodes.ts",
+      "sha256": "fdece7d8e39cb78dfd5d1b11194c44b84ffd8b52440e512551ff74a9cece05ce",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollCompanyProfiles.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollCompanyProfiles.ts",
+      "sha256": "771718db86e6b8084889b385a8a82eb9d080d488af4d595b889c76f61a8e869f",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollComparison.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollComparison.test.ts",
+      "sha256": "e4c110c01468ee456ceea22921489a8a43590e79ee6a69e44ed7ec7ed1f03a4b",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollComparison.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollComparison.ts",
+      "sha256": "ccc2106e5274b73779e0efcc6ca3a2eb7a133705b281a3c8206541780c3b9f77",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollDebugLogger.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollDebugLogger.ts",
+      "sha256": "31d82b04a0312139ff69dd29bbddf3adf81fb712c497b9d4dcf9734555ad982b",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollEngine.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollEngine.ts",
+      "sha256": "323683e0472cb7da25a0d73125acaa05a73575d44770d0cd2ebc746ff3e64c31",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalCatalog.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalCatalog.test.ts",
+      "sha256": "0609af24065115ea5daa9eb5229849d7ad621a1f07b492420dcda6c5bd014bce",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalCatalog.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalCatalog.ts",
+      "sha256": "875cf4b96f9b579898842cb4da688caf42d5696007f418195017dce3f7919436",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalNormalizer.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalNormalizer.test.ts",
+      "sha256": "3723335d919d2799748f79b907839d563b11d059a33278c7d24fe8fbdf77f35a",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalNormalizer.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalNormalizer.ts",
+      "sha256": "c7dd309de48b6b2eb13242cf43b3f280f4584e30ebf1065acbf2dee1ca3d9a33",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalTypes.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalTypes.ts",
+      "sha256": "1b1585549551337e8ffb6b44571968ab1d95df68ae3b877564e10243e47c4784",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalUnits.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalUnits.test.ts",
+      "sha256": "8d82a8cccc2512c83b2afee596763860824a9735721acbb7d4d86dcad34561a9",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalUnits.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalUnits.ts",
+      "sha256": "41a03ba3fa29d6613944992cf7481f49f475b612a01479156747543df2c0e8ba",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalValidation.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalValidation.test.ts",
+      "sha256": "882a823c35457162fbf132b2ed3186620317d159be7cfc3827a9721f2c132de8",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollFiscalValidation.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollFiscalValidation.ts",
+      "sha256": "43294806bf9994652cc78427d5d6b1d99ff00dc0d85ac51cdf4e0f738df0f7f2",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollHistoricalValidation.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollHistoricalValidation.test.ts",
+      "sha256": "fa82840187b7291a0662e684a893a93c488101892039bda904fea8026eb6b877",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollHistoricalValidation.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollHistoricalValidation.ts",
+      "sha256": "8a5aba0e6de2820c1500a375029236447f8be6be5ed6752e506c3688bf208885",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollImportService.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollImportService.test.ts",
+      "sha256": "5fb2d9c175ca7aa9b19b6bbd2e349cc068198d50809781fef8f5429a994e42fd",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollImportService.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollImportService.ts",
+      "sha256": "f58fe43533c2e51b75bf504aaeccefac50f287f91d11f1aec7119e4b3fd872d4",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollImportTypes.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollImportTypes.ts",
+      "sha256": "d7891402a055c06a51be310328e77d1a7f51de9142751f7342df985611821eec",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollLineValues.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollLineValues.ts",
+      "sha256": "f3a578966d66ea69c1993ee0c87dd1247796ea890104ad3a9a7ad7f2d2bf3914",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParserDiagnostics.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParserDiagnostics.test.ts",
+      "sha256": "281566849149448bb9583675e24dda740ae292598d5a514c721ce4483fd3e0a3",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollParserDiagnostics.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParserDiagnostics.ts",
+      "sha256": "d88b95b8ca6c7f87741762306d9b5f90575550ff3f26075e18af82e1e909d0eb",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/finalSummaryParser.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/finalSummaryParser.test.ts",
+      "sha256": "9390ca5803e7424d2924f0beaeaa65438c7442acc0693497e7ac58de88b10195",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/finalSummaryParser.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/finalSummaryParser.ts",
+      "sha256": "b4a4680b27b85ba5bda4570002fcdea2aaa3a3c19bc898877fe962c2c712f0f7",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/fixtures/january2026SummaryAnonymizedFixture.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/fixtures/january2026SummaryAnonymizedFixture.ts",
+      "sha256": "57147f31ec1b0d7a713747588b5f01d46d522805557ad4dfab7db7708ad3ffdd",
+      "kind": "original-fixture"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/fixtures/november2025TwoPageAnonymizedFixture.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/fixtures/november2025TwoPageAnonymizedFixture.ts",
+      "sha256": "5b9798f40c4b326291308a3be3fb4090c053d262887ddc278e0327998ef38e5c",
+      "kind": "original-fixture"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/fixtures/october2025AnonymizedFixture.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/fixtures/october2025AnonymizedFixture.ts",
+      "sha256": "8f3de9af2275785edd9bde23a1ada725c1b7804099821a1e317df19954394428",
+      "kind": "original-fixture"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/fixtures/september2025AnonymizedFixture.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/fixtures/september2025AnonymizedFixture.ts",
+      "sha256": "2185173c5a7841aa6d07f7c78a77f9eb7c0563de4d5131241c2802a22b66a0c6",
+      "kind": "original-fixture"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/genericPayslipParser.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/genericPayslipParser.ts",
+      "sha256": "bcb8fe50357e6e4c07335b7c86100a27fdfd880797e4daf4a56dbc791065543e",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/logisticsLayoutV1Parser.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/logisticsLayoutV1Parser.ts",
+      "sha256": "a99a4e3b99d1ae3004e1ca4d0e207869d8926fbff10dd6ab2b4327cb648ba6b3",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/november2025TwoPageRegression.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/november2025TwoPageRegression.test.ts",
+      "sha256": "1b0d4bdbb8b2c867048d229086b5a73e96fcb673b26bbfb737e2e77ff7c5c1f1",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/october2025Regression.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/october2025Regression.test.ts",
+      "sha256": "90e11f637dfa13005b7a01ae14ded594768bb0f299493d3284b6fb95aa12d78d",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/payrollParserTypes.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/payrollParserTypes.ts",
+      "sha256": "9ed439f1a14c2f845f574cbd2bf3180e602bec6865b7c2eb00301572846e8e5c",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/payslipFormatDetector.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/payslipFormatDetector.ts",
+      "sha256": "11fb993e0d1fb4d5d7d6b1c96517298ac03fcd31472569f96ee896cd6ffac6fd",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/payslipParserHelpers.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/payslipParserHelpers.ts",
+      "sha256": "bdf24308983316ecd0198e0fd4570cd31fc49cc1eb2a9e0ba61f907eb14012f3",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/payslipParserRegistry.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/payslipParserRegistry.test.ts",
+      "sha256": "5feb5bf3dc257f191f3bad3e3b233e2824f40ee5a24c0a989ad90ccf956be32c",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/payslipParserRegistry.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/payslipParserRegistry.ts",
+      "sha256": "a7d0baa50f5fde2cdc15888234d3ddad233c20e2e2dec55847eaa14b177cc994",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollParsers/september2025Regression.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollParsers/september2025Regression.test.ts",
+      "sha256": "32bb738f3d795292aca87778eedfdf74ca9c1df2b991f548bec248f8b92f6d52",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollPayslipNormalizer.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPayslipNormalizer.test.ts",
+      "sha256": "d7e2e9e38de63001fafd9c314a6cbea2bf98b881fb8f236c2ea417155530f30f",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollPayslipNormalizer.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPayslipNormalizer.ts",
+      "sha256": "ee56eb5f8f78a97c186ce61f05fbd2316f35de9ca00ba2e873b1f234b3e46546",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollPayslipParser.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPayslipParser.test.ts",
+      "sha256": "3713a6d90a8dfa22f1f0814d3ee4d6b9d4cf48b93df2f3ec7db3aadc33af57a6",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollPayslipParser.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPayslipParser.ts",
+      "sha256": "ba3c8f1b3b48ce77503efdf10b14ec86e21c84b2cefe47e83e44b11b1f0ce952",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollPdfGeometry.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPdfGeometry.ts",
+      "sha256": "f559d87f8308ffca4c5c5910e56e6bf6d38e795e4bf2763a3e7f9a8dd7c7e66c",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollPdfLayout.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPdfLayout.test.ts",
+      "sha256": "c41baf4144aa65dda26ef36ff79288812431b5a16ab789fe6a7af3178fd20815",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollPdfLayout.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPdfLayout.ts",
+      "sha256": "73502525d9c85f286fa40c354a64e6a0ec804719553d1fcc14ee0d259425111b",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollPdfText.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPdfText.test.ts",
+      "sha256": "d9f5129eae3637069413a7fc50e02e071da1052c9f1d864bfdf1dd0673e97f6e",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollPdfText.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollPdfText.ts",
+      "sha256": "6d29f260805a09cf9eeb006cb8e170444ca793813b4313cd280b44fbe0eab033",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollQualityReport.md",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollQualityReport.md",
+      "sha256": "a113b4143580b71809bcb750cc1c236525648643c0ae8c0d92fa953ab7e6b7f3",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollReadDiagnosticTxt.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollReadDiagnosticTxt.test.ts",
+      "sha256": "5c020abaa3869cda344c6b16b24ece46f992f3f125a1f2ded9f20553cd18f32c",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollReadDiagnosticTxt.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollReadDiagnosticTxt.ts",
+      "sha256": "b5668ca6a6f0704cf585b1ea4d1948f76ee49516ce413beae036f9bfd910adcf",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollRuleExplanationEngine.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollRuleExplanationEngine.test.ts",
+      "sha256": "097a8547e3d57132ab2d081727c530e45613d3a172c8e182c1ef873318986d73",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollRuleExplanationEngine.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollRuleExplanationEngine.ts",
+      "sha256": "9499c67a7141136e0ff56824fbc13fa651669bd8db5725d80862d3a088f3673c",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollRules.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollRules.ts",
+      "sha256": "48d9ef12b71058034d4f68bd65156b1d06d88a9b738cc748a373c6e18717974c",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollSimulator.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollSimulator.test.ts",
+      "sha256": "8670331aec2a5a8272ae2aa0c5630daee7dd06e14e665cc27271174c9bd361f6",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollSimulator.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollSimulator.ts",
+      "sha256": "2a0607ddcbd67a3c41ec5587b3105d30b12fcda782e1a431f69c468b818edb61",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollStorage.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollStorage.test.ts",
+      "sha256": "24f7e226b70b38485c0eabd35b1629707b982c1a93bc89ea64c47dbac1c30fe9",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollStorage.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollStorage.ts",
+      "sha256": "6124e0354d244d124068036fefa580009d6ef4312d7dc7b47f3179bb41b945a6",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollTypes.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollTypes.ts",
+      "sha256": "3916165f26bd4b7bd90a8c599fe75b59cb8c4e31f4c3afc58310d6cc6cce8538",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/driverPayrollValidation.test.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollValidation.test.ts",
+      "sha256": "5e6efca5cac04d41c2db47dfb1c72a1bf68db5ccf463b7f88a8d95d45bd3e1c0",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/driverPayrollValidation.ts",
+      "destination": "vendor/driver-utility/src/lib/driverPayrollValidation.ts",
+      "sha256": "478f156c21431e52ff6acdc4e83fd25ecf2a034dbcd34590fea45ba88d7ff07f",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/italianHolidays.test.ts",
+      "destination": "vendor/driver-utility/src/lib/italianHolidays.test.ts",
+      "sha256": "13afcb01cf1ee7185b29d8700eb40fc1d86db557bf8be3084c43e86ee4b1c0d7",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/italianHolidays.ts",
+      "destination": "vendor/driver-utility/src/lib/italianHolidays.ts",
+      "sha256": "e9f830bc80f1d43123ca41c75f7c2332d50ae81e6e5726888bf63d2c2c74965e",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/monthlyAttendanceSummary.test.ts",
+      "destination": "vendor/driver-utility/src/lib/monthlyAttendanceSummary.test.ts",
+      "sha256": "a4c94c02a8876214dad1eebdb95e4e0c2d011723b635c6a760759f889189c253",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/monthlyAttendanceSummary.ts",
+      "destination": "vendor/driver-utility/src/lib/monthlyAttendanceSummary.ts",
+      "sha256": "6a1cdd1cc067cc31eddb5d08647b4c7c4fcfbc066c1a4d21ea36b4d39a7960fb",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollAttendanceVerification.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollAttendanceVerification.test.ts",
+      "sha256": "694094f70a17b51dc6f5ddc4ccceccee90da711edd4d695ffe06e9a7d29f92f6",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollAttendanceVerification.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollAttendanceVerification.ts",
+      "sha256": "9660ed9034ed3b2e59e34e1c842e42eb3961940aeebdb712ef668b819fb34a22",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsObservationQualityCheck.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsObservationQualityCheck.test.ts",
+      "sha256": "feaf322d39143342633c79d833ae0d57d6e56bc17ebafb693c2ce4a2954fee63",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsObservationQualityCheck.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsObservationQualityCheck.ts",
+      "sha256": "9928bae1f45c063ce9dde1e51a676034ecba085d481252922902e9abf024909f",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsObservedCalculationConsistencyCheck.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsObservedCalculationConsistencyCheck.test.ts",
+      "sha256": "7069658973f1c543776a4fc8159a777fdf25036b332ab5772a881d0f1710efff",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsObservedCalculationConsistencyCheck.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsObservedCalculationConsistencyCheck.ts",
+      "sha256": "7932332eda965ba6755d95ba5b7c47cb5c7204bf341bfcec662c0286ee96936d",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsTaxableRuleAvailabilityCheck.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsTaxableRuleAvailabilityCheck.test.ts",
+      "sha256": "71e02830f35e2a0a36ea5ee467e8804b617ec17e2e9418e65177a0013c19d068",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsTaxableRuleAvailabilityCheck.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsTaxableRuleAvailabilityCheck.ts",
+      "sha256": "ac25760732976ea5b69ef60faf0e1fd586ea5ea4ee002d7e211386ede5099d7a",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsTaxableStructuralConsistencyCheck.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsTaxableStructuralConsistencyCheck.test.ts",
+      "sha256": "1835266b5ae29ee2c4d4101cd453e2d22c1a5a73c019e09bd12c1977bd4fc1f4",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/inpsTaxableStructuralConsistencyCheck.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/inpsTaxableStructuralConsistencyCheck.ts",
+      "sha256": "5639721bfd738adcaac2e65fa328c9dc8af81f64760a0aa677d30e076e4ec038",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/netPayConsistencyCheck.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/netPayConsistencyCheck.test.ts",
+      "sha256": "6efcca28cc4ed93f240ca826b8fe8549e9aec01080fbf12fe07fad1b624cc9fd",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/netPayConsistencyCheck.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/netPayConsistencyCheck.ts",
+      "sha256": "e7b29bbf7cd6737aa309b377d89d2b79c192a804f119c6d94474b553d3d9d6ba",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/summaryConsistencyCheck.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/summaryConsistencyCheck.test.ts",
+      "sha256": "11a31a5e08aa2601898eed9cb2d2614d19a661b292987d6cfdd793462456ae84",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/checks/summaryConsistencyCheck.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/checks/summaryConsistencyCheck.ts",
+      "sha256": "c0dfde29922c6313507ab35bf027170c16794cc24bc350f7fee6120ef44ff83f",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/driverValidationReportMapper.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/driverValidationReportMapper.test.ts",
+      "sha256": "2d4674412f4a49446148affd4e14353f1c91a8a888d9a04da3cd43a09382786e",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/driverValidationReportMapper.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/driverValidationReportMapper.ts",
+      "sha256": "3da091866d916a1496fdbc5b294e57cfa413794e1e8303f66885599f052943ac",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/driverValidationReportTypes.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/driverValidationReportTypes.ts",
+      "sha256": "e9caef3ad2a996c1aab8ecdbfeb681690e099fd9306940c81c72a4c68386cdbe",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/fiscalObservationSelector.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/fiscalObservationSelector.test.ts",
+      "sha256": "cbd32931ab775e01ac555405b1c7bf0efcc72dfdf20cd4e5f5af61476f19564e",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/fiscalObservationSelector.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/fiscalObservationSelector.ts",
+      "sha256": "d3a19a461480b094bfd6daa34401872da00d1a8465570afbf8908ccfe835d3f6",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/fiscalRuleCatalog.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/fiscalRuleCatalog.test.ts",
+      "sha256": "afaf1482279f215ca452b00e463c25c6862eb5f103a2dc8e472aacd8143ab868",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/fiscalRuleCatalog.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/fiscalRuleCatalog.ts",
+      "sha256": "805a064ac3eb0ac6061b3b095dfba5beed335ce290cffa145497a7421d3674bb",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/fiscalRuleIntegration.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/fiscalRuleIntegration.test.ts",
+      "sha256": "5ba446f1903eb969a5ef64be8e4998412da4190d0449093f06de0a96db71f6c4",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/fiscalRuleIntegration.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/fiscalRuleIntegration.ts",
+      "sha256": "f66950c3642f8a9e6578f11119ddba8e68358a55c5b43b79e8904d7ce15e57a5",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/gregorianDate.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/gregorianDate.ts",
+      "sha256": "a4e53ad0f87417876c92a420872b9200cd3bf46058b0191c02859193967a67af",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/payrollObservedAdapter.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/payrollObservedAdapter.test.ts",
+      "sha256": "0bb8cdad9ab08ae6588e4f02e21bcdbce1b8256546ac9b585ede16834cea0bce",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/payrollObservedAdapter.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/payrollObservedAdapter.ts",
+      "sha256": "5dcd4fd5c7742843647d5ff6777286c3c9b8216b831c6a63c8b2c3dbabc607b5",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/payrollValidationPipeline.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/payrollValidationPipeline.test.ts",
+      "sha256": "af39b1431890b1e385d4249dcad36c2d74ac96cb2ca69229866c83f9d7e578fd",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/payrollValidationPipeline.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/payrollValidationPipeline.ts",
+      "sha256": "c7b624a003f75973af85ecd72bdc6537fe8d341fad776583300e0b1db20f309c",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEffectiveDate.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEffectiveDate.test.ts",
+      "sha256": "b10eb11faf101708de6447f5157c5ac70f45d9eafe81850ba3bed3ce3e5c7500",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEffectiveDate.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEffectiveDate.ts",
+      "sha256": "dfd01ad8b35baf7d91783377314a2c8c9be0841340929cb450cef2a8f756f169",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/index.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/index.ts",
+      "sha256": "2b02d2951ed2dbe9ba0840062c32468176770fc236b33420a8c20f04b6893d11",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/ruleCatalogValidation.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/ruleCatalogValidation.test.ts",
+      "sha256": "a37b0d688565c54300cb1cce8daa4d387f79c3557bd86c3c356011e09b2915f3",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/ruleCatalogValidation.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/ruleCatalogValidation.ts",
+      "sha256": "5466b272ce63a3263cf3863eace5cb824c420f5340d8d6b670d1a5342c333f99",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/rulePayload.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/rulePayload.test.ts",
+      "sha256": "3f44a3f05e3962722ceb8361823179efd710b754450536ad40fa5888b4578fce",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/rulePayload.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/rulePayload.ts",
+      "sha256": "32c93566e06a1adb5a32ce59ba583c9581cfef36ae644c253f42016fda085897",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/ruleResolver.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/ruleResolver.test.ts",
+      "sha256": "233f58a494600cea25cc218bf3558d9b85006006c14de87363f7e3ddd61dc735",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/ruleResolver.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/ruleResolver.ts",
+      "sha256": "b1ac5b39c06eeffc44f031f633c5ed38be1ca96cc98d6b18da98ce006909f698",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/ruleEngine/types.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/ruleEngine/types.ts",
+      "sha256": "80fb1655536461b94fa3c8a9f5f8a1314cb74e7b8a109ed0127d05339dccd058",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/rulePayloadInterpreter.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/rulePayloadInterpreter.test.ts",
+      "sha256": "5309c2d52d64d305e72b082d5368b99e25bb14b02ebd2593cc1f69d05e997f4b",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/rulePayloadInterpreter.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/rulePayloadInterpreter.ts",
+      "sha256": "df5481cd554bb8c2e492f50343694fc6945a50a3ef1087b46ba1dcf8eae6dceb",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/types.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/types.test.ts",
+      "sha256": "5b3cf6ba76b0b97ade245e7d51dfd4eaed9f1899abefd175d4f93a5e97d53cb1",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/types.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/types.ts",
+      "sha256": "83d965caa8f7fffbe0aed06255ea4da2637c5c6abbf0c74535090aa1b5d0b71a",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/validationRegistry.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/validationRegistry.test.ts",
+      "sha256": "7496bfdb8677857c5b84bdc2cf48d3ab217402db36dcb8f99507e1c9ab063e4e",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/validationRegistry.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/validationRegistry.ts",
+      "sha256": "ee2c94265330096d31f6a719a07d4fd4200817b4bbbd3f3b48f23eb4e12d745e",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/validationRunner.test.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/validationRunner.test.ts",
+      "sha256": "592c0faa1c093bd9568e2c2cf068ffdd3558843b24cc9d0d50c9484033261277",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/payrollValidationEngine/validationRunner.ts",
+      "destination": "vendor/driver-utility/src/lib/payrollValidationEngine/validationRunner.ts",
+      "sha256": "40d7b2f12f0663dbde6016615c33cd3153e1dc49108147fa539cb4fded9732bc",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/pdfGenerator.test.ts",
+      "destination": "vendor/driver-utility/src/lib/pdfGenerator.test.ts",
+      "sha256": "8d4ae63b5c3df7f3c44277cbed0868941f90ab7f756ad2c8d9c5a1656f654073",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/lib/pdfGenerator.ts",
+      "destination": "vendor/driver-utility/src/lib/pdfGenerator.ts",
+      "sha256": "962e229cda713d19155019034fac1bc8fd9a8dbefa46c773167d8c0e0e787a01",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/lib/utils.ts",
+      "destination": "vendor/driver-utility/src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/pages/Attendance.test.tsx",
+      "destination": "vendor/driver-utility/src/pages/Attendance.test.tsx",
+      "sha256": "063f243d24cb85eaf5b40c10f9f726e876106acf3ca1fb5f182c53f872bdb2a1",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/pages/Attendance.tsx",
+      "destination": "vendor/driver-utility/src/pages/Attendance.tsx",
+      "sha256": "cebd504389c3dfba77ab2a1f75d117afed58a88ca8678aed178513258caeb6b3",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/pages/DriverPayroll.test.tsx",
+      "destination": "vendor/driver-utility/src/pages/DriverPayroll.test.tsx",
+      "sha256": "0125958aa6c58dda65c130ab8b3932c3e7f0fbf5f52c2bb405cdb78239ace115",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/pages/DriverPayroll.tsx",
+      "destination": "vendor/driver-utility/src/pages/DriverPayroll.tsx",
+      "sha256": "f77fa0ed1bcc0e814f1e8e03f1e0f1fbc1f90b4cde8e0888eb1e14ff0a62fe9a",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/pages/DriverWorkPage.test.tsx",
+      "destination": "vendor/driver-utility/src/pages/DriverWorkPage.test.tsx",
+      "sha256": "0ddc290e2403ce1f2eae310eeae44b9013d904bd800ac3058267527f9c280a30",
+      "kind": "original-test"
+    },
+    {
+      "source": "src/pages/DriverWorkPage.tsx",
+      "destination": "vendor/driver-utility/src/pages/DriverWorkPage.tsx",
+      "sha256": "c58d5a9056295b7a1bb0869d4b7249bc272d8c8d11bb50aaae21850ffd37e026",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/pages/Settings.tsx",
+      "destination": "vendor/driver-utility/reference/src/pages/Settings.tsx",
+      "sha256": "54f6b3c2f3ed85257fff3d0cb50d0b0a601ce8014b0861609d777b6fd290227d",
+      "kind": "original-source"
+    },
+    {
+      "source": "src/test/setup.ts",
+      "destination": "vendor/driver-utility/src/test/setup.ts",
+      "sha256": "7fb65ef092291d0278639dc0567ebfd960f097fef0c869d43d0b9b4485449bfc",
+      "kind": "original-source"
+    },
+    {
+      "source": "tailwind.config.ts",
+      "destination": "vendor/driver-utility/reference/tailwind.config.ts",
+      "sha256": "2a42b85979a3ad51a5b900459b675eaef4f7a21573eef9c052e333afdaf08d53",
+      "kind": "original-source"
+    },
+    {
+      "source": "vitest.config.ts",
+      "destination": "vendor/driver-utility/reference/vitest.config.ts",
+      "sha256": "2c64550d05cdec49d120f28afd53056372945035b13d54cbd16f8027329f2a84",
+      "kind": "original-source"
+    }
+  ],
+  "runtimeDependencyComparison": [
+    {
+      "name": "react",
+      "original": "18.3.1",
+      "dto": "19.2.8"
+    },
+    {
+      "name": "react-dom",
+      "original": "18.3.1",
+      "dto": "19.2.8"
+    },
+    {
+      "name": "react-router-dom",
+      "original": "6.30.1",
+      "dto": "7.18.2"
+    },
+    {
+      "name": "pdfjs-dist",
+      "original": "6.1.200",
+      "dto": "6.1.200",
+      "dtoPackageAlias": "driver-payroll-pdfjs",
+      "scope": "Driver Utility imports only; existing DTO pdfjs-dist remains unchanged"
+    },
+    {
+      "name": "jspdf",
+      "original": "4.2.1",
+      "dto": "4.2.1"
+    },
+    {
+      "name": "lucide-react",
+      "original": "0.462.0",
+      "dto": "0.462.0"
+    },
+    {
+      "name": "sonner",
+      "original": "1.7.4",
+      "dto": "1.7.4"
+    },
+    {
+      "name": "class-variance-authority",
+      "original": "0.7.1",
+      "dto": "0.7.1"
+    },
+    {
+      "name": "clsx",
+      "original": "2.1.1",
+      "dto": "2.1.1"
+    },
+    {
+      "name": "tailwind-merge",
+      "original": "2.6.0",
+      "dto": "2.6.0"
+    },
+    {
+      "name": "@radix-ui/react-slot",
+      "original": "1.2.3",
+      "dto": "1.2.3"
+    },
+    {
+      "name": "@radix-ui/react-alert-dialog",
+      "original": "1.1.14",
+      "dto": "1.1.14"
+    },
+    {
+      "name": "@radix-ui/react-label",
+      "original": "2.1.7",
+      "dto": "2.1.7"
+    },
+    {
+      "name": "@radix-ui/react-tabs",
+      "original": "1.1.12",
+      "dto": "1.1.12"
+    },
+    {
+      "name": "vitest",
+      "original": "3.2.4",
+      "dto": "3.2.4"
+    },
+    {
+      "name": "jsdom",
+      "original": "20.0.3",
+      "dto": "20.0.3"
+    },
+    {
+      "name": "@testing-library/jest-dom",
+      "original": "6.9.1",
+      "dto": "6.9.1"
+    },
+    {
+      "name": "tailwindcss",
+      "original": "3.4.17",
+      "dto": "3.4.17"
+    },
+    {
+      "name": "tailwindcss-animate",
+      "original": "1.0.7",
+      "dto": "1.0.7"
+    }
+  ]
+}
