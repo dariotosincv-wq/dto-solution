@@ -207,7 +207,7 @@ function DriverUtilityPrivacyPage() {
           <section id="conservazione-dei-dati">
             <h2>Conservazione dei dati</h2>
             <p>I dati rimangono sul dispositivo fino alla loro eliminazione da parte dell'utente o secondo le impostazioni di conservazione previste da alcune funzionalità dell'app.</p>
-            <p>Nel caso delle funzioni cloud, i dati rimangono archiviati fino alla loro eliminazione.</p>
+            <p>Nel caso delle funzioni cloud, i dati rimangono archiviati fino alla loro eliminazione. I dati personali eventualmente archiviati nei servizi cloud di DTO Solution possono essere eliminati su richiesta dell'utente.</p>
           </section>
 
           <section id="sicurezza">
@@ -222,6 +222,7 @@ function DriverUtilityPrivacyPage() {
             <ul>
               <li>Eliminare i dati salvati localmente</li>
               <li>Interrompere l'utilizzo delle funzioni cloud</li>
+              <li>Richiedere la cancellazione dei dati personali eventualmente archiviati nei servizi cloud di DTO Solution scrivendo a <PrivacyEmail />.</li>
               <li>Revocare il collegamento con Google Drive</li>
               <li>Richiedere informazioni scrivendo a:</li>
             </ul>
