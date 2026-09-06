@@ -125,7 +125,7 @@ test('confirmed and repaired damage can be removed from the operational view whi
   assert.match(map, /\["PENDING", "CONFIRMED"\]\.includes\(d\.status\)/)
 })
 
-test('compact vehicle list uses category priority and natural code ordering', async () => {
+test('category helpers retain natural ordering and vehicle table retains detail links', async () => {
   const vehicles = [
     { silhouette_category: 'SMALL', internal_code: 'S1' },
     { silhouette_category: 'LARGE', internal_code: 'L10' },
@@ -141,21 +141,25 @@ test('compact vehicle list uses category priority and natural code ordering', as
   assert.deepEqual(groups.map((group) => group.category), VEHICLE_CATEGORIES)
   assert.deepEqual(groups[0].items.map((item) => item.internal_code), ['L1', 'L2', 'L10'])
   assert.equal(groups.flatMap((group) => group.items).length, vehicles.length)
-  assert.match(page, /className="vehicle-categories"/)
-  assert.match(page, /className="vehicle-category"/)
-  assert.match(page, /className="vehicle-list"/)
-  assert.match(page, /className="vehicle-row"/)
+  assert.match(page, /className="vehicles-table"/)
+  assert.match(page, /scope="row"/)
   assert.match(page, /to=\{COMPANY_ROUTES\.vehicle\((?:v|vehicle)\.vehicle_id\)\}/)
   assert.match(page, /<strong>\{(?:v|vehicle)\.internal_code\}<\/strong>/)
-  assert.match(page, /vehicle-row__plate">\{(?:v|vehicle)\.plate\}/)
+  assert.match(page, /vehicles-plate">\{(?:v|vehicle)\.plate\}/)
   assert.doesNotMatch(page, /\{v\.silhouette_category\} · \{v\.status\}/)
 })
 
-test('vehicle category layout has four desktop columns, two tablet columns and one mobile column', async () => {
-  const css = await readFile(new URL('../company/src/styles.css', import.meta.url), 'utf8')
-  assert.match(css, /\.vehicle-categories\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/)
-  assert.match(css, /@media\(max-width:70rem\)\{\.vehicle-categories\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/)
-  assert.match(css, /@media\(max-width:48rem\)\{\.vehicle-categories\{grid-template-columns:1fr\}/)
+test('vehicle catalog provides table headings, mobile labels and scoped card layout', async () => {
+  const page = await readFile(new URL('../company/src/pages/VehiclesPage.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../company/src/pages/vehicles.css', import.meta.url), 'utf8')
+  for (const label of ['Codice mezzo', 'Targa', 'Categoria', 'Stato', 'Azioni']) {
+    assert.ok(page.includes(`scope="col">${label}</th>`))
+  }
+  assert.match(page, /data-label="Categoria"/)
+  assert.match(page, /data-label="Targa"/)
+  assert.match(css, /@media\(max-width:700px\)/)
+  assert.match(css, /\.vehicles-table tr \{ display: grid;/)
+  assert.match(css, /\.company-shell:has\(\.vehicles-page\) \.company-sidebar/)
 })
 
 test('REMOVED migration is incremental, append-only and distinct from REPAIRED', async () => {
