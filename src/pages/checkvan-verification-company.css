@@ -1,0 +1,45 @@
+.company-shell:has(.verification-company) .company-sidebar { min-width: 0; }
+.company-page.company-tool:has(.verification-company) { width: 100%; padding: 0; }
+.company-tool:has(.verification-company) > header { display: none; }
+.verification-company { background: linear-gradient(145deg,#f8fcff,#edf7ff 45%,#fff); padding: 2rem 1.5rem!important; color: #0d2449; }
+.verification-company .checkvan-verification-layout { width: 100%; max-width: 90rem; padding: 0; display: grid; gap: 1.5rem; }
+.verification-company .verify-hero { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); align-items: center; gap: 1rem; }
+.verification-company .verify-hero h1 { font-size: clamp(2.8rem,5vw,4.7rem); letter-spacing: -.055em; line-height: 1.1; margin: .8rem 0; }
+.verification-company .verify-hero h1 span { color: #1260ff; }
+.verification-company .verify-hero h2 { font-size: clamp(1.1rem,1.6vw,1.5rem); margin: 1rem 0 .6rem; line-height: 1.4; }
+.verification-company .verify-hero p { color: #5a7193; line-height: 1.65; }
+.verification-company .verify-hero .eyebrow { color: #1663ff; font-weight: 800; }
+.verify-benefits { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.6rem; }
+.verify-benefits span { display: flex; align-items: center; gap: .5rem; flex: 1 1 8rem; font-size: .8rem; }
+.verify-benefits svg { flex-shrink: 0; width: 32px; height: 32px; color: #1260ff; }
+.verify-art { min-height: 340px; position: relative; border-radius: 45%; background: radial-gradient(ellipse,#acd5ff,transparent 70%); }
+.verify-paper { position: absolute; left: 15%; top: 30px; width: 160px; height: 225px; padding: 1.3rem; border: 2px solid white; border-radius: .65rem; background: linear-gradient(145deg,#fff,#dceeff); box-shadow: 0 14px 25px #1d6bbc20; transform: rotate(-14deg); color: #0952c9; font-weight: 800; font-size: 1.2rem; }
+.verify-paper i { display: block; height: 6px; margin-top: 16px; background: #bad8fc; }
+.verify-paper.back { left: 42%; top: 65px; transform: rotate(11deg); }
+.verify-paper > svg { width: 90px; height: 90px; position: absolute; bottom: 20px; right: -20px; fill: #1763ff; color: white; filter: drop-shadow(0 6px 10px #1663ff30); }
+.verify-lens { position: absolute; right: 5%; bottom: 32px; width: 100px; height: 100px; color: #0755e0; filter: drop-shadow(0 5px 5px #125acc30); }
+.verification-company .verify-art > p { position: absolute; bottom: 0; left: 4%; margin: 0; font-size: .95rem; font-style: italic; color: #164ba4; }
+.verification-company .checkvan-verification-form { padding: 1.4rem; background: white; border: 1px solid #e0edfa; border-radius: 1rem; box-shadow: 0 8px 28px #4078b509; }
+.verification-company .checkvan-file-field { display: grid; gap: .8rem; }
+.verification-company .checkvan-file-field label { font-size: 1.2rem; color: #0d2449; font-weight: 800; }
+.verification-company .checkvan-file-field small { display: block; color: #5a7193; margin-top: .4rem; }
+.verify-upload-intro { display: grid; justify-items: center; gap: .6rem; background: #f4faff; border: 1px dashed #b9d2f3; border-bottom: 0; border-radius: .7rem .7rem 0 0; padding: 1.4rem 1rem .6rem; margin-bottom: -.8rem; }
+.verify-upload-intro svg { color: #1675ff; }
+.verify-upload-intro span { color: #647a9a; font-size: .85rem; }
+.verification-company #checkvan-pdf { width: 100%; min-width: 0; border: 1px dashed #b9d2f3; border-top: 0; border-radius: 0 0 .7rem .7rem; background: #f4faff; padding: 1rem; font-size: .85rem; }
+.verification-company #checkvan-pdf::file-selector-button { border: 0; border-radius: .5rem; background: #1663ff; color: white; padding: .8rem 1rem; margin-right: .7rem; font: inherit; cursor: pointer; }
+.verification-company .checkvan-form-actions { display: flex; justify-content: center; background: #f6f9fc; padding: 1rem; border-radius: .6rem; margin-top: 1rem; }
+.verify-how { margin-top: 1rem; font-size: .85rem; color: #526c91; }
+.verify-how summary { cursor: pointer; color: #1260df; min-height: 44px; padding: .7rem; }
+.verify-info { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; }
+.verify-info article { display: flex; gap: .8rem; align-items: flex-start; padding: 1.2rem; border: 1px solid #dcecf9; border-radius: .85rem; background: #f5fcfa; }
+.verify-info article:nth-child(2) { background: #f5faff; }.verify-info article:nth-child(3) { background: #faf7ff; }
+.verify-info article > svg { width: 36px; height: 36px; flex-shrink: 0; color: #148f79; }.verify-info article:nth-child(2)>svg{color:#1675ff}.verify-info article:nth-child(3)>svg{color:#9755dc}
+.verification-company :is(.verify-info,.verify-privacy,.verify-help) h2 { font-size: 1rem; margin: 0 0 .5rem; }
+.verification-company :is(.verify-info,.verify-privacy,.verify-help) p { font-size: .85rem; color: #617493; line-height: 1.6; margin: 0; }
+.verify-privacy { display: flex; align-items: center; flex-wrap: wrap; gap: 1.2rem; padding: 1.4rem; border: 1px solid #ddf0f2; border-radius: 1rem; background: linear-gradient(110deg,#effcfa,#fff); }
+.verify-privacy > svg { width: 48px; height: 48px; color: #0ba6a7; flex-shrink: 0; }.verify-privacy > div{flex:2 1 20rem}.verify-privacy > span{display:grid;justify-items:center;gap:.5rem;flex:1 1 7rem;font-size:.75rem;text-align:center;color:#4e698b}
+.verify-help { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; padding: 1rem 0; }.verify-help > div{flex:1 1 18rem}.verify-help a{display:inline-flex;align-items:center;gap:.5rem;border:1px solid #1675ff;border-radius:.5rem;padding:.8rem;color:#1260ff;background:white;text-decoration:none;font-size:.85rem}.verify-help a:last-child{background:#1663ff;color:white}
+.verification-company :is(button,a,input,summary):focus-visible { outline: 3px solid #1663ff; outline-offset: 3px; }
+@media(max-width:1050px){.verification-company .verify-hero{grid-template-columns:minmax(0,1fr)}.verify-art{max-width:440px;width:100%;justify-self:center}.verify-info{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:500px){.verification-company{padding:1.4rem .75rem!important}.verification-company .checkvan-verification-form{padding:1rem}.verify-art{min-height:300px}.verify-paper{width:135px;height:205px;left:8%}.verify-paper.back{left:40%}.verify-lens{width:80px;height:80px;right:1%}.verify-benefits{flex-direction:column}.verify-benefits span{flex-basis:auto}.verification-company .checkvan-form-actions .button{width:100%}.verify-help a{flex:1 1 100%;justify-content:center}.verification-company .checkvan-summary{flex-wrap:wrap}}
