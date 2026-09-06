@@ -38,7 +38,7 @@ function translateElement(root) {
   if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return
 
   if (root.nodeType === Node.ELEMENT_NODE) {
-    if (root.tagName === 'A' && !root.closest('[data-i18n-ignore]')) {
+    if (root.tagName === 'A' && !root.closest('[data-i18n-ignore], .language-switcher')) {
       const href = root.getAttribute('href')
       if (href?.startsWith('https://dtosolution.it') || href?.startsWith('https://www.dtosolution.it')) {
         const parsed = new URL(href)
@@ -69,7 +69,7 @@ function translateElement(root) {
 
   if (root.querySelectorAll) {
     root.querySelectorAll('a[href]').forEach((anchor) => {
-      if (anchor.closest('[data-i18n-ignore]')) return
+      if (anchor.closest('[data-i18n-ignore], .language-switcher')) return
       const href = anchor.getAttribute('href')
       if (href?.startsWith('https://dtosolution.it') || href?.startsWith('https://www.dtosolution.it')) {
         const parsed = new URL(href)
