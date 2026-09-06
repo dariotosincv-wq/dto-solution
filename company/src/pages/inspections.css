@@ -1,0 +1,54 @@
+.company-page.inspections-page { width: calc(100% - 3rem); max-width: 90rem; padding: 1.8rem 0 3rem; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.55fr); gap: 1.2rem; align-items: center; color: #102243; }
+.company-shell:has(.inspections-page) .company-sidebar { min-width: 0; }
+.company-page.inspections-page > header { margin: 0; }
+.company-page.inspections-page h1 { font-size: clamp(2rem,3.2vw,3rem); letter-spacing: -.045em; line-height: 1.15; margin: .4rem 0 .7rem; }
+.inspections-page > header > p:last-child { color: #617493; font-size: .9rem; line-height: 1.6; }
+.inspections-banner { position: relative; overflow: hidden; display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; min-height: 175px; padding: 1.3rem; border-radius: .9rem; background: radial-gradient(ellipse at 80% 100%,#a7d7ff,transparent 70%),linear-gradient(115deg,#e7f1ff,#cce6ff); }
+.inspections-banner strong { position: relative; z-index: 1; display: block; font-size: clamp(1.1rem,1.6vw,1.45rem); line-height: 1.35; letter-spacing: -.035em; }
+.inspections-banner p { position: relative; z-index: 1; color: #506f97; font-size: .85rem; line-height: 1.6; margin: .6rem 0 0; }
+.inspections-art { position: relative; min-width: 0; height: 130px; }
+.inspections-art img { position: absolute; width: 200%; max-width: none; height: 180px; object-fit: contain; left: -55%; top: -8px; mix-blend-mode: multiply; }
+.inspections-art > span { position: absolute; right: 0; top: 0; display: grid; place-items: center; width: 54px; height: 60px; color: white; border-radius: 14px 14px 22px 22px; background: linear-gradient(130deg,#2394ff,#164ed5); box-shadow: 0 6px 16px #1261c92a; }
+.inspections-kpis { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .8rem; }
+.inspections-kpis article { display: flex; align-items: center; gap: 1rem; padding: 1.2rem; background: white; border: 1px solid #eaf0f7; border-radius: .8rem; box-shadow: 0 3px 16px #24487904; }
+.inspections-kpis article > span { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: #e9f2ff; color: #1663ff; }
+.inspections-kpis article:nth-child(2) > span { background: #e8f6ef; color: #159267; }
+.inspections-kpis article:nth-child(3) > span { background: #fff0ed; color: #c34738; }
+.inspections-kpis h2 { margin: 0 0 .35rem; font-size: .75rem; color: #4c6081; }
+.inspections-kpis strong { display: block; font-size: 1.8rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.inspections-kpis small { display: block; color: #667d9c; font-size: .75rem; margin-top: .3rem; }
+.inspections-catalog { padding: 1.2rem; background: white; border: 1px solid #e8eff7; border-radius: .9rem; box-shadow: 0 3px 16px #24487904; }
+.inspections-catalog > header { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.2rem; margin-bottom: 1rem; }
+.inspections-catalog h2 { margin: 0 auto 0 0; font-size: 1.15rem; }
+.inspections-catalog > header > span,.inspections-catalog > header label { font-size: .75rem; color: #647a9a; }
+.inspections-catalog > header label { display: flex; align-items: center; gap: .6rem; }
+.inspections-catalog > header select { width: auto; }
+.inspections-empty { padding: 1.5rem .5rem; margin: 0; color: #647a9a; text-align: center; }
+.inspections-page :is(a,button,input,select):focus-visible { outline: 3px solid #1763cf; outline-offset: 3px; }
+.inspections-page button:disabled { opacity: .5; cursor: wait; }
+.inspections-page > :is(.inspections-filter-bar,.inspections-kpis,.inspections-catalog,.notice) { grid-column: 1 / -1; min-width: 0; }
+.inspections-page .inspections-filter-bar { grid-template-columns: repeat(4,minmax(0,1fr)) auto auto; margin: 0; padding: 1rem; border-color: #e6edf6; gap: .65rem; }
+.inspections-page .inspections-filter-bar label { min-width: 0; font-size: .75rem; color: #506685; }
+.inspections-filter-bar input,.inspections-filter-bar select { width: 100%; min-width: 0; min-height: 46px; background: white; }
+.inspections-page .inspections-filter-bar button,.inspections-compare button,.inspections-download button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 46px; border: 1px solid #1663ff; border-radius: .5rem; padding: .65rem .8rem; background: #1663ff; color: white; font: inherit; font-size: .8rem; cursor: pointer; }
+.inspections-page .inspections-filter-bar .inspections-clear { background: white; color: #175ed3; border-color: #dbe4f0; }
+.inspections-catalog select { max-width: 100%; min-width: 0; min-height: 44px; padding: .6rem; border: 1px solid #dbe4f0; border-radius: .5rem; color: #172b49; background: white; font: inherit; }
+.inspections-compare { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin: .8rem 0 1rem; }
+.inspections-compare > span { font-size: .75rem; color: #647a9a; }
+.inspections-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .8rem; }
+.inspections-table th,.inspections-table td { text-align: left; padding: .55rem .65rem; border-bottom: 1px solid #e9eff6; overflow-wrap: anywhere; }
+.inspections-table thead th { padding-block: .9rem; background: #f2f5fa; color: #5b6f90; text-transform: uppercase; font-size: .7rem; }
+.inspections-table thead th:first-child { width: 52px; }
+.inspections-table thead th:last-child { width: 150px; }
+.inspections-table tbody tr:hover { background: #f8fbff; }
+.inspections-table td small { display: block; margin-top: .3rem; color: #647a9a; }
+.inspections-selection label { display: flex; align-items: center; justify-content: center; min-height: 44px; cursor: pointer; }
+.inspections-selection input { width: 18px; height: 18px; accent-color: #1663ff; }
+.inspections-selection span { display: none; }
+.inspections-type { display: inline-block; border-radius: 1rem; padding: .3rem .65rem; color: #175ed3; background: #eaf2ff; font-size: .75rem; }
+.inspections-type[data-type="return"] { color: #12845b; background: #e8f7ef; }
+.inspections-empty small { display: block; margin-top: .5rem; }
+@media(max-width:1250px) { .inspections-page .inspections-filter-bar { grid-template-columns: repeat(4,minmax(0,1fr)); } .inspections-filter-bar button { grid-column: span 2; } }
+@media(max-width:1000px) { .company-page.inspections-page { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:700px) { .company-page.inspections-page { width: calc(100% - 1.5rem); padding-top: 1.3rem; gap: 1rem; } .inspections-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); } .inspections-kpis article:first-child { grid-column: 1 / -1; } .inspections-kpis article { padding: .8rem; gap: .6rem; } .inspections-kpis article > span { width: 32px; height: 32px; } .inspections-catalog { padding: .8rem; } .inspections-catalog > header { align-items: flex-start; flex-direction: column; } .inspections-table,.inspections-table tbody { display: block; } .inspections-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .inspections-table tr { display: grid; border: 1px solid #e4ecf7; border-radius: .7rem; padding: .6rem; margin-top: .8rem; } .inspections-table th,.inspections-table td { display: block; border: 0; padding: .45rem; } .inspections-table tbody th { font-size: .95rem; } .inspections-table td[data-label] { display: flex; justify-content: space-between; align-items: center; gap: .7rem; } .inspections-table td[data-label]::before { content: attr(data-label); font-size: .75rem; color: #647a9a; } .inspections-selection label { justify-content: flex-start; gap: .5rem; } .inspections-selection span { display: inline; } .inspections-download button,.inspections-compare button { width: 100%; } }
+@media(max-width:450px) { .inspections-page .inspections-filter-bar { grid-template-columns: minmax(0,1fr); } .inspections-filter-bar button { grid-column: auto; } .inspections-banner { grid-template-columns: minmax(0,1fr); padding: 1.2rem; } .inspections-art { height: 115px; } .inspections-art img { width: 155%; left: -33%; height: 150px; top: -8px; } .inspections-art > span { top: 10px; } }
