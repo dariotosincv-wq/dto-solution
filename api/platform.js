@@ -243,7 +243,11 @@ async function operationalAccess(request, response, clients) {
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
     const { data: active, error: activeError } = await clients.checkvan.from('checkvan_driver_access_tokens').select('id,created_at,last_used_at,status').eq('organization_id', context.organization.id).eq('driver_id', driverId).eq('status', 'active').maybeSingle()
     if (activeError) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
-    if (active) return sendJson(response, 200, { status: 'existing', token: active })
+    if (active && request.body?.action !== 'REGENERATE') return sendJson(response, 200, { status: 'existing', token: active })
+    if (active) {
+      const { error: revokeError } = await clients.checkvan.from('checkvan_driver_access_tokens').update({ status: 'revoked', revoked_at: new Date().toISOString() }).eq('id', active.id).eq('status', 'active')
+      if (revokeError) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
+    }
     const secret = newSecret()
     const { error } = await clients.checkvan.from('checkvan_driver_access_tokens').insert({ organization_id: context.organization.id, driver_id: driverId, token_hash: hashSecret(secret), created_by: user.id })
     if (error) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
