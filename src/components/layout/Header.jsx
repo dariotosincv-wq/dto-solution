@@ -12,9 +12,10 @@ const navigation = [
 ]
 
 const areas = [
-  { label: 'Area Driver', to: '/area-driver' },
-  { label: 'Area Aziende', to: '/azienda/login' },
-  { label: 'Area Enti', to: '/enti/login' },
+  { label: 'Area Driver', to: '/area-driver', group: 'free' },
+  { label: 'Area Operativa', to: '/area-operativa', group: 'reserved', description: 'Turni, mezzi, rotte e assegnazioni della tua azienda' },
+  { label: 'Area Aziende', to: '/azienda/login', group: 'reserved' },
+  { label: 'Area Enti', to: '/enti/login', group: 'reserved' },
 ]
 
 function Header() {
@@ -67,16 +68,7 @@ function Header() {
               Driver Utility Web <ChevronDown size={18} aria-hidden="true" />
             </button>
           <div id="utility-navigation" className="navigation__areas" role="group" aria-label="Aree DTO Solution" hidden={!areAreasOpen}>
-            {areas.map((area) => (
-              <NavLink
-                key={area.to}
-                to={area.to}
-                onClick={closeMenu}
-                className={({ isActive }) => `navigation__area-cta${isActive ? ' navigation__area-cta--active' : ''}`}
-              >
-                {area.label}
-              </NavLink>
-            ))}
+            {areas.map((area, index) => <div key={area.to}>{(index === 0 || area.group !== areas[index - 1].group) && <span className="navigation__areas-label">{area.group === 'free' ? 'Area gratuita' : 'Accessi riservati'}</span>}<NavLink to={area.to} onClick={closeMenu} className={({ isActive }) => `navigation__area-cta${isActive ? ' navigation__area-cta--active' : ''}`}>{area.label}{area.description && <small>{area.description}</small>}</NavLink></div>)}
           </div>
           </div>
           <NavLink to="/nacscan" onClick={closeMenu} className={({ isActive }) => `navigation__area-cta${isActive ? ' navigation__area-cta--active' : ''}`}>NACScan Web</NavLink>

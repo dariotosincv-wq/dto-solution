@@ -2,18 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { canManageVehicles } from '../access.js'
-import { createCompanyDriver, importCompanyDrivers, loadCompanyDrivers, updateCompanyDriver } from '../lib/companySupabase.js'
+import { createCompanyDriver, createDriverOperationalQr, importCompanyDrivers, loadCompanyDrivers, updateCompanyDriver } from '../lib/companySupabase.js'
 import { importableDriverRows, parseDriverCsv } from '../lib/driverCsv.js'
 import { COMPANY_ROUTES } from '../routes.js'
 
-import { Users, UserCheck, Archive, Plus, Upload, ShieldCheck } from 'lucide-react'
+import { Users, UserCheck, Archive, Plus, Upload, ShieldCheck, QrCode } from 'lucide-react'
 import './drivers.css'
 
 const alphabet = new Intl.Collator('it', { sensitivity: 'base', numeric: true })
 const empty = { driver_code: '', first_name: '', last_name: '' }
 export default function DriversPage() {
   const { access, session } = useAuth()
-  const [items, setItems] = useState([]), [form, setForm] = useState(empty), [error, setError] = useState(''), [preview, setPreview] = useState(null), [busy, setBusy] = useState(false)
+  const [items, setItems] = useState([]), [form, setForm] = useState(empty), [error, setError] = useState(''), [preview, setPreview] = useState(null), [busy, setBusy] = useState(false), [qr, setQr] = useState(null)
   const [sort, setSort] = useState('surname-asc'), [search, setSearch] = useState(''), [status, setStatus] = useState('all')
   const fileRef = useRef(null)
   const refresh = useCallback(() => loadCompanyDrivers(session.access_token).then((value) => setItems(value.items)).catch(() => setError('Anagrafica driver non disponibile.')), [session.access_token])
@@ -31,6 +31,8 @@ export default function DriversPage() {
       setItems(current => current.map(item => item.driver_id === driver.driver_id ? updated : item))
     } catch { setError('Aggiornamento del profilo non riuscito.') } finally { setBusy(false) }
   }
+  const generateQr = async (driver) => { if (busy) return; setBusy(true); setError(''); try { const result = await createDriverOperationalQr(session.access_token, driver.driver_id); const QRCode = (await import('qrcode')).default; setQr({ driver, path: result.access_path, image: await QRCode.toDataURL(`${window.location.origin}${result.access_path}`, { width: 360, margin: 2 }) }) } catch { setError('Generazione QR non riuscita.') } finally { setBusy(false) } }
+  const shareQr = () => { const message = `Accesso personale DTO Solution. Usa questo link/QR per accedere alla tua Area Operativa: ${window.location.origin}${qr.path}`; window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer') }
   const query = search.trim().toLocaleLowerCase('it')
   const displayed = items.filter(driver => (status === 'all' || driver.status === status) && (!query || [driver.last_name, driver.first_name, driver.driver_code, `${driver.last_name} ${driver.first_name}`].some(value => (value ?? '').toLocaleLowerCase('it').includes(query)))).sort((a, b) => {
     const primary = sort === 'name-asc' ? 'first_name' : 'last_name'
@@ -58,9 +60,9 @@ export default function DriversPage() {
       <header><h2 id="drivers-title">Elenco driver</h2><span>{displayed.length} di {items.length} driver</span><label>Ordina per<select value={sort} onChange={event => setSort(event.target.value)}><option value="surname-asc">Cognome A–Z</option><option value="surname-desc">Cognome Z–A</option><option value="name-asc">Nome A–Z</option></select></label></header>
       <div className="drivers-filters"><label>Cerca driver<input type="search" placeholder="Cognome, nome o codice" value={search} onChange={event => setSearch(event.target.value)}/></label><label>Stato<select value={status} onChange={event => setStatus(event.target.value)}><option value="all">Tutti</option><option value="active">Attivi</option><option value="archived">Archiviati</option></select></label></div>
       <table className="drivers-table"><caption className="visually-hidden">Driver della tua organizzazione</caption><thead><tr><th scope="col">Cognome</th><th scope="col">Nome</th><th scope="col">Codice</th><th scope="col">Stato</th><th scope="col">Giornate settimanali previste</th><th scope="col">Azioni</th></tr></thead><tbody>
-        {displayed.map(driver => <tr key={driver.driver_id}><th scope="row">{driver.last_name}<span className="drivers-mobile-name"> {driver.first_name}</span></th><td className="drivers-first-name">{driver.first_name}</td><td data-label="Codice">{driver.driver_code || 'Senza codice'}</td><td data-label="Stato"><span className="drivers-badge" data-status={driver.status}>{driver.status === 'active' ? 'Attivo' : driver.status === 'archived' ? 'Archiviato' : driver.status}</span></td><td data-label="Giornate settimanali previste"><select aria-label={`Giornate settimanali previste di ${driver.last_name} ${driver.first_name}`} value={driver.expected_weekly_days ?? ''} disabled={busy} onChange={event => void setProfile(driver, event.target.value)}><option value="">Da impostare</option>{[3,4,5,0,1,2,6,7].map(days => <option key={days} value={days}>{days} giorni</option>)}</select></td><td className="drivers-actions">{driver.status === 'active' && <button type="button" aria-label={`Archivia ${driver.last_name} ${driver.first_name}`} onClick={() => void archive(driver)}><Archive size={16} aria-hidden="true"/>Archivia</button>}</td></tr>)}
+        {displayed.map(driver => <tr key={driver.driver_id}><th scope="row">{driver.last_name}<span className="drivers-mobile-name"> {driver.first_name}</span></th><td className="drivers-first-name">{driver.first_name}</td><td data-label="Codice">{driver.driver_code || 'Senza codice'}</td><td data-label="Stato"><span className="drivers-badge" data-status={driver.status}>{driver.status === 'active' ? 'Attivo' : driver.status === 'archived' ? 'Archiviato' : driver.status}</span></td><td data-label="Giornate settimanali previste"><select aria-label={`Giornate settimanali previste di ${driver.last_name} ${driver.first_name}`} value={driver.expected_weekly_days ?? ''} disabled={busy} onChange={event => void setProfile(driver, event.target.value)}><option value="">Da impostare</option>{[3,4,5,0,1,2,6,7].map(days => <option key={days} value={days}>{days} giorni</option>)}</select></td><td className="drivers-actions">{driver.status === 'active' && <><button type="button" onClick={() => void generateQr(driver)}><QrCode size={16} aria-hidden="true"/>Genera QR</button><button type="button" aria-label={`Archivia ${driver.last_name} ${driver.first_name}`} onClick={() => void archive(driver)}><Archive size={16} aria-hidden="true"/>Archivia</button></>}</td></tr>)}
       </tbody></table>
       {!displayed.length && <p className="drivers-empty">{items.length ? 'Nessun driver corrisponde alla ricerca.' : 'Nessun driver in anagrafica.'}</p>}
-    </section>
+    </section>{qr && <dialog className="planning-editor" open><div><header><div><h2>QR personale</h2><p>{qr.driver.first_name} {qr.driver.last_name}</p></div><button type="button" onClick={() => setQr(null)}>×</button></header><img src={qr.image} alt="QR per accesso personale Area Operativa" width="280" height="280"/><p>Rigenerando il QR, quello precedente viene revocato.</p><div className="button-group"><button type="button" onClick={shareQr}>Condividi su WhatsApp</button><a className="button button--secondary" href={qr.image} download="dto-area-operativa-qr.png">Scarica QR</a></div></div></dialog>}
   </div>
 }

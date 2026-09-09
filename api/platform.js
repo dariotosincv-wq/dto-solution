@@ -4,6 +4,7 @@ import { damageInput, damagePhotoInput, publicDamage, publicVehicle, requireComp
 import { handleDeviceVehicleDamages } from './_lib/deviceVehicleDamages.js'
 import { assignmentInput, driverBatchInput, driverInput, publicAssignment, publicDriver } from './_lib/companyDrivers.js'
 import { planningWeek, readPlanning, mutatePlanning } from './_lib/companyPlanning.js'
+import { driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } from './_lib/operationalAccess.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
 
@@ -227,6 +228,37 @@ async function companyAssignments(request, response, clients) {
   }
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
+const operationalCookie = value => `${sessionCookie}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`
+const operationalUuid = value => /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value ?? '')
+async function operationalAccess(request, response, clients) {
+  const action = request.query?.action
+  if (action === 'manage') {
+    const user = await authenticateRequest(request, clients), context = await resolveCompanyContext(user.id, clients)
+    if (context.membership.role !== 'COMPANY_ADMIN') return sendJson(response, 403, { error: 'COMPANY_ADMIN_REQUIRED' })
+    const driverId = request.method === 'GET' ? request.query?.driver_id : request.body?.driver_id
+    if (!operationalUuid(driverId)) return sendJson(response, 400, { error: 'INVALID_DRIVER_ID' })
+    const { data: driver } = await clients.checkvan.from('checkvan_drivers').select('id').eq('id', driverId).eq('organization_id', context.organization.id).eq('status', 'active').maybeSingle()
+    if (!driver) return sendJson(response, 404, { error: 'DRIVER_NOT_FOUND' })
+    if (request.method === 'GET') { const { data } = await clients.checkvan.from('checkvan_driver_access_tokens').select('id,created_at,last_used_at,status').eq('organization_id', context.organization.id).eq('driver_id', driverId).eq('status', 'active').maybeSingle(); return sendJson(response, 200, { token: data ?? null }) }
+    if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+    const secret = newSecret(), now = new Date().toISOString()
+    await clients.checkvan.from('checkvan_driver_access_tokens').update({ status: 'revoked', revoked_at: now }).eq('organization_id', context.organization.id).eq('driver_id', driverId).eq('status', 'active')
+    const { error } = await clients.checkvan.from('checkvan_driver_access_tokens').insert({ organization_id: context.organization.id, driver_id: driverId, token_hash: hashSecret(secret), created_by: user.id })
+    if (error) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
+    return sendJson(response, 201, { access_path: `/area-operativa/access/${secret}` })
+  }
+  if (action === 'exchange') {
+    if (request.method !== 'POST' || typeof request.body?.token !== 'string' || request.body.token.length < 32) return sendJson(response, 400, { error: 'INVALID_ACCESS_TOKEN' })
+    const { data } = await clients.checkvan.from('checkvan_driver_access_tokens').select('id,organization_id,driver_id').eq('token_hash', hashSecret(request.body.token)).eq('status', 'active').maybeSingle()
+    if (!data) return sendJson(response, 401, { error: 'INVALID_ACCESS_TOKEN' })
+    const secret = newSecret(), expires = new Date(Date.now() + 28800000).toISOString()
+    const { error } = await clients.checkvan.from('checkvan_driver_access_sessions').insert({ organization_id: data.organization_id, driver_id: data.driver_id, session_hash: hashSecret(secret), expires_at: expires })
+    if (error) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
+    response.setHeader('Set-Cookie', operationalCookie(secret)); return sendJson(response, 200, { ok: true })
+  }
+  if (request.method !== 'GET') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+  return sendJson(response, 200, await driverWeek(clients, await operationalSession(request, clients), planningWeek(request.query?.week_start)))
+}
 
 async function companyPlanning(request, response, clients) {
   const { user, context } = await companyContext(request, clients)
@@ -310,6 +342,7 @@ export default async function handler(request, response) {
     if (resource === 'company-drivers') return await companyDrivers(request, response, clients)
     if (resource === 'company-assignments') return await companyAssignments(request, response, clients)
     if (resource === 'company-planning') return await companyPlanning(request, response, clients)
+    if (resource === 'operational-access') return await operationalAccess(request, response, clients)
     if (resource === 'device-driver-assignments') return await deviceDriverAssignments(request, response, clients)
     return sendJson(response, 404, { error: 'NOT_FOUND' })
   } catch (error) { return sendError(response, error) }

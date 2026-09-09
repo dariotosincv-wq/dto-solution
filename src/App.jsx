@@ -6,6 +6,7 @@ import ApplicationsPage from './pages/ApplicationsPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
 import CcnlLogisticaPage from './pages/CcnlLogisticaPage.jsx'
 import DriverAreaPage from './pages/DriverAreaPage.jsx'
+import OperationalAreaPage, { OperationalAccessPage } from './pages/OperationalAreaPage.jsx'
 import DriverBackupPage from './pages/DriverBackupPage.jsx'
 import DriverLegislationPage from './pages/DriverLegislationPage.jsx'
 import AccordoAssoespressiPage from './pages/AccordoAssoespressiPage.jsx'
@@ -47,6 +48,8 @@ function App() {
           <Route path="applicazioni/driver-utility" element={<DriverUtilityPage />} />
           <Route path="applicazioni/driver-utility/privacy" element={<DriverUtilityPrivacyPage />} />
           <Route path="area-driver" element={<DriverAreaPage />} />
+          <Route path="area-operativa" element={<OperationalAreaPage />} />
+          <Route path="area-operativa/access/:token" element={<OperationalAccessPage />} />
           <Route path="area-driver/backup" element={<DriverBackupPage />} />
           <Route path="area-driver/normativa" element={<DriverLegislationPage />} />
           <Route path="area-driver/turni" element={<Suspense fallback={<p role="status">Caricamento…</p>}><DriverToolsPage tool="turni" /></Suspense>} />
