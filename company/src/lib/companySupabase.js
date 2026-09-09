@@ -60,3 +60,5 @@ export const importCompanyDrivers = (token, drivers) => authorizedRequest('/api/
 export const loadCompanyAssignments = (token, date) => authorizedRequest(`/api/company-assignments?date=${encodeURIComponent(date)}`, token)
 export const saveCompanyAssignment = (token, value) => authorizedRequest('/api/company-assignments', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const copyPreviousAssignments = (token, date) => saveCompanyAssignment(token, { action: 'COPY_PREVIOUS', assignment_date: date })
+export const loadCompanyPlanning = (token, start, signal) => authorizedRequest(`/api/platform?resource=company-planning&week_start=${encodeURIComponent(start)}`, token, { signal })
+export const saveCompanyPlanning = (token, value) => authorizedRequest('/api/platform?resource=company-planning', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })

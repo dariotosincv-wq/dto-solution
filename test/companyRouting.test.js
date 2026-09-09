@@ -13,7 +13,7 @@ test('all company URLs live below /azienda', () => {
     '/azienda/pdf/verifica',
     '/azienda/pdf/confronta',
     '/azienda/dispositivi',
-    '/azienda/veicoli', '/azienda/driver', '/azienda/assegnazioni',
+    '/azienda/veicoli', '/azienda/driver', '/azienda/pianificazione/settimanale', '/azienda/assegnazioni',
     '/azienda/account',
   ])
   assert.equal(COMPANY_ROUTES.vehicle('vehicle-id'), '/azienda/veicoli/vehicle-id')
@@ -76,7 +76,7 @@ test('only company login sits outside ProtectedRoute', async () => {
   const fallback = source.indexOf('<Route path="*"')
   assert.ok(login > -1 && login < guard)
   assert.ok(guard > -1 && guard < fallback)
-  for (const path of ['dashboard', 'checkvan', 'ispezioni', 'veicoli', 'veicoli/:vehicleId', 'pdf/verifica', 'pdf/confronta', 'dispositivi', 'account']) {
+  for (const path of ['dashboard', 'checkvan', 'ispezioni', 'veicoli', 'veicoli/:vehicleId', 'pianificazione/settimanale', 'pdf/verifica', 'pdf/confronta', 'dispositivi', 'account']) {
     const route = source.indexOf(`<Route path="${path}"`, guard)
     assert.ok(route > guard && route < fallback, `${path} must remain protected`)
   }

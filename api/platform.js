@@ -3,6 +3,7 @@ import { authenticateDeviceRequest, resolveDeviceContext } from './_lib/deviceAu
 import { damageInput, damagePhotoInput, publicDamage, publicVehicle, requireCompanyAdmin, uuid, vehicleBatchInput, vehicleInput } from './_lib/companyVehicles.js'
 import { handleDeviceVehicleDamages } from './_lib/deviceVehicleDamages.js'
 import { assignmentInput, driverBatchInput, driverInput, publicAssignment, publicDriver } from './_lib/companyDrivers.js'
+import { planningWeek, readPlanning, mutatePlanning } from './_lib/companyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
 
@@ -179,6 +180,13 @@ async function companyDrivers(request, response, clients) {
   }
   if (request.method === 'PATCH') {
     if (!uuid(request.body?.driver_id)) return sendJson(response, 400, { error: 'INVALID_DRIVER_ID' })
+    if (request.body.action === 'PROFILE') {
+      const days = request.body.expected_weekly_days
+      if (days !== null && (!Number.isInteger(days) || days < 0 || days > 7)) return sendJson(response, 400, { error: 'INVALID_DRIVER_PROFILE' })
+      const { data, error } = await clients.checkvan.rpc('internal_admin_set_driver_profile', { p_auth_subject: user.id, p_organization_id: context.organization.id, p_driver_id: request.body.driver_id, p_days: days })
+      if (error) throw Object.assign(new Error('DRIVER_PROFILE_SAVE_FAILED'), { status: 400 })
+      return sendJson(response, 200, publicDriver(data))
+    }
     const values = request.body.action === 'ARCHIVE' ? { status: 'archived', archived_at: new Date().toISOString(), updated_at: new Date().toISOString() } : { ...driverInput(request.body), status: 'active', archived_at: null, updated_at: new Date().toISOString() }
     const { data, error } = await clients.checkvan.from('checkvan_drivers').update(values).eq('id', request.body.driver_id).eq('organization_id', context.organization.id).select('*').maybeSingle()
     if (error) throw new Error('DRIVERS_UNAVAILABLE')
@@ -192,17 +200,18 @@ async function companyAssignments(request, response, clients) {
   const date = request.method === 'GET' ? request.query?.date : request.body?.assignment_date
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return sendJson(response, 400, { error: 'INVALID_ASSIGNMENT_DATE' })
   if (request.method === 'GET') {
-    const [assignments, drivers, vehicles] = await Promise.all([
-      clients.checkvan.from('checkvan_daily_assignments').select('*').eq('organization_id', context.organization.id).eq('assignment_date', date),
+    const [planning, drivers, vehicles] = await Promise.all([
+      readPlanning(clients.checkvan, context.organization.id, date, date),
       clients.checkvan.from('checkvan_drivers').select('*').eq('organization_id', context.organization.id).eq('status', 'active').order('last_name'),
       clients.checkvan.from('checkvan_vehicles').select('*').eq('organization_id', context.organization.id).eq('status', 'active').order('internal_code'),
     ])
-    if ([assignments, drivers, vehicles].some((value) => value.error)) throw new Error('ASSIGNMENTS_UNAVAILABLE')
-    return sendJson(response, 200, { date, assignments: assignments.data.map(publicAssignment), drivers: drivers.data.map(publicDriver), vehicles: vehicles.data.map(publicVehicle) })
+    if ([drivers, vehicles].some((value) => value.error)) throw new Error('ASSIGNMENTS_UNAVAILABLE')
+    const assignments = planning.effective.filter(item => item.work_status === 'TURNO').map(item => ({ ...publicAssignment(item), work_status: item.work_status, route: item.route, notes: item.notes, source: item.source }))
+    return sendJson(response, 200, { date, assignments, operational: planning.effective, drivers: drivers.data.map(publicDriver), vehicles: vehicles.data.map(publicVehicle) })
   }
   if (request.method === 'POST') {
     if (request.body?.action === 'COPY_PREVIOUS') {
-      const { data, error } = await clients.checkvan.rpc('internal_admin_copy_checkvan_assignments', { p_auth_subject: user.id, p_organization_id: context.organization.id, p_date: date })
+      const { data, error } = await clients.checkvan.rpc('internal_admin_copy_operational_assignments', { p_auth_subject: user.id, p_organization_id: context.organization.id, p_date: date })
       if (error) throw Object.assign(new Error(error.message), { status: 400 })
       return sendJson(response, 200, data)
     }
@@ -212,10 +221,27 @@ async function companyAssignments(request, response, clients) {
       clients.checkvan.from('checkvan_vehicles').select('id').eq('id', input.vehicle_id).eq('organization_id', context.organization.id).eq('status', 'active').maybeSingle(),
     ])
     if (!driver.data || !vehicle.data) return sendJson(response, 409, { error: 'ASSIGNMENT_TARGET_UNAVAILABLE' })
-    const { data, error } = await clients.checkvan.rpc('internal_admin_set_checkvan_assignment', { p_auth_subject: user.id, p_organization_id: context.organization.id, p_date: date, p_driver_id: input.driver_id, p_vehicle_id: input.vehicle_id })
+    const { data, error } = await clients.checkvan.rpc('internal_admin_set_operational_vehicle', { p_auth_subject: user.id, p_organization_id: context.organization.id, p_date: date, p_driver_id: input.driver_id, p_vehicle_id: input.vehicle_id })
     if (error) throw Object.assign(new Error('ASSIGNMENT_CONFLICT'), { status: 409 })
     return sendJson(response, 200, publicAssignment(data))
   }
+  return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+}
+
+async function companyPlanning(request, response, clients) {
+  const { user, context } = await companyContext(request, clients)
+  if (request.method === 'GET') {
+    const start = planningWeek(request.query?.week_start)
+    const [planning, drivers, vehicles] = await Promise.all([
+      readPlanning(clients.checkvan, context.organization.id, start),
+      clients.checkvan.from('checkvan_drivers').select('*').eq('organization_id', context.organization.id).order('last_name').order('first_name'),
+      clients.checkvan.from('checkvan_vehicles').select('*').eq('organization_id', context.organization.id).order('internal_code'),
+    ])
+    if (drivers.error || vehicles.error) throw new Error('PLANNING_UNAVAILABLE')
+    const referenced = new Set([...planning.entries, ...planning.effective].map(item => item.driver_id))
+    return sendJson(response, 200, { ...planning, drivers: drivers.data.filter(row => row.status === 'active' || referenced.has(row.id)).map(publicDriver), vehicles: vehicles.data.map(publicVehicle) })
+  }
+  if (request.method === 'POST') return sendJson(response, 200, await mutatePlanning(clients.checkvan, context.organization.id, user.id, request.body))
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
 
@@ -283,6 +309,7 @@ export default async function handler(request, response) {
     if (resource === 'company-vehicle-reports') return await companyVehicleReports(request,response,clients)
     if (resource === 'company-drivers') return await companyDrivers(request, response, clients)
     if (resource === 'company-assignments') return await companyAssignments(request, response, clients)
+    if (resource === 'company-planning') return await companyPlanning(request, response, clients)
     if (resource === 'device-driver-assignments') return await deviceDriverAssignments(request, response, clients)
     return sendJson(response, 404, { error: 'NOT_FOUND' })
   } catch (error) { return sendError(response, error) }
