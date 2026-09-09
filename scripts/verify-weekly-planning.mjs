@@ -12,7 +12,7 @@ try {
   const vehicles = drivers.map((_, index) => ({ vehicle_id: `v${index}`, internal_code: `VAN ${String(index + 1).padStart(3, '0')}`, plate: `TEST${index}`, status: 'active' }))
   const weeks = new Map(), requests = [], errors = []
   let fail = false, stale = false, role = 'COMPANY_ADMIN'
-  const initial = start => ({ week_start: start, revision: 0, drivers, vehicles, entries: drivers.flatMap((driver, index) => weekDays(start).map((assignment_date, day) => ({ driver_id: driver.driver_id, assignment_date, work_status: day >= 5 ? 'RIPOSO' : index === 1 && day === 2 ? 'FERIE' : 'TURNO', vehicle_id: day >= 5 ? null : `v${index}`, route: day >= 5 ? null : '33', notes: null }))), requirements: weekDays(start).map(assignment_date => ({ assignment_date, required_drivers: 100 })), overrides: [], daily: [] })
+  const initial = start => ({ week_start: start, revision: 0, drivers, vehicles, entries: drivers.flatMap((driver, index) => weekDays(start).map((assignment_date, day) => ({ driver_id: driver.driver_id, assignment_date, work_status: day >= 5 ? 'RIPOSO' : index === 1 && day === 2 ? 'FERIE' : 'TURNO', vehicle_id: day >= 5 || (index === 2 && day >= 1) ? null : `v${index}`, route: day >= 5 ? null : '33', notes: null }))), requirements: weekDays(start).map(assignment_date => ({ assignment_date, required_drivers: 100 })), overrides: [], daily: [] })
   const get = start => { if (!weeks.has(start)) weeks.set(start, initial(start)); const value = weeks.get(start); return { ...value, effective: resolveEffective(value.entries, value.overrides, value.daily) } }
   await context.route('**/company/src/auth/AuthContext.jsx*', route => route.fulfill({ contentType: 'text/javascript', body: `const auth={session:{access_token:'isolated-planning-test'},access:{organization:{id:'local',name:'Impresa test'},role:'${role}',state:'active_license',capabilities:{useTools:true,viewInspections:true,manageDevices:true}},signOut(){}};export function AuthProvider({children}){return children}export function useAuth(){return auth}` }))
   await context.route('**/api/**', async route => {
@@ -34,13 +34,19 @@ try {
     if (stale || value.revision !== body.revision) return route.fulfill({ status: 409, json: { error: 'PLANNING_STALE' } })
     const next = { ...weeks.get(start), revision: value.revision + 1 }
     const item = { ...body }, key = entryKey(body.driver_id, body.assignment_date)
-    let copied = 0
-    if (['SAVE', 'CLEAR'].includes(body.action)) next.entries = [...value.entries.filter(entry => entryKey(entry.driver_id, entry.assignment_date) !== key), ...(body.action === 'SAVE' ? [item] : [])]
+    let copied = 0, propagated = []
+    if (['SAVE', 'CLEAR'].includes(body.action)) {
+      next.entries = [...value.entries.filter(entry => entryKey(entry.driver_id, entry.assignment_date) !== key), ...(body.action === 'SAVE' ? [item] : [])]
+      if (body.action === 'SAVE' && item.work_status === 'TURNO' && item.vehicle_id) next.entries = next.entries.map(entry => {
+        if (entry.driver_id !== item.driver_id || entry.assignment_date <= item.assignment_date || entry.work_status !== 'TURNO' || entry.vehicle_id) return entry
+        const updated = { ...entry, vehicle_id: item.vehicle_id }; propagated.push(updated); return updated
+      })
+    }
     if (['OVERRIDE', 'RESET_OVERRIDE'].includes(body.action)) next.overrides = [...value.overrides.filter(entry => entryKey(entry.driver_id, entry.assignment_date) !== key), ...(body.action === 'OVERRIDE' ? [item] : [])]
     if (body.action === 'REQUIREMENT') next.requirements = [...value.requirements.filter(entry => entry.assignment_date !== body.assignment_date), item]
     if (body.action === 'COPY_PREVIOUS') { const copy = copyPreviousWeek(get(shiftDay(start, -7)).entries, value.entries, start); next.entries = [...value.entries, ...copy]; copied = copy.length }
     weeks.set(start, next)
-    return route.fulfill({ json: { revision: next.revision, item: ['CLEAR', 'RESET_OVERRIDE'].includes(body.action) ? null : item, copied, copied_requirements: 0 } })
+    return route.fulfill({ json: { revision: next.revision, item: ['CLEAR', 'RESET_OVERRIDE'].includes(body.action) ? null : item, propagated, copied, copied_requirements: 0 } })
   })
   const page = await context.newPage()
   page.on('pageerror', error => { errors.push(error.message); console.error(error.message) })
@@ -73,6 +79,15 @@ try {
   await page.getByRole('button', { name: 'Pagina successiva', exact: true }).click()
   await expect(page.locator('.planning-grid tbody th').first()).toHaveText('Driver 011 Test')
   await page.getByRole('button', { name: 'Pagina precedente', exact: true }).click()
+  const propagate = date => page.getByRole('button', { name: new RegExp(`^Driver 003 Test, ${date},`) })
+  await propagate('2026-09-07').click()
+  await page.getByLabel('Mezzo previsto (facoltativo)').selectOption('v2')
+  await page.getByRole('button', { name: 'Salva', exact: true }).click()
+  await expect(propagate('2026-09-08')).toContainText('VAN 003')
+  await propagate('2026-09-09').click()
+  await page.getByLabel('Mezzo previsto (facoltativo)').selectOption('v6')
+  await page.getByRole('button', { name: 'Salva', exact: true }).click()
+  await expect(propagate('2026-09-10')).toContainText('VAN 003')
   const cell = () => page.getByRole('button', { name: /^Driver 001 Test, 2026-09-07,/ })
   const getCount = () => requests.filter(request => request.method === 'GET' && request.path === '/api/platform').length
   const reads = getCount()
@@ -119,6 +134,7 @@ try {
   const profile = page.getByLabel('Giornate settimanali previste di Driver 001 Test', { exact: true })
   await profile.selectOption('5'); await expect(profile).toHaveValue('5')
   await page.goto(base + path)
+  await expect(page.getByRole('columnheader', { name: 'Azioni', exact: true })).toHaveCount(0)
   await expect(page.locator('.planning-profile').first()).toHaveText('5 giorni')
   fail = true; await page.reload()
   await expect(page.getByRole('alert')).toContainText('Pianificazione non disponibile')

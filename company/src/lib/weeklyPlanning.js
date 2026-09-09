@@ -63,6 +63,10 @@ export function copyPreviousWeek(source, target, start) {
   const occupied = new Set(target.map(entry => entryKey(entry.driver_id, entry.assignment_date)))
   return source.filter(entry => entry.assignment_date >= shiftDay(start, -7) && entry.assignment_date < start).map(entry => ({ ...entry, assignment_date: shiftDay(entry.assignment_date, 7) })).filter(entry => !occupied.has(entryKey(entry.driver_id, entry.assignment_date)))
 }
+export function propagatePlannedVehicle(entries, source) {
+  if (source.work_status !== 'TURNO' || !source.vehicle_id) return []
+  return entries.filter(entry => entry.driver_id === source.driver_id && entry.assignment_date > source.assignment_date && entry.work_status === 'TURNO' && !entry.vehicle_id).map(entry => ({ ...entry, vehicle_id: source.vehicle_id }))
+}
 export function resolveRoute(current, lastKnown) {
   return current?.trim() ? { route: current.trim(), needs_confirmation: false } : { route: lastKnown?.trim() || null, needs_confirmation: true }
 }

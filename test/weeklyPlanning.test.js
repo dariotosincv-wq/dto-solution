@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { sortDrivers, driverSummary, dailySummary, filterDrivers, findConflicts, resolveEffective, copyPreviousWeek, weekStart, weekDays, shiftDay, validDate, entryKey, resolveRoute } from '../company/src/lib/weeklyPlanning.js'
+import { sortDrivers, driverSummary, dailySummary, filterDrivers, findConflicts, resolveEffective, copyPreviousWeek, propagatePlannedVehicle, weekStart, weekDays, shiftDay, validDate, entryKey, resolveRoute } from '../company/src/lib/weeklyPlanning.js'
 import { planningInput, planningWeek, mutatePlanning, readPlanning } from '../api/_lib/companyPlanning.js'
 
 const start = '2026-09-07'
@@ -47,6 +47,24 @@ test('copy previous week shifts all seven dates and fills only empty cells, idem
   assert.equal(copyPreviousWeek(source, [...target, ...copy], start).length, 0)
   assert.equal(source[0].assignment_date, '2026-08-31')
   assert.deepEqual(copyPreviousWeek([], target, start), [])
+})
+test('a planned vehicle fills only later empty shifts for the same driver', () => {
+  const entries = [
+    entry('a', '2026-09-07', 'v1'),
+    entry('a', '2026-09-08', null),
+    entry('a', '2026-09-09', 'v2'),
+    entry('a', '2026-09-10', null, 'FERIE'),
+    entry('a', '2026-09-11', null, 'PERMESSO'),
+    entry('a', '2026-09-12', null, 'MALATTIA'),
+    entry('a', '2026-09-13', null, 'RIPOSO'),
+    entry('b', '2026-09-08', null),
+  ]
+  const propagated = propagatePlannedVehicle(entries, entries[0])
+  assert.deepEqual(propagated.map(item => [item.assignment_date, item.vehicle_id]), [['2026-09-08', 'v1']])
+  assert.equal(entries[1].vehicle_id, null)
+  assert.equal(entries[2].vehicle_id, 'v2')
+  assert.equal(propagatePlannedVehicle(entries, { ...entries[0], vehicle_id: null }).length, 0)
+  assert.equal(propagatePlannedVehicle(entries, { ...entries[0], work_status: 'FERIE' }).length, 0)
 })
 test('operational day is immediately prepared from the plan; overrides preserve original', () => {
   const planned = [{ ...entry(), route: '33', notes: 'Piano' }]
