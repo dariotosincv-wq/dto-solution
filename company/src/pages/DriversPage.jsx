@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext.jsx'
 import { canManageVehicles } from '../access.js'
 import { createCompanyDriver, createDriverOperationalQr, importCompanyDrivers, loadCompanyDrivers, loadDriverOperationalQr, updateCompanyDriver } from '../lib/companySupabase.js'
 import { importableDriverRows, parseDriverCsv } from '../lib/driverCsv.js'
+import { DRIVER_QR_SHARE_TEXT, canShareDriverQrFile, driverQrLink, driverQrPngFile } from '../lib/driverQrShare.js'
 import { COMPANY_ROUTES } from '../routes.js'
 
 import { Users, UserCheck, Archive, Plus, Upload, ShieldCheck, QrCode } from 'lucide-react'
@@ -13,15 +14,28 @@ const alphabet = new Intl.Collator('it', { sensitivity: 'base', numeric: true })
 const empty = { driver_code: '', first_name: '', last_name: '' }
 const operationalOrigin = 'https://www.dtosolution.it'
 
-function DriverQrDialog({ qr, onClose, onShare }) {
+function DriverQrDialog({ qr, onClose }) {
   const dialog = useRef(null)
+  const [notice, setNotice] = useState('')
+  const link = driverQrLink(qr.path)
   useEffect(() => {
     const node = dialog.current
     node?.showModal()
     return () => { if (node?.open) node.close() }
   }, [])
+  const shareQr = async () => {
+    try {
+      const file = await driverQrPngFile(qr.image)
+      if (!canShareDriverQrFile(file)) { setNotice('La condivisione dell’immagine non è supportata qui. Usa Scarica QR, Condividi link o Copia link.'); return }
+      await navigator.share({ title: 'QR personale DTO Solution', text: DRIVER_QR_SHARE_TEXT, url: link, files: [file] })
+    } catch (reason) {
+      if (reason?.name !== 'AbortError') setNotice('Impossibile condividere l’immagine. Puoi scaricare il QR o condividere il link.')
+    }
+  }
+  const shareLink = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${DRIVER_QR_SHARE_TEXT}\n${link}`)}`, '_blank', 'noopener,noreferrer')
+  const copyLink = async () => { try { await navigator.clipboard.writeText(link); setNotice('Link copiato.') } catch { setNotice('Copia link non disponibile in questo browser.') } }
   return <dialog ref={dialog} className="planning-editor" aria-labelledby="driver-qr-title" onCancel={event => { event.preventDefault(); onClose() }}>
-    <div><header><div><h2 id="driver-qr-title">QR personale</h2><p>{qr.driver.first_name} {qr.driver.last_name}</p></div><button type="button" aria-label="Chiudi QR" onClick={onClose}>×</button></header><img src={qr.image} alt="QR per accesso personale Area Operativa" width="280" height="280"/><p>Rigenerando il QR, quello precedente viene revocato.</p><div className="button-group"><button type="button" onClick={onShare}>Condividi su WhatsApp</button><a className="button button--secondary" href={qr.image} download="dto-area-operativa-qr.png">Scarica QR</a></div></div>
+    <div><header><div><h2 id="driver-qr-title">QR personale</h2><p>{qr.driver.first_name} {qr.driver.last_name}</p></div><button type="button" aria-label="Chiudi QR" onClick={onClose}>×</button></header><img src={qr.image} alt="QR per accesso personale Area Operativa" width="280" height="280"/><p>Rigenerando il QR, quello precedente viene revocato.</p>{notice && <p role="status">{notice}</p>}<div className="button-group"><button type="button" onClick={() => void shareQr()}>Condividi QR</button><a className="button button--secondary" href={qr.image} download="dto-solution-qr-driver.png">Scarica QR</a><button type="button" onClick={shareLink}>Condividi link</button><button type="button" onClick={() => void copyLink()}>Copia link</button></div></div>
   </dialog>
 }
 
@@ -46,7 +60,6 @@ export default function DriversPage() {
     } catch { setError('Aggiornamento del profilo non riuscito.') } finally { setBusy(false) }
   }
   const generateQr = async (driver, regenerate = false) => { if (busy) return; if (qr?.driver.driver_id === driver.driver_id && !regenerate) { setError(''); return setQr({ ...qr }) }; if (regenerate && !window.confirm('Rigenerare il QR? Il QR precedente verrà revocato e non funzionerà più.')) return; setBusy(true); setError(''); try { const result = await createDriverOperationalQr(session.access_token, driver.driver_id, regenerate ? 'REGENERATE' : undefined); if (result.status === 'existing') { setActiveQrIds(current => new Set(current).add(driver.driver_id)); setError('QR attivo: per sicurezza il QR esistente non può essere visualizzato nuovamente. Usa Rigenera QR solo se necessario.'); return } if (!result.access_path) throw new Error('QR_ACCESS_UNAVAILABLE'); const QRCode = (await import('qrcode')).default; const image = await QRCode.toDataURL(`${operationalOrigin}${result.access_path}`, { width: 360, margin: 2 }); setQr({ driver, path: result.access_path, image }); setActiveQrIds(current => new Set(current).add(driver.driver_id)) } catch (reason) { console.error('Driver QR generation failed', reason); setError('Generazione QR non riuscita. Riprova o verifica la sessione aziendale.') } finally { setBusy(false) } }
-  const shareQr = () => { const message = `Accesso personale DTO Solution. Usa questo link/QR per accedere alla tua Area Operativa: ${operationalOrigin}${qr.path}`; window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer') }
   const query = search.trim().toLocaleLowerCase('it')
   const displayed = items.filter(driver => (status === 'all' || driver.status === status) && (!query || [driver.last_name, driver.first_name, driver.driver_code, `${driver.last_name} ${driver.first_name}`].some(value => (value ?? '').toLocaleLowerCase('it').includes(query)))).sort((a, b) => {
     const primary = sort === 'name-asc' ? 'first_name' : 'last_name'
@@ -77,6 +90,6 @@ export default function DriversPage() {
         {displayed.map(driver => <tr key={driver.driver_id}><th scope="row">{driver.last_name}<span className="drivers-mobile-name"> {driver.first_name}</span></th><td className="drivers-first-name">{driver.first_name}</td><td data-label="Codice">{driver.driver_code || 'Senza codice'}</td><td data-label="Stato"><span className="drivers-badge" data-status={driver.status}>{driver.status === 'active' ? 'Attivo' : driver.status === 'archived' ? 'Archiviato' : driver.status}</span></td><td data-label="Giornate settimanali previste"><select aria-label={`Giornate settimanali previste di ${driver.last_name} ${driver.first_name}`} value={driver.expected_weekly_days ?? ''} disabled={busy} onChange={event => void setProfile(driver, event.target.value)}><option value="">Da impostare</option>{[3,4,5,0,1,2,6,7].map(days => <option key={days} value={days}>{days} giorni</option>)}</select></td><td className="drivers-actions">{driver.status === 'active' && <>{activeQrIds.has(driver.driver_id) ? <><span className="drivers-qr-active">QR attivo</span>{qr?.driver.driver_id === driver.driver_id && <button type="button" onClick={() => void generateQr(driver)}><QrCode size={16} aria-hidden="true"/>Visualizza QR</button>}<button type="button" disabled={busy} onClick={() => void generateQr(driver, true)}><QrCode size={16} aria-hidden="true"/>{busy ? 'Generazione…' : 'Rigenera QR'}</button></> : <button type="button" disabled={busy} onClick={() => void generateQr(driver)}><QrCode size={16} aria-hidden="true"/>{busy ? 'Generazione…' : 'Genera QR'}</button>}<button type="button" aria-label={`Archivia ${driver.last_name} ${driver.first_name}`} onClick={() => void archive(driver)}><Archive size={16} aria-hidden="true"/>Archivia</button></>}</td></tr>)}
       </tbody></table>
       {!displayed.length && <p className="drivers-empty">{items.length ? 'Nessun driver corrisponde alla ricerca.' : 'Nessun driver in anagrafica.'}</p>}
-    </section>{qr && <DriverQrDialog qr={qr} onClose={() => setQr(null)} onShare={shareQr}/>}
+    </section>{qr && <DriverQrDialog qr={qr} onClose={() => setQr(null)}/>}
   </div>
 }
