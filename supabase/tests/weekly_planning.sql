@@ -85,6 +85,15 @@ begin
  assert not exists(select 1 from jsonb_array_elements(result->'propagated') e where e->>'assignment_date' in ('2030-01-09','2030-01-10','2030-01-11')), 'absence and manual vehicle retained';
  snapshot := public.internal_read_weekly_plan(org,'2030-01-07','2030-01-13');
  assert exists(select 1 from jsonb_array_elements(snapshot->'entries') e where e->>'assignment_date'='2030-01-11' and e->>'vehicle_id'='70000000-0000-4000-8000-000000000031'), 'manual later vehicle remains local';
+ -- A TURNO added after the default vehicle inherits it, while manual changes stay local.
+ result := public.internal_admin_mutate_weekly_plan(actor,org,jsonb_build_object('action','SAVE','week_start','2030-01-14','assignment_date','2030-01-14','revision',2,'driver_id',driver,'vehicle_id',vehicle,'work_status','TURNO'));
+ result := public.internal_admin_mutate_weekly_plan(actor,org,jsonb_build_object('action','SAVE','week_start','2030-01-14','assignment_date','2030-01-16','revision',3,'driver_id',driver,'vehicle_id',null,'work_status','TURNO'));
+ assert result->'item'->>'vehicle_id'=vehicle::text, 'new TURNO inherits weekly default vehicle';
+ result := public.internal_admin_mutate_weekly_plan(actor,org,jsonb_build_object('action','SAVE','week_start','2030-01-14','assignment_date','2030-01-17','revision',4,'driver_id',driver,'vehicle_id','70000000-0000-4000-8000-000000000031','work_status','TURNO'));
+ result := public.internal_admin_mutate_weekly_plan(actor,org,jsonb_build_object('action','SAVE','week_start','2030-01-14','assignment_date','2030-01-18','revision',5,'driver_id',driver,'vehicle_id',null,'work_status','TURNO'));
+ assert result->'item'->>'vehicle_id'=vehicle::text, 'manual day does not replace weekly default';
+ snapshot := public.internal_read_weekly_plan(org,'2030-01-14','2030-01-20');
+ assert exists(select 1 from jsonb_array_elements(snapshot->'entries') e where e->>'assignment_date'='2030-01-17' and e->>'vehicle_id'='70000000-0000-4000-8000-000000000031'), 'manual vehicle remains local';
  assert exists(select 1 from public.checkvan_planning_history where organization_id=org and changed_by=actor and operation='UPDATE' and before_value is not null and after_value is not null), 'audit actor old/new values';
  assert not exists(select 1 from public.checkvan_planning_history where organization_id=org and changed_by is null), 'all mutations have an actor';
  assert not has_table_privilege('authenticated','public.checkvan_planned_assignments','SELECT'), 'no direct browser data access';
