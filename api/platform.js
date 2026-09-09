@@ -241,11 +241,13 @@ async function operationalAccess(request, response, clients) {
     if (!driver) return sendJson(response, 404, { error: 'DRIVER_NOT_FOUND' })
     if (request.method === 'GET') { const { data } = await clients.checkvan.from('checkvan_driver_access_tokens').select('id,created_at,last_used_at,status').eq('organization_id', context.organization.id).eq('driver_id', driverId).eq('status', 'active').maybeSingle(); return sendJson(response, 200, { token: data ?? null }) }
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
-    const secret = newSecret(), now = new Date().toISOString()
-    await clients.checkvan.from('checkvan_driver_access_tokens').update({ status: 'revoked', revoked_at: now }).eq('organization_id', context.organization.id).eq('driver_id', driverId).eq('status', 'active')
+    const { data: active, error: activeError } = await clients.checkvan.from('checkvan_driver_access_tokens').select('id,created_at,last_used_at,status').eq('organization_id', context.organization.id).eq('driver_id', driverId).eq('status', 'active').maybeSingle()
+    if (activeError) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
+    if (active) return sendJson(response, 200, { status: 'existing', token: active })
+    const secret = newSecret()
     const { error } = await clients.checkvan.from('checkvan_driver_access_tokens').insert({ organization_id: context.organization.id, driver_id: driverId, token_hash: hashSecret(secret), created_by: user.id })
     if (error) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
-    return sendJson(response, 201, { access_path: `/area-operativa/access/${secret}` })
+    return sendJson(response, 201, { status: 'created', access_path: `/area-operativa/access/${secret}` })
   }
   if (action === 'exchange') {
     if (request.method !== 'POST' || typeof request.body?.token !== 'string' || request.body.token.length < 32) return sendJson(response, 400, { error: 'INVALID_ACCESS_TOKEN' })
