@@ -12,6 +12,19 @@ import './drivers.css'
 const alphabet = new Intl.Collator('it', { sensitivity: 'base', numeric: true })
 const empty = { driver_code: '', first_name: '', last_name: '' }
 const operationalOrigin = 'https://www.dtosolution.it'
+
+function DriverQrDialog({ qr, onClose, onShare }) {
+  const dialog = useRef(null)
+  useEffect(() => {
+    const node = dialog.current
+    node?.showModal()
+    return () => { if (node?.open) node.close() }
+  }, [])
+  return <dialog ref={dialog} className="planning-editor" aria-labelledby="driver-qr-title" onCancel={event => { event.preventDefault(); onClose() }}>
+    <div><header><div><h2 id="driver-qr-title">QR personale</h2><p>{qr.driver.first_name} {qr.driver.last_name}</p></div><button type="button" aria-label="Chiudi QR" onClick={onClose}>×</button></header><img src={qr.image} alt="QR per accesso personale Area Operativa" width="280" height="280"/><p>Rigenerando il QR, quello precedente viene revocato.</p><div className="button-group"><button type="button" onClick={onShare}>Condividi su WhatsApp</button><a className="button button--secondary" href={qr.image} download="dto-area-operativa-qr.png">Scarica QR</a></div></div>
+  </dialog>
+}
+
 export default function DriversPage() {
   const { access, session } = useAuth()
   const [items, setItems] = useState([]), [form, setForm] = useState(empty), [error, setError] = useState(''), [preview, setPreview] = useState(null), [busy, setBusy] = useState(false), [qr, setQr] = useState(null), [activeQrIds, setActiveQrIds] = useState(() => new Set())
@@ -64,6 +77,6 @@ export default function DriversPage() {
         {displayed.map(driver => <tr key={driver.driver_id}><th scope="row">{driver.last_name}<span className="drivers-mobile-name"> {driver.first_name}</span></th><td className="drivers-first-name">{driver.first_name}</td><td data-label="Codice">{driver.driver_code || 'Senza codice'}</td><td data-label="Stato"><span className="drivers-badge" data-status={driver.status}>{driver.status === 'active' ? 'Attivo' : driver.status === 'archived' ? 'Archiviato' : driver.status}</span></td><td data-label="Giornate settimanali previste"><select aria-label={`Giornate settimanali previste di ${driver.last_name} ${driver.first_name}`} value={driver.expected_weekly_days ?? ''} disabled={busy} onChange={event => void setProfile(driver, event.target.value)}><option value="">Da impostare</option>{[3,4,5,0,1,2,6,7].map(days => <option key={days} value={days}>{days} giorni</option>)}</select></td><td className="drivers-actions">{driver.status === 'active' && <>{activeQrIds.has(driver.driver_id) ? <><span className="drivers-qr-active">QR attivo</span>{qr?.driver.driver_id === driver.driver_id && <button type="button" onClick={() => void generateQr(driver)}><QrCode size={16} aria-hidden="true"/>Visualizza QR</button>}<button type="button" disabled={busy} onClick={() => void generateQr(driver, true)}><QrCode size={16} aria-hidden="true"/>{busy ? 'Generazione…' : 'Rigenera QR'}</button></> : <button type="button" disabled={busy} onClick={() => void generateQr(driver)}><QrCode size={16} aria-hidden="true"/>{busy ? 'Generazione…' : 'Genera QR'}</button>}<button type="button" aria-label={`Archivia ${driver.last_name} ${driver.first_name}`} onClick={() => void archive(driver)}><Archive size={16} aria-hidden="true"/>Archivia</button></>}</td></tr>)}
       </tbody></table>
       {!displayed.length && <p className="drivers-empty">{items.length ? 'Nessun driver corrisponde alla ricerca.' : 'Nessun driver in anagrafica.'}</p>}
-    </section>{qr && <dialog className="planning-editor" open><div><header><div><h2>QR personale</h2><p>{qr.driver.first_name} {qr.driver.last_name}</p></div><button type="button" onClick={() => setQr(null)}>×</button></header><img src={qr.image} alt="QR per accesso personale Area Operativa" width="280" height="280"/><p>Rigenerando il QR, quello precedente viene revocato.</p><div className="button-group"><button type="button" onClick={shareQr}>Condividi su WhatsApp</button><a className="button button--secondary" href={qr.image} download="dto-area-operativa-qr.png">Scarica QR</a></div></div></dialog>}
+    </section>{qr && <DriverQrDialog qr={qr} onClose={() => setQr(null)} onShare={shareQr}/>}
   </div>
 }

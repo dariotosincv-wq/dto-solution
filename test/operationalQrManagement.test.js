@@ -13,5 +13,8 @@ test('QR management distinguishes an active QR from explicit regeneration', asyn
   assert.match(page, /Rigenera QR/)
   assert.match(page, /window\.confirm\('Rigenerare il QR/)
   assert.match(page, /https:\/\/www\.dtosolution\.it/)
+  assert.match(page, /function DriverQrDialog/)
+  assert.match(page, /node\?\.showModal\(\)/)
+  assert.match(page, /<DriverQrDialog qr=\{qr\}/)
   assert.doesNotMatch(api, /token_secret|token_ciphertext/)
 })
