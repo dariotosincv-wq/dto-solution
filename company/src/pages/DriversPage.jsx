@@ -11,6 +11,7 @@ import './drivers.css'
 
 const alphabet = new Intl.Collator('it', { sensitivity: 'base', numeric: true })
 const empty = { driver_code: '', first_name: '', last_name: '' }
+const operationalOrigin = 'https://www.dtosolution.it'
 export default function DriversPage() {
   const { access, session } = useAuth()
   const [items, setItems] = useState([]), [form, setForm] = useState(empty), [error, setError] = useState(''), [preview, setPreview] = useState(null), [busy, setBusy] = useState(false), [qr, setQr] = useState(null)
@@ -31,8 +32,8 @@ export default function DriversPage() {
       setItems(current => current.map(item => item.driver_id === driver.driver_id ? updated : item))
     } catch { setError('Aggiornamento del profilo non riuscito.') } finally { setBusy(false) }
   }
-  const generateQr = async (driver) => { if (busy) return; if (qr?.driver.driver_id === driver.driver_id) { setError(''); return setQr({ ...qr }) }; setBusy(true); setError(''); try { const result = await createDriverOperationalQr(session.access_token, driver.driver_id); if (result.status === 'existing' || !result.access_path) throw new Error('QR_ALREADY_ACTIVE'); const QRCode = (await import('qrcode')).default; const image = await QRCode.toDataURL(`${window.location.origin}${result.access_path}`, { width: 360, margin: 2 }); setQr({ driver, path: result.access_path, image }) } catch (reason) { setError(reason.message === 'QR_ALREADY_ACTIVE' ? 'Per questo driver è già attivo un QR personale. Rigeneralo solo quando necessario.' : 'Generazione QR non riuscita. Riprova o verifica la sessione aziendale.') } finally { setBusy(false) } }
-  const shareQr = () => { const message = `Accesso personale DTO Solution. Usa questo link/QR per accedere alla tua Area Operativa: ${window.location.origin}${qr.path}`; window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer') }
+  const generateQr = async (driver) => { if (busy) return; if (qr?.driver.driver_id === driver.driver_id) { setError(''); return setQr({ ...qr }) }; setBusy(true); setError(''); try { const result = await createDriverOperationalQr(session.access_token, driver.driver_id); if (result.status === 'existing' || !result.access_path) throw new Error('QR_ALREADY_ACTIVE'); const QRCode = (await import('qrcode')).default; const image = await QRCode.toDataURL(`${operationalOrigin}${result.access_path}`, { width: 360, margin: 2 }); setQr({ driver, path: result.access_path, image }) } catch (reason) { setError(reason.message === 'QR_ALREADY_ACTIVE' ? 'Per questo driver è già attivo un QR personale. Rigeneralo solo quando necessario.' : 'Generazione QR non riuscita. Riprova o verifica la sessione aziendale.') } finally { setBusy(false) } }
+  const shareQr = () => { const message = `Accesso personale DTO Solution. Usa questo link/QR per accedere alla tua Area Operativa: ${operationalOrigin}${qr.path}`; window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer') }
   const query = search.trim().toLocaleLowerCase('it')
   const displayed = items.filter(driver => (status === 'all' || driver.status === status) && (!query || [driver.last_name, driver.first_name, driver.driver_code, `${driver.last_name} ${driver.first_name}`].some(value => (value ?? '').toLocaleLowerCase('it').includes(query)))).sort((a, b) => {
     const primary = sort === 'name-asc' ? 'first_name' : 'last_name'
