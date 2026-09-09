@@ -91,7 +91,7 @@ begin
  assert result->'item'->>'vehicle_id'=vehicle::text, 'new TURNO inherits weekly default vehicle';
  result := public.internal_admin_mutate_weekly_plan(actor,org,jsonb_build_object('action','SAVE','week_start','2030-01-14','assignment_date','2030-01-17','revision',4,'driver_id',driver,'vehicle_id','70000000-0000-4000-8000-000000000031','work_status','TURNO'));
  result := public.internal_admin_mutate_weekly_plan(actor,org,jsonb_build_object('action','SAVE','week_start','2030-01-14','assignment_date','2030-01-18','revision',5,'driver_id',driver,'vehicle_id',null,'work_status','TURNO'));
- assert result->'item'->>'vehicle_id'=vehicle::text, 'manual day does not replace weekly default';
+ assert result->'item'->>'vehicle_id'='70000000-0000-4000-8000-000000000031', 'latest previous manual vehicle is inherited';
  snapshot := public.internal_read_weekly_plan(org,'2030-01-14','2030-01-20');
  assert exists(select 1 from jsonb_array_elements(snapshot->'entries') e where e->>'assignment_date'='2030-01-17' and e->>'vehicle_id'='70000000-0000-4000-8000-000000000031'), 'manual vehicle remains local';
  assert exists(select 1 from public.checkvan_planning_history where organization_id=org and changed_by=actor and operation='UPDATE' and before_value is not null and after_value is not null), 'audit actor old/new values';

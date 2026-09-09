@@ -18,7 +18,7 @@ test('weekly planning migration and transactions on local Supabase, rolled back'
   const script = ['begin;']
   if (!hadDrivers) script.push(migration('20260824193755_driver_directory_daily_assignments.sql'), migration('20260824195118_atomic_daily_assignments.sql'))
   if (!hadPlanning) script.push(migration('20260908164756_weekly_driver_planning.sql'))
-  script.push(migration('20260909012717_propagate_weekly_planned_vehicle.sql'), migration('20260909084520_inherit_weekly_default_vehicle.sql'))
+  script.push(migration('20260909012717_propagate_weekly_planned_vehicle.sql'), migration('20260909084520_inherit_weekly_default_vehicle.sql'), migration('20260909091018_inherit_latest_previous_vehicle.sql'))
   script.push(readFileSync(new URL('../supabase/tests/weekly_planning.sql', import.meta.url), 'utf8'), 'rollback;')
   const output = sql(script.join('\n'))
   assert.match(output, /PASS: SQL planning/)

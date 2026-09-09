@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext.jsx'
 import { canManageVehicles } from '../access.js'
 import { COMPANY_ROUTES } from '../routes.js'
 import { loadCompanyPlanning, saveCompanyPlanning } from '../lib/companySupabase.js'
-import { WORK_STATUSES, STATUS_LABELS, dailySummary, driverSummary, entryKey, filterDrivers, findConflicts, resolveEffective, shiftDay, validDate, weekDays, weekStart, weeklyDefaultVehicle, weeklyFormVehicle } from '../lib/weeklyPlanning.js'
+import { WORK_STATUSES, STATUS_LABELS, dailySummary, driverSummary, entryKey, filterDrivers, findConflicts, resolveEffective, shiftDay, validDate, weekDays, weekStart, latestPreviousWeeklyVehicle, weeklyFormVehicle } from '../lib/weeklyPlanning.js'
 import './weekly-planning.css'
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
@@ -126,6 +126,6 @@ export default function WeeklyPlanningPage() {
       <footer className="planning-footer"><span>{filtered.length ? `${(currentPage - 1) * 10 + 1}–${Math.min(currentPage * 10, filtered.length)}` : '0'} di {filtered.length} driver</span><nav aria-label="Pagine driver"><button aria-label="Pagina precedente" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={18}/></button><span>{currentPage} / {pageCount}</span><button aria-label="Pagina successiva" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}><ChevronRight size={18}/></button></nav></footer>
       <div className="planning-legend">{WORK_STATUSES.map(status => <span key={status}><i data-status={status}/>{STATUS_LABELS[status]}</span>)}<span>R. = Rotta</span></div><p className="planning-hint">Pianificate = giornate in turno. Assenze e riposi restano distinti. Lo scostamento dal profilo è informativo e non blocca il lavoro.</p>
     </>}
-    {selection && <CellEditor error={error} selection={selection} vehicles={data.vehicles} defaultVehicle={weeklyDefaultVehicle(data.entries, selection.driver.driver_id)} busy={busy} onClose={() => setSelection(null)} onSave={async values => { const saved = await mutate({ ...values, driver_id: selection.driver.driver_id, assignment_date: selection.date }); if (saved) setSelection(null) }}/>}
+    {selection && <CellEditor error={error} selection={selection} vehicles={data.vehicles} defaultVehicle={latestPreviousWeeklyVehicle(data.entries, selection.driver.driver_id, selection.date)} busy={busy} onClose={() => setSelection(null)} onSave={async values => { const saved = await mutate({ ...values, driver_id: selection.driver.driver_id, assignment_date: selection.date }); if (saved) setSelection(null) }}/>}
   </div>
 }
