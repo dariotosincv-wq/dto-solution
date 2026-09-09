@@ -67,6 +67,13 @@ export function propagatePlannedVehicle(entries, source) {
   if (source.work_status !== 'TURNO' || !source.vehicle_id) return []
   return entries.filter(entry => entry.driver_id === source.driver_id && entry.assignment_date > source.assignment_date && entry.work_status === 'TURNO' && !entry.vehicle_id).map(entry => ({ ...entry, vehicle_id: source.vehicle_id }))
 }
+export function weeklyDefaultVehicle(entries, driverId) {
+  return entries.filter(entry => entry.driver_id === driverId && entry.work_status === 'TURNO' && entry.vehicle_id).sort((left, right) => left.assignment_date.localeCompare(right.assignment_date))[0]?.vehicle_id ?? ''
+}
+export function weeklyFormVehicle(workStatus, currentVehicle, defaultVehicle, mode = 'planned') {
+  if (workStatus !== 'TURNO') return ''
+  return currentVehicle || (mode === 'planned' ? defaultVehicle : '')
+}
 export function resolveRoute(current, lastKnown) {
   return current?.trim() ? { route: current.trim(), needs_confirmation: false } : { route: lastKnown?.trim() || null, needs_confirmation: true }
 }

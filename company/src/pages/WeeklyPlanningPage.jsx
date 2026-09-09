@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext.jsx'
 import { canManageVehicles } from '../access.js'
 import { COMPANY_ROUTES } from '../routes.js'
 import { loadCompanyPlanning, saveCompanyPlanning } from '../lib/companySupabase.js'
-import { WORK_STATUSES, STATUS_LABELS, dailySummary, driverSummary, entryKey, filterDrivers, findConflicts, resolveEffective, shiftDay, validDate, weekDays, weekStart } from '../lib/weeklyPlanning.js'
+import { WORK_STATUSES, STATUS_LABELS, dailySummary, driverSummary, entryKey, filterDrivers, findConflicts, resolveEffective, shiftDay, validDate, weekDays, weekStart, weeklyDefaultVehicle, weeklyFormVehicle } from '../lib/weeklyPlanning.js'
 import './weekly-planning.css'
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
@@ -13,14 +13,16 @@ const dateLabel = (date, options) => new Intl.DateTimeFormat('it', { timeZone: '
 const quickFilters = [['all', 'Tutti'], ['incomplete', 'Da completare'], ['under', 'Sotto profilo'], ['equal', 'In linea'], ['over', 'Sopra profilo'], ['absent', 'Assenti'], ['conflicts', 'Con conflitti']]
 const emptyData = { revision: 0, entries: [], requirements: [], overrides: [], daily: [], effective: [], drivers: [], vehicles: [] }
 
-function CellEditor({ selection, vehicles, busy, error, onSave, onClose }) {
+const formFor = (item, defaultVehicle = '') => { const workStatus = item?.work_status ?? 'TURNO'; return { work_status: workStatus, vehicle_id: weeklyFormVehicle(workStatus, item?.vehicle_id ?? '', defaultVehicle), route: item?.route ?? '', notes: item?.notes ?? '' } }
+
+function CellEditor({ selection, vehicles, defaultVehicle, busy, error, onSave, onClose }) {
   const [mode, setMode] = useState('planned')
-  const [form, setForm] = useState(selection.planned ?? { work_status: 'TURNO', vehicle_id: '', route: '', notes: '' })
+  const [form, setForm] = useState(() => formFor(selection.planned, defaultVehicle))
   const dialog = useRef(null)
   useEffect(() => { dialog.current.showModal() }, [])
   const switchMode = (next) => {
     setMode(next)
-    setForm((next === 'planned' ? selection.planned : selection.effective) ?? { work_status: 'TURNO', vehicle_id: '', route: '', notes: '' })
+    setForm(formFor(next === 'planned' ? selection.planned : selection.effective, next === 'planned' ? defaultVehicle : ''))
   }
   return <dialog ref={dialog} className="planning-editor" aria-labelledby="planning-editor-title" onCancel={event => { event.preventDefault(); if (!busy) onClose() }}>
     <form onSubmit={event => { event.preventDefault(); void onSave({ ...form, action: mode === 'planned' ? 'SAVE' : 'OVERRIDE' }) }}>
@@ -29,7 +31,7 @@ function CellEditor({ selection, vehicles, busy, error, onSave, onClose }) {
       <fieldset disabled={busy}>
         <label>Modifica<select aria-label="Modifica" autoFocus value={mode} onChange={event => switchMode(event.target.value)}><option value="planned">Pianificazione</option><option value="effective">Variazione effettiva della giornata</option></select></label>
         <p className="planning-hint">{mode === 'planned' ? 'La giornata operativa usa questo piano finché non inserisci una variazione.' : 'La variazione conserva il piano originale. Puoi ripristinarlo in qualsiasi momento.'}</p>
-        <label>Stato<select aria-label="Stato" value={form.work_status} onChange={event => setForm({ ...form, work_status: event.target.value, ...(event.target.value !== 'TURNO' ? { vehicle_id: '', route: '' } : {}) })}>{WORK_STATUSES.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select></label>
+        <label>Stato<select aria-label="Stato" value={form.work_status} onChange={event => setForm(current => ({ ...current, work_status: event.target.value, vehicle_id: weeklyFormVehicle(event.target.value, current.vehicle_id, defaultVehicle, mode), ...(event.target.value !== 'TURNO' ? { route: '' } : {}) }))}>{WORK_STATUSES.map(status => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}</select></label>
         {form.work_status === 'TURNO' && <><label>Mezzo previsto (facoltativo)<select aria-label="Mezzo previsto (facoltativo)" value={form.vehicle_id ?? ''} onChange={event => setForm({ ...form, vehicle_id: event.target.value })}><option value="">Senza mezzo</option>{vehicles.map(vehicle => <option key={vehicle.vehicle_id} value={vehicle.vehicle_id}>{vehicle.internal_code} · {vehicle.plate}{vehicle.status !== 'active' ? ' · Non disponibile' : ''}</option>)}</select></label><label>Rotta (facoltativa)<input aria-label="Rotta (facoltativa)" maxLength={100} value={form.route ?? ''} onChange={event => setForm({ ...form, route: event.target.value })} placeholder="Es. 33"/></label></>}
         <label>Note operative<textarea aria-label="Note operative" rows={3} maxLength={2000} value={form.notes ?? ''} onChange={event => setForm({ ...form, notes: event.target.value })}/></label>
       </fieldset>
@@ -124,6 +126,6 @@ export default function WeeklyPlanningPage() {
       <footer className="planning-footer"><span>{filtered.length ? `${(currentPage - 1) * 10 + 1}–${Math.min(currentPage * 10, filtered.length)}` : '0'} di {filtered.length} driver</span><nav aria-label="Pagine driver"><button aria-label="Pagina precedente" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={18}/></button><span>{currentPage} / {pageCount}</span><button aria-label="Pagina successiva" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}><ChevronRight size={18}/></button></nav></footer>
       <div className="planning-legend">{WORK_STATUSES.map(status => <span key={status}><i data-status={status}/>{STATUS_LABELS[status]}</span>)}<span>R. = Rotta</span></div><p className="planning-hint">Pianificate = giornate in turno. Assenze e riposi restano distinti. Lo scostamento dal profilo è informativo e non blocca il lavoro.</p>
     </>}
-    {selection && <CellEditor error={error} selection={selection} vehicles={data.vehicles} busy={busy} onClose={() => setSelection(null)} onSave={async values => { const saved = await mutate({ ...values, driver_id: selection.driver.driver_id, assignment_date: selection.date }); if (saved) setSelection(null) }}/>}
+    {selection && <CellEditor error={error} selection={selection} vehicles={data.vehicles} defaultVehicle={weeklyDefaultVehicle(data.entries, selection.driver.driver_id)} busy={busy} onClose={() => setSelection(null)} onSave={async values => { const saved = await mutate({ ...values, driver_id: selection.driver.driver_id, assignment_date: selection.date }); if (saved) setSelection(null) }}/>}
   </div>
 }

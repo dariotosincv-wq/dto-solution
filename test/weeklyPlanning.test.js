@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { sortDrivers, driverSummary, dailySummary, filterDrivers, findConflicts, resolveEffective, copyPreviousWeek, propagatePlannedVehicle, weekStart, weekDays, shiftDay, validDate, entryKey, resolveRoute } from '../company/src/lib/weeklyPlanning.js'
+import { sortDrivers, driverSummary, dailySummary, filterDrivers, findConflicts, resolveEffective, copyPreviousWeek, propagatePlannedVehicle, weekStart, weekDays, shiftDay, validDate, entryKey, resolveRoute, weeklyDefaultVehicle, weeklyFormVehicle } from '../company/src/lib/weeklyPlanning.js'
 import { planningInput, planningWeek, mutatePlanning, readPlanning } from '../api/_lib/companyPlanning.js'
 
 const start = '2026-09-07'
@@ -65,6 +65,16 @@ test('a planned vehicle fills only later empty shifts for the same driver', () =
   assert.equal(entries[2].vehicle_id, 'v2')
   assert.equal(propagatePlannedVehicle(entries, { ...entries[0], vehicle_id: null }).length, 0)
   assert.equal(propagatePlannedVehicle(entries, { ...entries[0], work_status: 'FERIE' }).length, 0)
+})
+test('a new weekly shift form uses the first planned vehicle without replacing manual choices', () => {
+  const entries = [entry('a', '2026-09-07', 'v1'), entry('a', '2026-09-10', 'v2'), entry('b', '2026-09-08', 'v3'), entry('a', '2026-09-09', null, 'FERIE')]
+  assert.equal(weeklyDefaultVehicle(entries, 'a'), 'v1')
+  assert.equal(weeklyDefaultVehicle(entries, 'b'), 'v3')
+  assert.equal(weeklyDefaultVehicle(entries, 'missing'), '')
+  assert.equal(weeklyFormVehicle('TURNO', '', 'v1'), 'v1')
+  assert.equal(weeklyFormVehicle('TURNO', 'v2', 'v1'), 'v2')
+  assert.equal(weeklyFormVehicle('FERIE', 'v1', 'v1'), '')
+  assert.equal(weeklyFormVehicle('TURNO', '', 'v1', 'effective'), '')
 })
 test('operational day is immediately prepared from the plan; overrides preserve original', () => {
   const planned = [{ ...entry(), route: '33', notes: 'Piano' }]
