@@ -30,6 +30,13 @@ export default function InspectionsPage() {
   const selectedItems = items.filter((item) => selected.includes(item.id)); const selectedVehicle = selectedItems[0]?.vehiclePlate || selectedItems[0]?.vehicleDescription || ''
   const sameVehicle = (item) => !selectedVehicle || (item.vehiclePlate || item.vehicleDescription || '') === selectedVehicle
   const toggle = (item) => setSelected((current) => current.includes(item.id) ? current.filter((value) => value !== item.id) : current.length < 2 && sameVehicle(item) ? [...current, item.id] : current)
+  const firstSelected = selected[0] ? items.find((item) => item.id === selected[0]) : null
+  const selectedVehicleKey = firstSelected?.vehiclePlate || firstSelected?.vehicleDescription || ''
+  const compatibleInspection = firstSelected && [...items].filter((item) => {
+    const itemVehicleKey = item.vehiclePlate || item.vehicleDescription || ''
+    const isCompatibleType = firstSelected.inspectionType === 'pickup' ? item.inspectionType === 'return' : item.inspectionType === 'pickup'
+    return itemVehicleKey === selectedVehicleKey && isCompatibleType && (firstSelected.inspectionType === 'pickup' ? new Date(item.inspectedAt) > new Date(firstSelected.inspectedAt) : new Date(item.inspectedAt) < new Date(firstSelected.inspectedAt))
+  }).sort((left, right) => firstSelected.inspectionType === 'pickup' ? new Date(left.inspectedAt) - new Date(right.inspectedAt) : new Date(right.inspectedAt) - new Date(left.inspectedAt))[0]
   const compare = async () => { setPreparing(true); setError(''); try { const chosen = [...selectedItems].sort((left, right) => new Date(left.inspectedAt) - new Date(right.inspectedAt)); const files = await Promise.all(chosen.map(async (item) => { const { url } = await createInspectionDownload(session.access_token, item.id); const response = await fetch(url); if (!response.ok) throw new Error('DOWNLOAD_FAILED'); const blob = await response.blob(); return new File([blob], `checkvan-${item.vehiclePlate}-${item.inspectedAt}.pdf`, { type: 'application/pdf' }) })); navigate(COMPANY_ROUTES.comparePdf, { state: { files, cloudItems: chosen } }) } catch { setError('Non è stato possibile preparare il confronto.') } finally { setPreparing(false) } }
   const displayed = [...items].sort((a, b) => (new Date(b.inspectedAt) - new Date(a.inspectedAt)) * (sort === 'newest' ? 1 : -1))
   return <div className="company-page inspections-page">
@@ -51,7 +58,7 @@ export default function InspectionsPage() {
         <td className="inspections-selection"><label title={!selected.includes(item.id) && !sameVehicle(item) ? 'Seleziona un’ispezione dello stesso mezzo' : ''}><input type="checkbox" aria-label={`Seleziona ${item.vehiclePlate || item.vehicleDescription || 'ispezione'} ${formatDate(item.inspectedAt)}`} checked={selected.includes(item.id)} disabled={!selected.includes(item.id) && (selected.length >= 2 || !sameVehicle(item))} onChange={() => toggle(item)}/><span>Seleziona</span></label></td>
         <th scope="row">{formatDate(item.inspectedAt)}</th>
         <td data-label="Targa / Mezzo"><div>{item.vehiclePlate && <strong>{item.vehiclePlate}</strong>}{item.vehicleDescription && <small>{item.vehicleDescription}</small>}</div></td>
-        <td data-label="Tipo"><span className="inspections-type" data-type={item.inspectionType}>{typeLabel(item.inspectionType)}</span></td>
+        <td data-label="Tipo"><span className="inspections-type" data-type={item.inspectionType}>{typeLabel(item.inspectionType)}</span>{compatibleInspection?.id === item.id && <small className="inspections-suggestion">Corrispondenza suggerita</small>}</td>
         <td className="inspections-download"><button type="button" onClick={() => download(item)}><Download size={17} aria-hidden="true"/>Scarica PDF</button></td>
       </tr>)}</tbody></table> : !error && <p className="inspections-empty">Nessuna ispezione trovata.<small>Prova a modificare i filtri.</small></p>}
     </section>

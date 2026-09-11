@@ -47,6 +47,7 @@
 .inspections-selection span { display: none; }
 .inspections-type { display: inline-block; border-radius: 1rem; padding: .3rem .65rem; color: #175ed3; background: #eaf2ff; font-size: .75rem; }
 .inspections-type[data-type="return"] { color: #12845b; background: #e8f7ef; }
+.inspections-suggestion { display: block; width: fit-content; margin-top: .35rem; padding: .2rem .45rem; border-radius: 1rem; color: #7b5411; background: #fff4d8; font-size: .68rem; font-weight: 700; }
 .inspections-empty small { display: block; margin-top: .5rem; }
 @media(max-width:1250px) { .inspections-page .inspections-filter-bar { grid-template-columns: repeat(4,minmax(0,1fr)); } .inspections-filter-bar button { grid-column: span 2; } }
 @media(max-width:1000px) { .company-page.inspections-page { grid-template-columns: minmax(0,1fr); } }

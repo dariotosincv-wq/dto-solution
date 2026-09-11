@@ -6,6 +6,7 @@ import { clampZoom } from '../lib/zoom.js'
 import { CHECKVAN_CATEGORIES, platesDiffer, readCheckvanPdf, releaseComparison, validatePdfFile } from '../lib/checkvanComparison.js'
 import { changeSyncMode, compactDocumentLabel, compactVehicleLabel, comparisonTransformKey, DEFAULT_COMPARISON_SYNCED, DEFAULT_PHOTO_TRANSFORM } from '../lib/checkvanComparisonUi.js'
 import { useI18n } from '../i18n/useI18n.js'
+import CloudComparisonPicker from '../../company/src/components/CloudComparisonPicker.jsx'
 
 function CheckVanComparisonPage() {
   const location = useLocation()
@@ -13,6 +14,8 @@ function CheckVanComparisonPage() {
   const firstInput = useRef(null)
   const secondInput = useRef(null)
   const [files, setFiles] = useState(() => location.state?.files?.length === 2 ? location.state.files : [null, null])
+  const [comparisonMode, setComparisonMode] = useState('cloud')
+  const [cloudItems, setCloudItems] = useState(() => location.state?.cloudItems ?? [])
   const [documents, setDocuments] = useState([])
   const documentsRef = useRef([])
   const [progress, setProgress] = useState('')
@@ -31,18 +34,22 @@ function CheckVanComparisonPage() {
   useEffect(() => { documentsRef.current = documents }, [documents])
   useEffect(() => () => { releaseComparison(documentsRef.current) }, [])
 
-  const compare = async (event) => {
-    event.preventDefault(); setError(''); setProgress(t('Preparazione del confronto…', 'Preparing the comparison…'))
-    if (files.some((file) => validatePdfFile(file))) { setError(t('Seleziona due file PDF validi e non vuoti.', 'Select two valid, non-empty PDF files.')); setProgress(''); return }
+  const compare = async (event, selectedFiles = files) => {
+    event?.preventDefault(); setError(''); setProgress(t('Preparazione del confronto…', 'Preparing the comparison…'))
+    if (selectedFiles.some((file) => validatePdfFile(file))) { setError(t('Seleziona due file PDF validi e non vuoti.', 'Select two valid, non-empty PDF files.')); setProgress(''); return }
     const results = []
     try {
-      for (let index = 0; index < 2; index += 1) results.push(await readCheckvanPdf(files[index], (page, total) => setProgress(t(`Documento ${index + 1}: pagina ${page} di ${total}…`, `Document ${index + 1}: page ${page} of ${total}…`))))
+      for (let index = 0; index < 2; index += 1) results.push(await readCheckvanPdf(selectedFiles[index], (page, total) => setProgress(t(`Documento ${index + 1}: pagina ${page} di ${total}…`, `Document ${index + 1}: page ${page} of ${total}…`))))
       setDocuments(results); setProgress('')
     } catch (reason) {
       await releaseComparison(results); setProgress('')
       const known = reason.message === 'not-checkvan' || reason.message === 'no-categories'
       setError(known ? t('Il PDF non è stato riconosciuto come ispezione CheckVan con fotografie guidate.', 'The PDF was not recognized as a CheckVan inspection with guided photos.') : t('Non è stato possibile leggere uno dei PDF.', 'One of the PDFs could not be read.'))
     }
+  }
+
+  const handleCloudReady = (nextFiles, selectedItems) => {
+    setFiles(nextFiles); setCloudItems(selectedItems); void compare(null, nextFiles)
   }
 
   const categoryLabel = (category) => language === 'en' ? category.en : category.it
@@ -69,6 +76,11 @@ function CheckVanComparisonPage() {
   return <>
     <MetaDescription title={t('Confronta ispezioni CheckVan | DTO Solution', 'Compare CheckVan inspections | DTO Solution')} content={t('Confronta affiancate le fotografie guidate di due ispezioni CheckVan. I PDF rimangono sul tuo dispositivo.', 'Compare the guided photographs from two CheckVan inspections side by side. The PDFs remain on your device.')} canonical="https://dtosolution.it/confronta-checkvan" openGraphUrl="https://dtosolution.it/confronta-checkvan" />
     <section className="page-section checkvan-comparison-page"><div className="container comparison-layout">
+      <div className="comparison-mode-tabs" role="tablist" aria-label="Origine delle ispezioni">
+        <button type="button" role="tab" aria-selected={comparisonMode === 'cloud'} className={comparisonMode === 'cloud' ? 'button button--primary' : 'button button--secondary'} onClick={() => setComparisonMode('cloud')}>Dal cloud aziendale</button>
+        <button type="button" role="tab" aria-selected={comparisonMode === 'local'} className={comparisonMode === 'local' ? 'button button--primary' : 'button button--secondary'} onClick={() => setComparisonMode('local')}>Da questo dispositivo</button>
+      </div>
+      {!documents.length && comparisonMode === 'cloud' && <><aside className="checkvan-privacy-note comparison-cloud-privacy"><span className="checkvan-privacy-note__icon" aria-hidden="true">✓</span><div><strong>I PDF vengono recuperati in modo sicuro dall'archivio aziendale e utilizzati solo per il confronto.</strong></div></aside><CloudComparisonPicker initial={cloudItems} onReady={handleCloudReady} /><style>{'.checkvan-comparison-page .checkvan-verification-form, .checkvan-comparison-page .checkvan-privacy-note:not(.comparison-cloud-privacy) { display: none; }'}</style></>}
       <header className="checkvan-verification-hero"><p className="eyebrow">CheckVan · Driver Utility</p><h1>{t('Confronta due ispezioni CheckVan', 'Compare two CheckVan inspections')}</h1><p>{t('Seleziona due PDF dello stesso veicolo per visualizzare affiancate le 14 fotografie guidate. La valutazione resta completamente umana.', 'Select two PDFs for the same vehicle to view the 14 guided photographs side by side. The assessment remains entirely human.')}</p></header>
       <aside className="checkvan-privacy-note"><span className="checkvan-privacy-note__icon" aria-hidden="true">✓</span><div><strong>{t('I PDF rimangono sul tuo dispositivo', 'The PDFs remain on your device')}</strong><p>{t('File e fotografie vengono elaborati soltanto in questo browser e rimossi con il reset.', 'Files and photographs are processed only in this browser and removed on reset.')}</p></div></aside>
       {!documents.length ? <form className="checkvan-verification-form comparison-form" onSubmit={compare}>{[0, 1].map((index) => <label className="checkvan-file-field" key={index}><span><strong>{index ? t('PDF dopo', 'After PDF') : t('PDF prima', 'Before PDF')}</strong><small>{files[index]?.name ?? t('Seleziona un PDF CheckVan', 'Select a CheckVan PDF')}</small></span><input ref={index ? secondInput : firstInput} type="file" accept="application/pdf,.pdf" onChange={(event) => setFiles((current) => current.map((file, position) => position === index ? event.target.files?.[0] ?? null : file))} /></label>)}<button className="button button--primary" disabled={files.some((file) => !file) || Boolean(progress)}>{progress || t('Confronta ispezioni', 'Compare inspections')}</button>{error && <p className="checkvan-local-error" role="alert">{error}</p>}</form> : <>

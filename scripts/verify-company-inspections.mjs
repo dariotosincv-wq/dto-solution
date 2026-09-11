@@ -44,6 +44,14 @@ try {
     if(process.env.INSPECTIONS_VISUAL==='1'&&[375,1440].includes(width)) await writeFile(`.inspections-review-${width}.png`,await page.screenshot({fullPage:true}),{flag:'wx'})
     console.log(`PASS ${width}px: document render, KPI, sort, download/checkbox touch targets, no overflow`)
   }
+  await checks.nth(2).check()
+  await expect(page.getByText('Corrispondenza suggerita',{exact:true})).toHaveCount(1)
+  await checks.nth(2).uncheck()
+  await expect(page.getByText('Corrispondenza suggerita',{exact:true})).toHaveCount(0)
+  await checks.nth(1).check()
+  await expect(page.getByText('Corrispondenza suggerita',{exact:true})).toHaveCount(1)
+  await checks.nth(1).uncheck()
+  console.log('PASS compatible inspection suggestion for pickup-to-return and return-to-pickup.')
   const downloaded=page.waitForEvent('download')
   await page.getByRole('button',{name:'Scarica PDF',exact:true}).first().click()
   const download=await downloaded
