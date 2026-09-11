@@ -10,6 +10,7 @@ test('Vercel gateway preserves all vehicle and SEO public paths within the Hobby
   assert.match(routes.get('/api/company-vehicle-damages'), /resource=company-damages/)
   assert.match(routes.get('/api/device-vehicles'), /resource=device-vehicles/)
   assert.match(routes.get('/api/device-vehicle-damages'), /resource=device-damages/)
+  assert.match(routes.get('/api/device-operational-assignment'), /resource=device-operational-assignment/)
   assert.match(routes.get('/api/super-admin'), /resource=super-admin/)
   for (const file of ['api/company-vehicles.js', 'api/company-vehicle.js', 'api/company-vehicle-damages.js', 'api/company-damage-photo.js', 'api/device-vehicles.js', 'api/device-vehicle-damages.js', 'api/seo.js', 'api/company-drivers.js', 'api/company-assignments.js', 'api/device-driver-assignments.js']) assert.match(ignored, new RegExp(file.replaceAll('.', '\\.')))
   assert.match(ignored, /api\/super-admin\.js/)

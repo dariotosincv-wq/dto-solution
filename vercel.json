@@ -84,6 +84,7 @@
     { "source": "/api/company-assignments", "destination": "/api/platform?resource=company-assignments" },
     { "source": "/api/operational-access", "destination": "/api/platform?resource=operational-access" },
     { "source": "/api/device-driver-assignments", "destination": "/api/platform?resource=device-driver-assignments" },
+    { "source": "/api/device-operational-assignment", "destination": "/api/platform?resource=device-operational-assignment" },
     {
       "source": "/sitemap.xml",
       "destination": "/api/platform?resource=seo&type=sitemap"
