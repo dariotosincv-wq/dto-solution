@@ -23,6 +23,7 @@ test('Vercel gateway preserves all vehicle and SEO public paths within the Hobby
 
 test('device gateway accepts only safe Capacitor origins and signed-request headers', async () => {
   const platform = await readFile(new URL('../api/platform.js', import.meta.url), 'utf8')
+  assert.match(platform, /'device-operational-assignment'/)
   assert.match(platform, /deviceOrigins = new Set\(\['http:\/\/localhost', 'https:\/\/localhost', 'capacitor:\/\/localhost'\]\)/)
   for (const header of ['content-type', 'x-checkvan-device-id', 'x-checkvan-key-id', 'x-checkvan-timestamp', 'x-checkvan-request-id', 'x-checkvan-signature']) assert.match(platform, new RegExp(header))
   assert.match(platform, /request\.method === 'OPTIONS'/)

@@ -9,7 +9,7 @@ import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
 
-const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-driver-assignments', 'device-vehicle-reports'])
+const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-driver-assignments', 'device-vehicle-reports', 'device-operational-assignment'])
 const deviceOrigins = new Set(['http://localhost', 'https://localhost', 'capacitor://localhost'])
 const deviceAllowedHeaders = 'content-type, x-checkvan-device-id, x-checkvan-key-id, x-checkvan-timestamp, x-checkvan-request-id, x-checkvan-signature'
 
