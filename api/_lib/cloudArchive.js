@@ -119,18 +119,41 @@ export async function completeGoogleDriveOAuth(clients, code, state) {
   return { organizationId: oauth.organization_id, includeHistory: oauth.include_history }
 }
 
-function inspectionFileName(inspection) {
+export function inspectionFileName(inspection) {
   const date = new Date(inspection.inspected_at).toISOString().slice(0, 10), type = inspection.inspection_type === 'pickup' ? 'PRESA' : 'RICONSEGNA', driver = [inspection.driver_last_name, inspection.driver_first_name].filter(Boolean).map(safeSegment).join('-') || 'SENZA-DRIVER'
-  return `${date}_${safeSegment(inspection.vehicle_plate)}_${safeSegment(inspection.vehicle_description)}_${type}_${driver}_${inspection.id.slice(0, 8)}.pdf`
+  return `${date}_${safeSegment(inspection.vehicle_plate)}_${safeSegment(inspection.vehicle_description)}_${type}_${driver}.pdf`
+}
+
+export function archiveFolderParts(inspection) {
+  const date = new Date(inspection.inspected_at), month = new Intl.DateTimeFormat('it-IT', { month: 'long', timeZone: 'UTC' }).format(date)
+  return ['CheckVan', String(date.getUTCFullYear()), month[0].toUpperCase() + month.slice(1), safeSegment(inspection.vehicle_plate || 'SENZA-TARGA')]
+}
+
+async function ensureArchiveRoot(clients, connection, accessToken) {
+  const root = await driveFolder(accessToken, 'DTO Solution')
+  if (connection.root_folder_id !== root.id || connection.root_folder_name !== root.name) {
+    const { error } = await clients.checkvan.from('checkvan_cloud_connections').update({ root_folder_id: root.id, root_folder_name: root.name, updated_at: now() }).eq('organization_id', connection.organization_id)
+    if (error) throw new Error('CLOUD_ARCHIVE_UNAVAILABLE')
+  }
+  return root
+}
+
+async function archiveDestination(clients, connection, inspection, accessToken) {
+  const [checkvanName, year, month, plate] = archiveFolderParts(inspection)
+  const root = await ensureArchiveRoot(clients, connection, accessToken)
+  const checkvan = await driveFolder(accessToken, checkvanName, root.id)
+  const yearFolder = await driveFolder(accessToken, year, checkvan.id)
+  const monthFolder = await driveFolder(accessToken, month, yearFolder.id)
+  const vehicleFolder = await driveFolder(accessToken, plate, monthFolder.id)
+  return { folder: vehicleFolder, fileName: inspectionFileName(inspection) }
 }
 
 async function uploadInspection(clients, connection, inspection) {
   const accessToken = await refreshConnection(clients, connection)
-  const date = new Date(inspection.inspected_at), year = String(date.getUTCFullYear()), month = new Intl.DateTimeFormat('it-IT', { month: 'long', timeZone: 'UTC' }).format(date), vehicle = safeSegment(inspection.vehicle_plate || inspection.vehicle_description)
-  const checkvan = await driveFolder(accessToken, 'CheckVan', connection.root_folder_id), yearFolder = await driveFolder(accessToken, year, checkvan.id), monthFolder = await driveFolder(accessToken, month[0].toUpperCase() + month.slice(1), yearFolder.id), vehicleFolder = await driveFolder(accessToken, vehicle, monthFolder.id)
+  const destination = await archiveDestination(clients, connection, inspection, accessToken)
   const { data, error } = await clients.checkvan.storage.from(inspection.storage_bucket).download(inspection.storage_object_path)
   if (error || !data) throw Object.assign(new Error('DOCUMENT_DOWNLOAD_FAILED'), { code: 'DOCUMENT_DOWNLOAD_FAILED' })
-  const metadata = { name: inspectionFileName(inspection), mimeType: 'application/pdf', parents: [vehicleFolder.id], appProperties: { dtoInspectionId: inspection.id } }
+  const metadata = { name: destination.fileName, mimeType: 'application/pdf', parents: [destination.folder.id], appProperties: { dtoInspectionId: inspection.id } }
   const form = new FormData(); form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' })); form.append('file', data, metadata.name)
   return google(`${DRIVE_UPLOAD}?uploadType=multipart&fields=id,name,webViewLink`, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form })
 }
@@ -164,7 +187,8 @@ export async function verifyGoogleDriveConnection(clients, organizationId) {
   const connection = await connectionForOrg(clients, organizationId)
   if (!connection) throw Object.assign(new Error('CLOUD_NOT_CONNECTED'), { status: 404 })
   const accessToken = await refreshConnection(clients, connection)
-  await google(`${DRIVE_FILES}/${encodeURIComponent(connection.root_folder_id)}?fields=id,name,mimeType`, { headers: { Authorization: `Bearer ${accessToken}` } })
+  const root = await ensureArchiveRoot(clients, connection, accessToken)
+  await google(`${DRIVE_FILES}/${encodeURIComponent(root.id)}?fields=id,name,mimeType`, { headers: { Authorization: `Bearer ${accessToken}` } })
   await clients.checkvan.from('checkvan_cloud_connections').update({ last_verified_at: now(), status: 'active', updated_at: now() }).eq('organization_id', organizationId)
   return cloudArchiveStatus(clients, organizationId)
 }
@@ -177,11 +201,11 @@ export async function disconnectGoogleDrive(clients, organizationId) {
   if (error) throw new Error('CLOUD_ARCHIVE_UNAVAILABLE')
 }
 
-export async function createArchiveFolder(clients, organizationId, folderName) {
+export async function createArchiveFolder(clients, organizationId) {
   const connection = await connectionForOrg(clients, organizationId)
   if (!connection) throw Object.assign(new Error('CLOUD_NOT_CONNECTED'), { status: 404 })
-  const accessToken = await refreshConnection(clients, connection), root = await driveFolder(accessToken, safeSegment(folderName || 'DTO Solution'))
-  await clients.checkvan.from('checkvan_cloud_connections').update({ root_folder_id: root.id, root_folder_name: root.name, updated_at: now() }).eq('organization_id', organizationId)
+  const accessToken = await refreshConnection(clients, connection)
+  await ensureArchiveRoot(clients, connection, accessToken)
   return cloudArchiveStatus(clients, organizationId)
 }
 
@@ -189,6 +213,7 @@ export async function queueCloudSyncs(clients, organizationId, inspectionIds) {
   const unique = [...new Set(inspectionIds)].slice(0, 100)
   const { data: permitted, error } = await clients.checkvan.from('checkvan_inspections').select('id').eq('organization_id', organizationId).eq('upload_status', 'available').in('id', unique)
   if (error) throw new Error('CLOUD_ARCHIVE_UNAVAILABLE')
-  const allowed = permitted.map(item => item.id), results = await Promise.all(allowed.map(id => syncInspectionToGoogleDrive(clients, organizationId, id)))
+  const allowed = permitted.map(item => item.id), results = []
+  for (const id of allowed) results.push(await syncInspectionToGoogleDrive(clients, organizationId, id))
   return { synced: results.filter(result => result.status === 'SYNCED').length, alreadyPresent: results.filter(result => result.status === 'ALREADY_SYNCED').length, failed: results.filter(result => result.status === 'FAILED').length, requested: allowed.length }
 }

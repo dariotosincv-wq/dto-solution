@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
+import { archiveFolderParts, inspectionFileName } from '../api/_lib/cloudArchive.js'
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
 const archive = read('api/_lib/cloudArchive.js')
@@ -32,4 +33,14 @@ test('la configurazione server-side documenta soltanto variabili non pubbliche',
   assert.match(env, /^GOOGLE_DRIVE_CLIENT_SECRET=/m)
   assert.match(env, /^GOOGLE_DRIVE_TOKEN_ENCRYPTION_KEY=/m)
   assert.doesNotMatch(env, /^VITE_GOOGLE_DRIVE_/m)
+})
+
+test('export manuale e backup automatico condividono il percorso Drive canonico e idempotente', () => {
+  const inspection = { id: '32bd57bc-21a0-4e2a-9c9f-87d1e6b3c0d4', inspected_at: '2026-09-12T10:15:00.000Z', inspection_type: 'pickup', vehicle_plate: 'HA956FV', vehicle_description: 'S-137', driver_last_name: 'Tosin', driver_first_name: 'Dario' }
+  assert.deepEqual(archiveFolderParts(inspection), ['CheckVan', '2026', 'Settembre', 'HA956FV'])
+  assert.equal(inspectionFileName(inspection), '2026-09-12_HA956FV_S-137_PRESA_Tosin-Dario.pdf')
+  assert.equal(inspectionFileName({ ...inspection, driver_last_name: '', driver_first_name: '' }), '2026-09-12_HA956FV_S-137_PRESA_SENZA-DRIVER.pdf')
+  assert.match(archive, /async function archiveDestination/)
+  assert.match(archive, /for \(const id of allowed\) results\.push\(await syncInspectionToGoogleDrive/)
+  assert.doesNotMatch(archive, /Promise\.all\(allowed\.map\(id => syncInspectionToGoogleDrive/)
 })
