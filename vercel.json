@@ -82,6 +82,7 @@
     { "source": "/api/company-vehicle-reports", "destination": "/api/platform?resource=company-vehicle-reports" },
     { "source": "/api/company-drivers", "destination": "/api/platform?resource=company-drivers" },
     { "source": "/api/company-assignments", "destination": "/api/platform?resource=company-assignments" },
+    { "source": "/api/company-cloud", "destination": "/api/platform?resource=company-cloud" },
     { "source": "/api/operational-access", "destination": "/api/platform?resource=operational-access" },
     { "source": "/api/device-driver-assignments", "destination": "/api/platform?resource=device-driver-assignments" },
     { "source": "/api/device-operational-assignment", "destination": "/api/platform?resource=device-operational-assignment" },

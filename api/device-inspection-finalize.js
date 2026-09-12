@@ -1,5 +1,6 @@
 import { clientsFromEnvironment, sendError, sendJson } from './_lib/companyLicensing.js'
 import { authenticateDeviceRequest, resolveDeviceContext } from './_lib/deviceAuthentication.js'
+import { syncInspectionToGoogleDrive } from './_lib/cloudArchive.js'
 
 export async function handleDeviceInspectionFinalize(request, response, dependencies = {}) {
   if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
@@ -24,6 +25,8 @@ export async function handleDeviceInspectionFinalize(request, response, dependen
     const { error: updateError } = await clients.checkvan.from('checkvan_inspections').update({ upload_status: 'available', uploaded_at: now, finalized_at: now, last_upload_error_code: null }).eq('id', inspection.id).eq('upload_status', 'uploading')
     if (updateError) throw new Error('FINALIZATION_FAILED')
     await clients.checkvan.from('checkvan_license_devices').update({ last_validated_at: now }).eq('id', device.id)
+    // Cloud archival is a best-effort copy: it never changes CheckVan finalization.
+    void syncInspectionToGoogleDrive(clients, context.organization.id, inspection.id).catch(() => {})
     return sendJson(response, 200, { inspectionId, status: 'available', finalizedAt: now })
   } catch (error) { return sendError(response, error) }
 }

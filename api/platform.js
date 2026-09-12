@@ -8,6 +8,7 @@ import { driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } 
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
+import { beginGoogleDriveOAuth, cloudArchiveStatus, completeGoogleDriveOAuth, createArchiveFolder, disconnectGoogleDrive, queueCloudSyncs, verifyGoogleDriveConnection } from './_lib/cloudArchive.js'
 
 const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-driver-assignments', 'device-vehicle-reports', 'device-operational-assignment'])
 const deviceOrigins = new Set(['http://localhost', 'https://localhost', 'capacitor://localhost'])
@@ -229,6 +230,44 @@ async function companyAssignments(request, response, clients) {
   }
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
+
+async function companyCloudArchive(request, response, clients) {
+  const action = request.query?.action ?? request.body?.action
+  if (action === 'callback' || (request.method === 'GET' && (request.query?.code || request.query?.error))) {
+    const target = new URL('/azienda/account', 'https://www.dtosolution.it')
+    try {
+      if (request.query?.error) throw Object.assign(new Error('OAUTH_CANCELLED'), { status: 400 })
+      const completed = await completeGoogleDriveOAuth(clients, request.query?.code, request.query?.state)
+      if (completed.includeHistory) {
+        const { data } = await clients.checkvan.from('checkvan_inspections').select('id').eq('organization_id', completed.organizationId).eq('upload_status', 'available').limit(100)
+        await queueCloudSyncs(clients, completed.organizationId, (data ?? []).map(item => item.id))
+      }
+      target.searchParams.set('cloud', 'connected')
+    } catch (error) { target.searchParams.set('cloud', error.message === 'OAUTH_CANCELLED' ? 'cancelled' : 'error') }
+    return response.redirect(302, target.toString())
+  }
+  const { user, context } = await companyContext(request, clients)
+  if (!context.organization) return sendJson(response, 403, { error: 'CLOUD_ARCHIVE_FORBIDDEN' })
+  if (request.method === 'GET') return sendJson(response, 200, await cloudArchiveStatus(clients, context.organization.id))
+  if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+  if (action === 'OAUTH_START') return sendJson(response, 200, await beginGoogleDriveOAuth(clients, context, user.id, request.body?.include_history === true))
+  if (action === 'VERIFY') return sendJson(response, 200, await verifyGoogleDriveConnection(clients, context.organization.id))
+  if (action === 'DISCONNECT') { await disconnectGoogleDrive(clients, context.organization.id); return sendJson(response, 200, { disconnected: true }) }
+  if (action === 'CREATE_FOLDER') return sendJson(response, 200, await createArchiveFolder(clients, context.organization.id, request.body?.folder_name))
+  if (action === 'SET_SETTINGS') {
+    const settings = { backup_enabled: request.body?.backup_enabled === true, backup_pickup: request.body?.backup_pickup !== false, backup_return: request.body?.backup_return !== false, updated_at: new Date().toISOString() }
+    const { error } = await clients.checkvan.from('checkvan_cloud_connections').update(settings).eq('organization_id', context.organization.id)
+    if (error) throw new Error('CLOUD_ARCHIVE_UNAVAILABLE')
+    return sendJson(response, 200, await cloudArchiveStatus(clients, context.organization.id))
+  }
+  if (action === 'RETRY') {
+    const { data, error } = await clients.checkvan.from('checkvan_cloud_document_syncs').select('inspection_id').eq('organization_id', context.organization.id).in('status', ['PENDING', 'FAILED']).limit(100)
+    if (error) throw new Error('CLOUD_ARCHIVE_UNAVAILABLE')
+    return sendJson(response, 200, await queueCloudSyncs(clients, context.organization.id, (data ?? []).map(item => item.inspection_id)))
+  }
+  if (action === 'EXPORT') return sendJson(response, 200, await queueCloudSyncs(clients, context.organization.id, Array.isArray(request.body?.inspection_ids) ? request.body.inspection_ids : []))
+  return sendJson(response, 400, { error: 'INVALID_CLOUD_ARCHIVE_ACTION' })
+}
 const operationalCookie = value => `${sessionCookie}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`
 const operationalUuid = value => /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value ?? '')
 async function operationalAccess(request, response, clients) {
@@ -370,6 +409,7 @@ export default async function handler(request, response) {
     if (resource === 'company-vehicle-reports') return await companyVehicleReports(request,response,clients)
     if (resource === 'company-drivers') return await companyDrivers(request, response, clients)
     if (resource === 'company-assignments') return await companyAssignments(request, response, clients)
+    if (resource === 'company-cloud') return await companyCloudArchive(request, response, clients)
     if (resource === 'company-planning') return await companyPlanning(request, response, clients)
     if (resource === 'operational-access') return await operationalAccess(request, response, clients)
     if (resource === 'device-driver-assignments') return await deviceDriverAssignments(request, response, clients)

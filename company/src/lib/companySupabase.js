@@ -33,6 +33,8 @@ export const loadCompanyInspections = (accessToken, filters = {}) => {
 export const createInspectionDownload = (accessToken, id) => authorizedRequest('/api/company-inspection-download', accessToken, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
 })
+export const loadCloudArchive = (accessToken) => authorizedRequest('/api/company-cloud', accessToken)
+export const cloudArchiveAction = (accessToken, action, payload = {}) => authorizedRequest('/api/company-cloud', accessToken, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...payload }) })
 export const loadCompanyVehicles = (token) => authorizedRequest('/api/company-vehicles', token)
 export const createCompanyVehicle = (token, value) => authorizedRequest('/api/company-vehicles', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const importCompanyVehicles = (token, vehicles) => authorizedRequest('/api/company-vehicles', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vehicles }) })

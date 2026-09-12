@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { canViewInspections } from '../access.js'
 import { useAuth } from '../auth/AuthContext.jsx'
-import { createInspectionDownload, loadCompanyInspections } from '../lib/companySupabase.js'
+import { cloudArchiveAction, createInspectionDownload, loadCloudArchive, loadCompanyInspections } from '../lib/companySupabase.js'
 import { COMPANY_ROUTES } from '../routes.js'
 
-import { FileText, Download, GitCompareArrows, ArrowDownToLine, ArrowUpFromLine, RotateCcw, ShieldCheck } from 'lucide-react'
+import { FileText, Download, GitCompareArrows, ArrowDownToLine, ArrowUpFromLine, RotateCcw, ShieldCheck, Cloud } from 'lucide-react'
 import './inspections.css'
 
 const typeLabel = (value) => value === 'pickup' ? 'Presa' : 'Riconsegna'
@@ -18,12 +18,14 @@ export default function InspectionsPage() {
   const [items, setItems] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState('')
   const [sort, setSort] = useState('newest')
   const [selected, setSelected] = useState([]); const [preparing, setPreparing] = useState(false)
+  const [cloudArchive, setCloudArchive] = useState(null); const [exporting, setExporting] = useState(false)
   const refresh = useCallback(async (next) => { setLoading(true); setError(''); try { const result = await loadCompanyInspections(session.access_token, next); setItems(result.items) } catch { setError('Non è stato possibile caricare le ispezioni.') } finally { setLoading(false) } }, [session.access_token])
   useEffect(() => {
     // Initial loading synchronizes the portal with the external CheckVan API.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (canViewInspections(access)) refresh({})
   }, [access, refresh])
+  useEffect(() => { if (canViewInspections(access)) void loadCloudArchive(session.access_token).then(setCloudArchive).catch(() => setCloudArchive({ connected: false })) }, [access, session.access_token])
   if (!canViewInspections(access)) return <Navigate to={COMPANY_ROUTES.dashboard} replace />
   const submit = (event) => { event.preventDefault(); setSelected([]); refresh(filters) }
   const download = async (item) => { try { const { url } = await createInspectionDownload(session.access_token, item.id); window.location.assign(url) } catch { setError('Download temporaneamente non disponibile.') } }
@@ -38,6 +40,7 @@ export default function InspectionsPage() {
     return itemVehicleKey === selectedVehicleKey && isCompatibleType && (firstSelected.inspectionType === 'pickup' ? new Date(item.inspectedAt) > new Date(firstSelected.inspectedAt) : new Date(item.inspectedAt) < new Date(firstSelected.inspectedAt))
   }).sort((left, right) => firstSelected.inspectionType === 'pickup' ? new Date(left.inspectedAt) - new Date(right.inspectedAt) : new Date(right.inspectedAt) - new Date(left.inspectedAt))[0]
   const compare = async () => { setPreparing(true); setError(''); try { const chosen = [...selectedItems].sort((left, right) => new Date(left.inspectedAt) - new Date(right.inspectedAt)); const files = await Promise.all(chosen.map(async (item) => { const { url } = await createInspectionDownload(session.access_token, item.id); const response = await fetch(url); if (!response.ok) throw new Error('DOWNLOAD_FAILED'); const blob = await response.blob(); return new File([blob], `checkvan-${item.vehiclePlate}-${item.inspectedAt}.pdf`, { type: 'application/pdf' }) })); navigate(COMPANY_ROUTES.comparePdf, { state: { files, cloudItems: chosen } }) } catch { setError('Non è stato possibile preparare il confronto.') } finally { setPreparing(false) } }
+  const exportCloud = async () => { setExporting(true); setError(''); try { const result = await cloudArchiveAction(session.access_token, 'EXPORT', { inspection_ids: selected }); setError(`${result.synced} sincronizzati, ${result.alreadyPresent} già presenti, ${result.failed} falliti.`); setCloudArchive(await loadCloudArchive(session.access_token)) } catch (reason) { setError(reason.message === 'CLOUD_NOT_CONNECTED' ? 'Collega Google Drive da Account.' : 'Esportazione cloud non riuscita.') } finally { setExporting(false) } }
   const displayed = [...items].sort((a, b) => (new Date(b.inspectedAt) - new Date(a.inspectedAt)) * (sort === 'newest' ? 1 : -1))
   return <div className="company-page inspections-page">
     <header><p className="company-kicker">Cloud CheckVan</p><h1>Ispezioni</h1><p>Consulta le ispezioni sincronizzate dai dispositivi della tua organizzazione.</p></header>
@@ -62,5 +65,6 @@ export default function InspectionsPage() {
         <td className="inspections-download"><button type="button" onClick={() => download(item)}><Download size={17} aria-hidden="true"/>Scarica PDF</button></td>
       </tr>)}</tbody></table> : !error && <p className="inspections-empty">Nessuna ispezione trovata.<small>Prova a modificare i filtri.</small></p>}
     </section>
+    <section className="inspections-cloud-export" aria-label="Esportazione cloud">{cloudArchive?.connected ? <><p>DTO Solution salva una copia delle ispezioni selezionate nel cloud collegato dalla tua azienda.</p><button type="button" disabled={!selected.length || exporting || loading} onClick={exportCloud}><Cloud size={18} aria-hidden="true"/>{exporting ? 'Esportazione…' : 'Esporta nel cloud'}</button></> : <p>Collega Google Drive da Account per esportare copie nel cloud.</p>}</section>
   </div>
 }
