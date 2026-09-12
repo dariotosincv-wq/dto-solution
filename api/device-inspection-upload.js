@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { clientsFromEnvironment, sendError, sendJson } from './_lib/companyLicensing.js'
 import { normalizePlate, validateInspectionInput } from './_lib/companyLicensingCore.js'
 import { authenticateDeviceRequest, resolveDeviceContext } from './_lib/deviceAuthentication.js'
+import { readPlanning } from './_lib/companyPlanning.js'
+import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 
 const BUCKET = 'checkvan-company-inspections'
 const UPLOAD_SELECT = 'id,organization_id,device_id,device_generated_id,inspection_type,vehicle_id,driver_id,driver_first_name,driver_last_name,assignment_date,vehicle_plate_normalized,vehicle_description,inspection_cycle_id,inspected_at,device_timezone,document_hash,document_size_bytes,document_format_version,app_version,storage_bucket,storage_object_path,upload_status'
@@ -28,6 +30,21 @@ export function uploadMatchesExisting(inspection, body, device, context) {
     && Number(inspection.document_size_bytes) === body.documentSizeBytes
     && nullable(inspection.document_format_version) === nullable(body.documentFormatVersion)
     && nullable(inspection.app_version) === nullable(body.appVersion)
+}
+
+export function matchesOperationalAssignment(entries, body) {
+  return entries.some((entry) => entry.assignment_date === body.assignmentDate
+    && entry.driver_id === body.driverId
+    && entry.vehicle_id === body.vehicleId
+    && entry.work_status === 'TURNO')
+}
+
+async function validateOperationalAssignment(clients, organizationId, body) {
+  if (!body.driverId) return
+  const planning = await readPlanning(clients.checkvan, organizationId, weekStart(body.assignmentDate))
+  if (!matchesOperationalAssignment(planning.effective ?? [], body)) {
+    throw Object.assign(new Error('OPERATIONAL_ASSIGNMENT_MISMATCH'), { status: 409 })
+  }
 }
 
 async function findExisting(clients, deviceId, deviceGeneratedId) {
@@ -75,6 +92,7 @@ export async function handleDeviceInspectionUpload(request, response, dependenci
       const { data: driver, error: driverError } = await clients.checkvan.from('checkvan_drivers').select('id,first_name,last_name').eq('id', request.body.driverId).eq('organization_id', context.organization.id).maybeSingle()
       if (driverError) throw new Error('DRIVERS_UNAVAILABLE')
       if (!driver || driver.first_name !== request.body.driverFirstName || driver.last_name !== request.body.driverLastName) throw Object.assign(new Error('DRIVER_SNAPSHOT_MISMATCH'), { status: 409 })
+      await validateOperationalAssignment(clients, context.organization.id, request.body)
     }
     const existing = await findExisting(clients, device.id, request.body.deviceGeneratedId)
     if (existing) {

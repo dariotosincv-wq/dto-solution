@@ -3,7 +3,7 @@ import { generateKeyPairSync, sign } from 'node:crypto'
 import test from 'node:test'
 import { authenticateDeviceRequest, canonicalDeviceRequest, resolveDeviceContext } from '../api/_lib/deviceAuthentication.js'
 import { handleDeviceInspectionFinalize } from '../api/device-inspection-finalize.js'
-import { handleDeviceInspectionUpload } from '../api/device-inspection-upload.js'
+import { handleDeviceInspectionUpload, matchesOperationalAssignment } from '../api/device-inspection-upload.js'
 
 const device = { id: '10000000-0000-4000-8000-000000000001' }
 const otherDevice = { id: '10000000-0000-4000-8000-000000000002' }
@@ -14,6 +14,18 @@ const body = {
   vehicleDescription: 'Daily 35S', inspectedAt: '2026-08-21T10:00:00.000Z', deviceTimezone: 'Europe/Rome',
   documentHash: 'ab'.repeat(32), documentSizeBytes: 1234, documentFormatVersion: 1, appVersion: '1.0.0',
 }
+
+test('company driver snapshot must match the effective QR operational assignment', () => {
+  const snapshot = {
+    driverId: '70000000-0000-4000-8000-000000000001',
+    vehicleId: '80000000-0000-4000-8000-000000000001',
+    assignmentDate: '2026-08-21',
+  }
+  const entries = [{ driver_id: snapshot.driverId, vehicle_id: snapshot.vehicleId, assignment_date: snapshot.assignmentDate, work_status: 'TURNO' }]
+  assert.equal(matchesOperationalAssignment(entries, snapshot), true)
+  assert.equal(matchesOperationalAssignment(entries, { ...snapshot, driverId: '70000000-0000-4000-8000-000000000002' }), false)
+  assert.equal(matchesOperationalAssignment([{ ...entries[0], work_status: 'RIPOSO' }], snapshot), false)
+})
 
 function responseRecorder() {
   return { statusCode: null, body: null, headers: {}, status(code) { this.statusCode = code; return this }, setHeader(name, value) { this.headers[name] = value; return this }, json(value) { this.body = value; return this } }

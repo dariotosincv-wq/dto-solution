@@ -23,3 +23,9 @@ test('remove foto preserva il damage e registra audit',()=>{
   assert.match(migration,/photo_bucket=null[\s\S]*photo_upload_status='LEGACY'/)
   assert.match(migration,/checkvan_vehicle_damage_events/)
 })
+test('QR company damage persists only a validated driver snapshot',()=>{
+  assert.match(api,/driverSnapshotInput\(body\)/)
+  assert.match(api,/validateDriverSnapshot\(clients,context\.organization\.id,body\.vehicle_id,driverSnapshot\)/)
+  assert.match(api,/\.\.\.driverSnapshot/)
+  assert.match(api,/OPERATIONAL_ASSIGNMENT_MISMATCH/)
+})
