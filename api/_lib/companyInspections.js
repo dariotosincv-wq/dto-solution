@@ -22,3 +22,17 @@ export function publicInspection(row) {
     deviceId: row.device_id, finalizedAt: row.finalized_at, retentionExpiresAt: row.retention_expires_at,
   }
 }
+
+export function resolveInspectionDrivers(rows, effectiveEntries, drivers) {
+  const driversById = new Map((drivers ?? []).map(driver => [driver.id, driver]))
+  return rows.map((row) => {
+    if (row.driver_first_name || row.driver_last_name) return row
+    let driverId = row.driver_id
+    if (!driverId && row.vehicle_id) {
+      const candidates = effectiveEntries.filter(entry => entry.work_status === 'TURNO' && entry.assignment_date === row.inspected_at.slice(0, 10) && entry.vehicle_id === row.vehicle_id)
+      if (candidates.length === 1) driverId = candidates[0].driver_id
+    }
+    const driver = driversById.get(driverId)
+    return driver ? { ...row, driver_id: driver.id, driver_first_name: driver.first_name, driver_last_name: driver.last_name } : row
+  })
+}
