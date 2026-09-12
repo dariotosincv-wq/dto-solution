@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import { AlertCircle, CheckCircle2, Clock3, FileWarning, History, ShieldCheck, Truck, Wrench } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { canManageVehicles } from "../access.js";
 import {
@@ -18,6 +19,7 @@ import { damageClickKey, removeOperationalDamage, reserveDamageClick, restoreOpe
 import { toggleVehicleStatusOptimistically } from "../lib/vehicleStatusState.js";
 import { VEHICLE_REPORT_LABELS, resolveReportOptimistically } from "../lib/vehicleReports.js";
 const damageStatusLabel = { PENDING: "In attesa", CONFIRMED: "Confermato", REJECTED: "Annullato", REPAIRED: "Riparato", REMOVED: "Rimosso" };
+const displayDate = (value, withTime = false) => value ? new Date(value).toLocaleString("it-IT", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }) : "â€”";
 export default function VehicleDetailPage() {
   const { vehicleId } = useParams(),
     { access, session } = useAuth(),
@@ -142,6 +144,9 @@ export default function VehicleDetailPage() {
       setPhotoModal({ damageId: damage.damage_id, status: "error", url: "" });
     }
   };
+  const openReports = reports.filter((item) => item.status === "OPEN");
+  const resolvedReports = reports.filter((item) => item.status === "RESOLVED");
+  const historicDamages = damages.filter((damage) => ["CONFIRMED", "REPAIRED"].includes(damage.status));
   return (
     <div className="company-page">
       <header>
@@ -205,7 +210,16 @@ export default function VehicleDetailPage() {
         moving={moving}
         disabled={vehicle.status !== "active"}
       />
-      <section className="vehicle-reports"><h2>Segnalazioni aperte</h2>{reports.filter(item=>item.status==='OPEN').length?reports.filter(item=>item.status==='OPEN').map(item=><article className="vehicle-report vehicle-report--open" key={item.report_id}><strong>🔴 {VEHICLE_REPORT_LABELS[item.report_type]||item.report_type}</strong>{item.description&&<p>{item.description}</p>}<small>Segnalato: {new Date(item.reported_at).toLocaleString('it-IT')}{item.driver?` · Driver: ${item.driver}`:''}</small><button onClick={()=>void resolveTechnicalReport(item)}>Segna come risolta</button></article>):<p>Nessuna segnalazione aperta.</p>}<h2>Storico segnalazioni</h2>{reports.filter(item=>item.status==='RESOLVED').map(item=><article className="vehicle-report" key={item.report_id}><strong>{VEHICLE_REPORT_LABELS[item.report_type]||item.report_type}</strong>{item.description&&<p>{item.description}</p>}<small>Segnalato {new Date(item.reported_at).toLocaleDateString('it-IT')} · Risolto {new Date(item.resolved_at).toLocaleDateString('it-IT')}</small></article>)}</section>
+      <div className="vehicle-activity" aria-label="Segnalazioni e storico del veicolo">
+        <section className="vehicle-activity-card vehicle-activity-card--open" aria-labelledby="open-reports-title">
+          <header className="vehicle-activity-card__heading"><span className="vehicle-activity-icon" aria-hidden="true"><FileWarning /></span><div><h2 id="open-reports-title">Segnalazioni aperte</h2><p>Qui trovi tutte le segnalazioni ancora in lavorazione relative a questo veicolo.</p></div></header>
+          {openReports.length ? <div className="vehicle-activity-list">{openReports.map((item) => <article className="vehicle-activity-item vehicle-activity-item--open" key={item.report_id}><span className="vehicle-activity-item__icon" aria-hidden="true"><AlertCircle /></span><div className="vehicle-activity-item__content"><strong>{VEHICLE_REPORT_LABELS[item.report_type] || item.report_type}</strong>{item.description && <p>{item.description}</p>}<small>Segnalata il {displayDate(item.reported_at, true)}{item.driver ? ` · Driver: ${item.driver}` : ""}</small></div><div className="vehicle-activity-item__aside"><span className="vehicle-activity-status vehicle-activity-status--open">Aperta</span><button onClick={() => void resolveTechnicalReport(item)}><CheckCircle2 size={17} aria-hidden="true" />Segna come risolta</button></div></article>)}</div> : <div className="vehicle-empty-state"><span className="vehicle-empty-state__icon" aria-hidden="true"><ShieldCheck /></span><strong>Nessuna segnalazione aperta</strong><p>Ottimo! Non ci sono segnalazioni in corso per questo veicolo.</p></div>}
+        </section>
+        <section className="vehicle-activity-card" aria-labelledby="report-history-title">
+          <header className="vehicle-activity-card__heading"><span className="vehicle-activity-icon" aria-hidden="true"><History /></span><div><h2 id="report-history-title">Storico segnalazioni</h2><p>Qui trovi tutte le segnalazioni effettuate per questo veicolo, con il relativo stato.</p></div></header>
+          {resolvedReports.length ? <div className="vehicle-activity-list">{resolvedReports.map((item) => <article className="vehicle-activity-item" key={item.report_id}><span className="vehicle-activity-item__icon vehicle-activity-item__icon--history" aria-hidden="true"><Wrench /></span><div className="vehicle-activity-item__content"><strong>{VEHICLE_REPORT_LABELS[item.report_type] || item.report_type}</strong>{item.description && <p>{item.description}</p>}<small>Segnalata il {displayDate(item.reported_at)} · Risolta il {displayDate(item.resolved_at)}</small></div><span className="vehicle-activity-status vehicle-activity-status--resolved">Risolta</span></article>)}</div> : <div className="vehicle-empty-state vehicle-empty-state--compact"><span className="vehicle-empty-state__icon" aria-hidden="true"><Clock3 /></span><strong>Nessuna segnalazione nello storico</strong><p>Le segnalazioni risolte compariranno qui.</p></div>}
+        </section>
+      </div>
       {selected && (
         <section className="damage-editor">
           <h2>Marker {selected.status}</h2>
@@ -250,43 +264,9 @@ export default function VehicleDetailPage() {
           <button onClick={() => { setSelected(null); setMoving(false); }}>Chiudi</button>
         </section>
       )}
-      <section className="table-card">
-        <h2>Storico danni</h2>
-        <ul className="damage-history">
-          {damages.filter((d) => ["CONFIRMED", "REPAIRED"].includes(d.status)).map((d) => (
-            <li key={d.damage_id}>
-              <strong>
-                {d.damage_type} · {d.vehicle_view}
-              </strong>
-              <span
-                className={`damage-status damage-status--${d.status.toLowerCase()}`}
-              >
-                {damageStatusLabel[d.status] || d.status}
-              </span>
-              <small>{new Date(d.reported_at).toLocaleString("it-IT")}</small>
-              <div className="damage-history__actions">
-                {vehicle.status === "active" && d.status === "REPAIRED" && (
-                  <button
-                    className="damage-action--reopen"
-                    onClick={() => {
-                      if (window.confirm("Annullare la riparazione? Il danno tornerà attivo sulla sagoma.")) void patch({ ...d, action: "REOPEN" });
-                    }}
-                  >
-                    Annulla riparazione
-                  </button>
-                )}
-                <button
-                  className="damage-action--delete"
-                  onClick={() => {
-                    if (window.confirm("Eliminare questo danno dalla mappa operativa?")) void patch({ ...d, action: "REMOVE" });
-                  }}
-                >
-                  Elimina
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+      <section className="vehicle-activity-card vehicle-damage-history" aria-labelledby="damage-history-title">
+        <header className="vehicle-activity-card__heading"><span className="vehicle-activity-icon" aria-hidden="true"><Truck /></span><div><h2 id="damage-history-title">Storico danni</h2><p>Qui trovi tutti i danni registrati per questo veicolo.</p></div></header>
+        {historicDamages.length ? <ul className="damage-history vehicle-activity-list">{historicDamages.map((d) => <li className="vehicle-activity-item" key={d.damage_id}><span className="vehicle-activity-item__icon vehicle-activity-item__icon--history" aria-hidden="true"><AlertCircle /></span><div className="vehicle-activity-item__content"><strong>{d.damage_type} · {d.vehicle_view}</strong><small>Registrato il {displayDate(d.reported_at, true)}</small></div><div className="vehicle-activity-item__aside"><span className={`vehicle-activity-status vehicle-activity-status--${d.status.toLowerCase()}`}>{damageStatusLabel[d.status] || d.status}</span><div className="damage-history__actions">{vehicle.status === "active" && d.status === "REPAIRED" && <button className="damage-action--reopen" onClick={() => { if (window.confirm("Annullare la riparazione? Il danno tornerà attivo sulla sagoma.")) void patch({ ...d, action: "REOPEN" }); }}>Annulla riparazione</button>}<button className="damage-action--delete" onClick={() => { if (window.confirm("Eliminare questo danno dalla mappa operativa?")) void patch({ ...d, action: "REMOVE" }); }}>Elimina</button></div></div></li>)}</ul> : <div className="vehicle-empty-state"><span className="vehicle-empty-state__icon" aria-hidden="true"><Truck /></span><strong>Nessun danno registrato</strong><p>Non sono presenti danni per questo veicolo.</p></div>}
       </section>
       {draft && <div className="damage-photo-modal" role="dialog" aria-modal="true" aria-labelledby="damage-photo-title"><section><h2 id="damage-photo-title">Aggiungi foto del danno</h2><p>Scegli come aggiungere la foto richiesta.</p><div className="damage-photo-source-actions"><button type="button" disabled={savingDraft} onClick={() => cameraInputRef.current?.click()}>Scatta foto</button><button type="button" disabled={savingDraft} onClick={() => pickerInputRef.current?.click()}>Scegli foto</button></div><input ref={cameraInputRef} className="visually-hidden" aria-label="Scatta foto del danno" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => { setDraftPhoto(event.target.files?.[0] ?? null); event.target.value = ""; }} /><input ref={pickerInputRef} className="visually-hidden" aria-label="Scegli foto dalla galleria" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { setDraftPhoto(event.target.files?.[0] ?? null); event.target.value = ""; }} />{draftPhotoUrl && <div className="damage-photo-preview"><strong>Foto selezionata</strong><img src={draftPhotoUrl} alt="Anteprima foto danno" /><small>{draftPhoto?.name}</small></div>}<div><button disabled={!draftPhoto || savingDraft} onClick={() => void saveDraft()}>{savingDraft ? "Salvataggio…" : "Salva danno"}</button><button disabled={savingDraft} onClick={() => { pendingAdds.current.delete(draft.key); setDraft(null); setDraftPhoto(null); }}>Annulla</button></div></section></div>}
       {photoModal && <div className="damage-photo-modal damage-photo-viewer" role="dialog" aria-modal="true" aria-label="Foto del danno" onMouseDown={(event) => { if (event.target === event.currentTarget) setPhotoModal(null); }}><section onMouseDown={(event) => event.stopPropagation()}><button className="damage-photo-close" aria-label="Chiudi foto" onClick={() => setPhotoModal(null)}>×</button>{["loading", "image-loading"].includes(photoModal.status) && <p className="damage-photo-loading">Caricamento foto…</p>}{photoModal.url && <img className={photoModal.status === "success" ? "is-ready" : ""} src={photoModal.url} alt="Foto del danno" onLoad={() => setPhotoModal((current) => current ? { ...current, status: "success" } : current)} onError={() => setPhotoModal((current) => current ? { ...current, status: "error", url: "" } : current)} />}{photoModal.status === "error" && <div className="damage-photo-error"><p>Impossibile caricare la foto. Riprova.</p><button onClick={() => { const damage = damages.find((item) => item.damage_id === photoModal.damageId); if (damage) void viewPhoto(damage, true); }}>Riprova</button></div>}</section></div>}
