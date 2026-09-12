@@ -15,7 +15,8 @@ export function inspectionListQuery(query = {}) {
 export function publicInspection(row) {
   return {
     id: row.id, inspectionType: row.inspection_type, vehiclePlate: row.vehicle_plate,
-    vehicleDescription: row.vehicle_description, inspectionCycleId: row.inspection_cycle_id,
+    vehicleDescription: row.vehicle_description, driverFirstName: row.driver_first_name,
+    driverLastName: row.driver_last_name, inspectionCycleId: row.inspection_cycle_id,
     inspectedAt: row.inspected_at, deviceTimezone: row.device_timezone, status: row.upload_status,
     documentHash: row.document_hash, documentSizeBytes: row.document_size_bytes,
     deviceId: row.device_id, finalizedAt: row.finalized_at, retentionExpiresAt: row.retention_expires_at,

@@ -26,7 +26,7 @@
 .inspections-empty { padding: 1.5rem .5rem; margin: 0; color: #647a9a; text-align: center; }
 .inspections-page :is(a,button,input,select):focus-visible { outline: 3px solid #1763cf; outline-offset: 3px; }
 .inspections-page button:disabled { opacity: .5; cursor: wait; }
-.inspections-page > :is(.inspections-filter-bar,.inspections-kpis,.inspections-catalog,.notice) { grid-column: 1 / -1; min-width: 0; }
+.inspections-page > :is(.inspections-filter-bar,.inspections-kpis,.inspections-catalog,.notice,.inspections-quick-filter) { grid-column: 1 / -1; min-width: 0; }
 .inspections-page .inspections-filter-bar { grid-template-columns: repeat(4,minmax(0,1fr)) auto auto; margin: 0; padding: 1rem; border-color: #e6edf6; gap: .65rem; }
 .inspections-page .inspections-filter-bar label { min-width: 0; font-size: .75rem; color: #506685; }
 .inspections-filter-bar input,.inspections-filter-bar select { width: 100%; min-width: 0; min-height: 46px; background: white; }
@@ -37,6 +37,11 @@
 .inspections-compare > span { font-size: .75rem; color: #647a9a; }
 .inspections-compare-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .55rem; }
 .inspections-compare-actions small { color: #647a9a; font-size: .75rem; }
+.inspections-quick-filter { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; margin: 0; padding: .7rem .9rem; border: 1px solid #cfe0ff; border-radius: .65rem; background: #f3f8ff; color: #245083; font-size: .82rem; }
+.inspections-quick-filter button { border: 0; padding: .2rem .4rem; color: #175ed3; background: transparent; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.inspections-filter-link { display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: .15rem; border: 0; padding: .2rem 0; color: #175ed3; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.inspections-filter-link:hover { color: #0d4bb5; text-decoration: underline; }
+.inspections-filter-link small { margin-top: 0; color: #647a9a; }
 .inspections-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .8rem; }
 .inspections-table th,.inspections-table td { text-align: left; padding: .55rem .65rem; border-bottom: 1px solid #e9eff6; overflow-wrap: anywhere; }
 .inspections-table thead th { padding-block: .9rem; background: #f2f5fa; color: #5b6f90; text-transform: uppercase; font-size: .7rem; }

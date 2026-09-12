@@ -8,7 +8,7 @@ export default async function handler(request, response) {
     if (!context.capabilities.viewInspections || !context.organization) return sendJson(response, 403, { error: 'INSPECTIONS_FORBIDDEN' })
     const filters = inspectionListQuery(request.query)
     let query = clients.checkvan.from('checkvan_inspections')
-      .select('id,inspection_type,vehicle_plate,vehicle_description,inspection_cycle_id,inspected_at,device_timezone,upload_status,document_hash,document_size_bytes,device_id,finalized_at,retention_expires_at', { count: 'exact' })
+      .select('id,inspection_type,vehicle_plate,vehicle_description,driver_first_name,driver_last_name,inspection_cycle_id,inspected_at,device_timezone,upload_status,document_hash,document_size_bytes,device_id,finalized_at,retention_expires_at', { count: 'exact' })
       .eq('organization_id', context.organization.id).eq('upload_status', 'available').order('inspected_at', { ascending: false }).range(filters.from, filters.to)
     if (filters.dateFrom) query = query.gte('inspected_at', filters.dateFrom)
     if (filters.dateTo) query = query.lte('inspected_at', filters.dateTo)
