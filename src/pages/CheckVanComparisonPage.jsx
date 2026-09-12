@@ -34,22 +34,23 @@ function CheckVanComparisonPage() {
   useEffect(() => { documentsRef.current = documents }, [documents])
   useEffect(() => () => { releaseComparison(documentsRef.current) }, [])
 
-  const compare = async (event, selectedFiles = files) => {
+  const compare = async (event, selectedFiles = files, fromCloud = false) => {
     event?.preventDefault(); setError(''); setProgress(t('Preparazione del confronto…', 'Preparing the comparison…'))
     if (selectedFiles.some((file) => validatePdfFile(file))) { setError(t('Seleziona due file PDF validi e non vuoti.', 'Select two valid, non-empty PDF files.')); setProgress(''); return }
     const results = []
     try {
-      for (let index = 0; index < 2; index += 1) results.push(await readCheckvanPdf(selectedFiles[index], (page, total) => setProgress(t(`Documento ${index + 1}: pagina ${page} di ${total}…`, `Document ${index + 1}: page ${page} of ${total}…`))))
+      for (let index = 0; index < 2; index += 1) { try { results.push(await readCheckvanPdf(selectedFiles[index], (page, total) => setProgress(t(`Documento ${index + 1}: pagina ${page} di ${total}…`, `Document ${index + 1}: page ${page} of ${total}…`)))) } catch (reason) { reason.comparisonIndex = index; throw reason } }
       setDocuments(results); setProgress('')
     } catch (reason) {
       await releaseComparison(results); setProgress('')
       const known = reason.message === 'not-checkvan' || reason.message === 'no-categories'
-      setError(known ? t('Il PDF non è stato riconosciuto come ispezione CheckVan con fotografie guidate.', 'The PDF was not recognized as a CheckVan inspection with guided photos.') : t('Non è stato possibile leggere uno dei PDF.', 'One of the PDFs could not be read.'))
+      const cloudLabel = reason.comparisonIndex === 0 ? 'prima' : 'seconda'
+      setError(known ? (fromCloud ? `Il documento della ${cloudLabel} ispezione non è compatibile con le fotografie guidate CheckVan.` : t('Il PDF non è stato riconosciuto come ispezione CheckVan con fotografie guidate.', 'The PDF was not recognized as a CheckVan inspection with guided photos.')) : t('Non è stato possibile leggere uno dei PDF.', 'One of the PDFs could not be read.'))
     }
   }
 
   const handleCloudReady = async (nextFiles, selectedItems) => {
-    setFiles(nextFiles); setCloudItems(selectedItems); await compare(null, nextFiles)
+    setFiles(nextFiles); setCloudItems(selectedItems); await compare(null, nextFiles, true)
   }
 
   const categoryLabel = (category) => language === 'en' ? category.en : category.it
