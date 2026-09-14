@@ -52,6 +52,17 @@ test('public desktop and mobile navigation exposes Area Enti login', async () =>
 
 test('UNION_GUEST is rejected by company routes while trial-eligible users without membership remain allowed', async () => {
   const source = await readFile(new URL('../company/src/App.jsx', import.meta.url), 'utf8')
-  assert.match(source, /<ProtectedRoute deniedRoles=\{\['UNION_GUEST'\]\} unauthorizedRoute="\/enti\/verifica"/)
+  assert.match(source, /<ProtectedRoute deniedRoles=\{\['UNION_GUEST'\]\} unauthorizedRoute=\{COMPANY_ROUTES\.login\}/)
+  assert.doesNotMatch(source, /unauthorizedRoute="\/enti\/verifica"/)
   assert.doesNotMatch(source, /allowedRoles=/)
+})
+
+test('area entry points keep an authenticated account in the requested area', async () => {
+  const [companyLogin, entitiesLogin] = await Promise.all([
+    readFile(new URL('../company/src/pages/LoginPage.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../entities/src/pages/EntitiesLoginPage.jsx', import.meta.url), 'utf8'),
+  ])
+  assert.match(companyLogin, /Questo account non è autorizzato ad accedere all’Area Aziende\. Utilizza l’accesso Area Enti\./)
+  assert.doesNotMatch(companyLogin, /access\?\.role === 'UNION_GUEST' \? '\/enti\/verifica'/)
+  assert.match(entitiesLogin, /Questo account non è autorizzato ad accedere all’Area Enti\. Utilizza l’accesso Area Aziende\./)
 })
