@@ -66,3 +66,31 @@
 .fleet-dashboard a:focus-visible { outline: 3px solid #1763cf; outline-offset: 3px; }
 @media(max-width:1250px) { .fleet-dashboard > .fleet-heading { align-items: flex-start; flex-direction: column; } .fleet-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); } .fleet-primary { grid-template-columns: 1fr; } .fleet-secondary { grid-template-columns: repeat(2,minmax(0,1fr)); } .fleet-secondary > :last-child { grid-column: 1/-1; } .fleet-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .company-page.fleet-dashboard { width: calc(100% - 1.5rem); padding-top: 1.25rem; } .fleet-identity { align-items: flex-start; flex-direction: column; gap: .75rem; } .fleet-identity > div { border: 0; padding: 0; } .fleet-kpis, .fleet-secondary, .fleet-shortcuts { grid-template-columns: 1fr; } .fleet-kpi { padding: 1rem; } .fleet-panel { padding: .9rem; } .fleet-report { grid-template-columns: 42px minmax(0,1fr); } .fleet-report > div:nth-of-type(2) { grid-column: 1/-1; } .fleet-report a { grid-column: 1/-1; } .fleet-report-list { max-height: 480px; } .fleet-account > div { flex-wrap: wrap; } }
+
+/* Dashboard density: preserve the existing visual system while prioritising operational actions. */
+@media(min-width:601px) {
+  .company-page.fleet-dashboard { padding-top: 1.15rem; padding-bottom: 2rem; }
+  .fleet-dashboard > .fleet-heading { margin-bottom: 1rem; }
+  .fleet-kpis { gap: .7rem; margin-bottom: .75rem; }
+  .fleet-kpi { gap: .7rem; padding: .8rem; }
+  .fleet-kpi h2 { margin: .15rem 0 .2rem; }
+  .fleet-kpi .fleet-icon { width: 46px; height: 46px; border-radius: 14px; }
+  .fleet-panel { padding: .9rem; }
+  .fleet-panel h2 { gap: .6rem; margin-bottom: .55rem; }
+  .fleet-quick-access { margin-bottom: .8rem; }
+  .fleet-shortcuts { gap: .65rem; }
+  .fleet-shortcuts > a, .fleet-shortcuts > div { min-height: 58px; gap: .65rem; padding: .65rem .75rem; }
+  .fleet-secondary, .fleet-primary { gap: .8rem; margin-bottom: .8rem; }
+  .fleet-caption { line-height: 1.4; margin: .1rem 0 .55rem; }
+  .fleet-empty { min-height: 96px; padding: .75rem; }
+  .fleet-success { min-height: 120px; gap: .35rem; padding: .8rem; }
+  .fleet-report-list { max-height: 240px; gap: .45rem; }
+  .fleet-report { grid-template-columns: 38px minmax(0, .7fr) minmax(0, 1.4fr) auto; gap: .6rem; padding: .6rem; }
+  .fleet-report .fleet-icon { width: 38px; height: 38px; }
+  .fleet-events li { gap: .6rem; padding: .5rem 0; }
+  .fleet-inspections li { gap: .15rem .5rem; padding: .45rem 0; }
+  .fleet-damage-placeholder { gap: .4rem; padding: .35rem; }
+  .fleet-distribution { height: 22px; margin: 1rem 0 .8rem; }
+  .fleet-state-counts { margin-bottom: .55rem; }
+  .fleet-account { gap: .8rem; margin-top: .8rem; padding: .8rem; }
+}
