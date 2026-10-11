@@ -32,3 +32,7 @@ test('ordinary PDF saving never asks for Drive archive details', () => {
   assert.match(source, /if \(archiveToDrive && driveState\.connected && driveState\.enabled\)/)
   assert.match(source, /Archivia su Google Drive/)
 })
+
+test('destructive actions rely on undo and warn only for unsaved work', () => {
+  for (const action of ['hasUnsavedChanges', 'beforeunload', 'Pagina eliminata. Puoi annullare', 'Elemento eliminato. Puoi annullare']) assert.match(source, new RegExp(action))
+})

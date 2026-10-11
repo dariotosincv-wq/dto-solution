@@ -5,6 +5,7 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import { getApplicationBySlug } from '../data/applications.js'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
+import { hasNacScanUnsavedChanges, nacScanDocumentStateKey } from '../lib/nacscanDocumentState.js'
 import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, movePageRectFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../lib/nacscanAnnotations.js'
 import { createDocumentSnapshot, createNacScanHistory, recordNacScanHistory, redoNacScanHistory, undoNacScanHistory } from '../lib/nacscanHistory.js'
 import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
@@ -132,7 +133,7 @@ function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete
     dragRef.current = null
     if (!moved) {
       if (annotation.type === 'text' || annotation.type === 'cover') onSelect(annotation.id)
-      else if (window.confirm('Eliminare questo elemento?')) onDelete(annotation.id)
+      else onDelete(annotation.id)
     }
   }
 
@@ -423,6 +424,8 @@ function NacScanWebPage() {
   const [saveDirectory, setSaveDirectory] = useState(null)
   const [driveState, setDriveState] = useState(() => loadDriveState())
   const [signatureForSettings, setSignatureForSettings] = useState(false)
+  const savedDocumentStateRef = useRef('')
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [history, setHistory] = useState(createNacScanHistory)
   const textEditingRef = useRef(null)
   const textEditingTimerRef = useRef(null)
@@ -433,6 +436,13 @@ function NacScanWebPage() {
   const language = resolveNacScanLanguage(preferences.languagePreference)
   const tr = (key) => nacScanText(language, key)
   useEffect(() => { loadSaveDirectory().then(setSaveDirectory) }, [])
+  useEffect(() => { setHasUnsavedChanges(hasNacScanUnsavedChanges(pages, savedDocumentStateRef.current)) }, [pages])
+  useEffect(() => {
+    if (!hasUnsavedChanges) return undefined
+    const warnBeforeUnload = (event) => { event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', warnBeforeUnload)
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload)
+  }, [hasUnsavedChanges])
 
   const setDocumentHistory = (next) => setHistory(next)
   const recordDocumentChange = () => setDocumentHistory(recordNacScanHistory(history, createDocumentSnapshot(pages, selectedId)))
@@ -542,7 +552,10 @@ function NacScanWebPage() {
         }
       }
       if (pages.length) recordDocumentChange()
-      else clearDocumentHistory()
+      else {
+        clearDocumentHistory()
+        savedDocumentStateRef.current = nacScanDocumentStateKey(additions)
+      }
       setPages((current) => [...current, ...additions])
       setSelectedId((current) => current || additions[0]?.id || null)
       setMessage(`${additions.length} ${additions.length === 1 ? 'pagina importata' : 'pagine importate'}.`)
@@ -588,7 +601,10 @@ function NacScanWebPage() {
 
   function updateAnnotation(id, value, record = true) {
     updateSelected((page) => ({ ...page, annotations: value ? (page.annotations || []).map((item) => item.id === id ? value : item) : (page.annotations || []).filter((item) => item.id !== id) }), record)
-    if (!value) setSelectedAnnotationId((current) => current === id ? null : current)
+    if (!value) {
+      setSelectedAnnotationId((current) => current === id ? null : current)
+      setMessage('Elemento eliminato. Puoi annullare l’operazione.')
+    }
   }
 
   function applyCoverColor(value) {
@@ -652,12 +668,14 @@ function NacScanWebPage() {
   }
 
   function returnHome() {
-    if (pages.length && !window.confirm('Tornare alla Home? Le modifiche non esportate verranno eliminate.')) return
+    if (hasUnsavedChanges && !window.confirm('Tornare alla Home? Le modifiche non salvate verranno eliminate.')) return
     setPages([])
     setSelectedId(null)
     setActiveTool('')
     setToolsOpen(false)
     setMessage('')
+    savedDocumentStateRef.current = ''
+    setHasUnsavedChanges(false)
     clearDocumentHistory()
   }
 
@@ -680,6 +698,7 @@ function NacScanWebPage() {
     const next = pages.filter((page) => page.id !== selectedId)
     setPages(next)
     setSelectedId(next[Math.min(selectedIndex, next.length - 1)]?.id || null)
+    setMessage('Pagina eliminata. Puoi annullare l’operazione.')
   }
 
   async function exportPdf({ archiveToDrive = false } = {}) {
@@ -754,6 +773,8 @@ function NacScanWebPage() {
       const blob = new Blob([await output.save()], { type: 'application/pdf' })
       const fileName = createAndroidCompatiblePdfName(pages)
       const saved = await saveNacScanFile(blob, fileName, saveDirectory)
+      savedDocumentStateRef.current = nacScanDocumentStateKey(pages)
+      setHasUnsavedChanges(false)
       if (archiveToDrive && driveState.connected && driveState.enabled) {
         const company = window.prompt('Azienda / soggetto', '')
         const documentType = company !== null ? window.prompt('Che tipo di documento vuoi salvare?', 'Documenti') : null
