@@ -22,3 +22,7 @@ test('fullscreen has an Escape fallback and viewport overlay', () => {
 test('viewer keeps existing rotate, signature, reorder, delete and export actions', () => {
   for (const action of ['moveSelected', 'rotation:', 'setSignatureOpen', 'removeSelected', 'exportPdf']) assert.match(source, new RegExp(action))
 })
+
+test('cover tool provides color selection, a canvas eyedropper and secure flattening path', () => {
+  for (const action of ['Contagocce', 'getImageData', 'coverColorToRgb', 'flattenPdfPage']) assert.match(source, new RegExp(action))
+})

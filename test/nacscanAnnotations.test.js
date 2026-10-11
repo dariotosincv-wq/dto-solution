@@ -1,12 +1,18 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../src/lib/nacscanAnnotations.js'
+import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../src/lib/nacscanAnnotations.js'
 
 test('creates normalized text and graphical cover annotations', () => {
   const text = createTextAnnotation(.2, .3, 'Prova', 24, 'blue')
   const cover = createCoverAnnotation(.4, .5)
   assert.deepEqual({ type: text.type, x: text.x, y: text.y, text: text.text, fontSize: text.fontSize, color: text.color }, { type: 'text', x: .2, y: .3, text: 'Prova', fontSize: 24, color: 'blue' })
-  assert.deepEqual({ type: cover.type, width: cover.width, height: cover.height }, { type: 'cover', width: .24, height: .06 })
+  assert.deepEqual({ type: cover.type, width: cover.width, height: cover.height, color: cover.color }, { type: 'cover', width: .24, height: .06, color: '#000000' })
+})
+
+test('normalizes custom cover colors for display and PDF export', () => {
+  assert.equal(normalizeCoverColor('#A1b2C3'), '#a1b2c3')
+  assert.equal(normalizeCoverColor('invalid'), '#000000')
+  assert.deepEqual(coverColorToRgb('#ff8040'), [1, 128 / 255, 64 / 255])
 })
 
 test('page coordinates round-trip through every visual rotation', () => {

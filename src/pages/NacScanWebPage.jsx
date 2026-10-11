@@ -5,7 +5,7 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import { getApplicationBySlug } from '../data/applications.js'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
-import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../lib/nacscanAnnotations.js'
+import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../lib/nacscanAnnotations.js'
 import { createDocumentSnapshot, createNacScanHistory, recordNacScanHistory, redoNacScanHistory, undoNacScanHistory } from '../lib/nacscanHistory.js'
 import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
 import { searchNacScanPages } from '../lib/nacscanPdfSearch.js'
@@ -129,7 +129,7 @@ function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete
     const moved = dragRef.current?.moved
     dragRef.current = null
     if (!moved) {
-      if (annotation.type === 'text') onSelect(annotation.id)
+      if (annotation.type === 'text' || annotation.type === 'cover') onSelect(annotation.id)
       else if (window.confirm('Eliminare questo elemento?')) onDelete(annotation.id)
     }
   }
@@ -138,7 +138,7 @@ function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete
     <div className="nacscan-annotation-anchor" style={{ left: `${(visualRect || visual).x * 100}%`, top: `${(visualRect || visual).y * 100}%`, width: annotation.width ? `${(visualRect || annotation).width * 100}%` : undefined, height: annotation.height ? `${(visualRect || annotation).height * 100}%` : undefined }}>
     <div
       className={`nacscan-annotation nacscan-annotation--${annotation.type}${selected ? ' is-selected' : ''}`}
-      style={{ fontSize: annotation.fontSize ? `${annotation.fontSize}px` : undefined, color: annotation.color, fontWeight: annotation.fontWeight, fontStyle: annotation.fontStyle, textDecoration: annotation.textDecoration, transform: annotation.type === 'cover' ? undefined : `rotate(${rotation}deg)` }}
+      style={{ fontSize: annotation.fontSize ? `${annotation.fontSize}px` : undefined, color: annotation.color, background: annotation.type === 'cover' ? normalizeCoverColor(annotation.color) : undefined, fontWeight: annotation.fontWeight, fontStyle: annotation.fontStyle, textDecoration: annotation.textDecoration, transform: annotation.type === 'cover' ? undefined : `rotate(${rotation}deg)` }}
       role="button"
       tabIndex="0"
       onPointerDown={startDrag}
@@ -151,7 +151,7 @@ function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete
   )
 }
 
-function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation, onMoveAnnotation, onBeginAnnotationMove, onDeleteAnnotation, selectedAnnotationId, onSelectAnnotation, searchHighlights }) {
+function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, coverColor, pickingCoverColor, onPickCoverColor, onAddAnnotation, onUpdateAnnotation, onMoveAnnotation, onBeginAnnotationMove, onDeleteAnnotation, selectedAnnotationId, onSelectAnnotation, searchHighlights }) {
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
   const [zoom, setZoom] = useState(1)
@@ -262,6 +262,15 @@ function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activ
   const startCoverSelection = (event) => {
     if (activeTool !== 'cover' || event.target !== canvasRef.current) return
     event.preventDefault()
+    if (pickingCoverColor) {
+      const canvas = canvasRef.current
+      const rect = canvas.getBoundingClientRect()
+      const pixelX = Math.min(canvas.width - 1, Math.max(0, Math.floor((event.clientX - rect.left) * canvas.width / rect.width)))
+      const pixelY = Math.min(canvas.height - 1, Math.max(0, Math.floor((event.clientY - rect.top) * canvas.height / rect.height)))
+      const [red, green, blue] = canvas.getContext('2d').getImageData(pixelX, pixelY, 1, 1).data
+      onPickCoverColor(`#${[red, green, blue].map((value) => value.toString(16).padStart(2, '0')).join('')}`)
+      return
+    }
     const point = canvasPoint(event)
     coverDragRef.current = { pointerId: event.pointerId, start: point }
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -302,7 +311,7 @@ function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activ
       <div className={`nacscan-viewer__viewport${activeTool ? ' is-editing' : ''}`} ref={viewportRef}>
         <div className="nacscan-viewer__stage" onClick={handlePageClick} onPointerDown={startCoverSelection} onPointerMove={moveCoverSelection} onPointerUp={finishCoverSelection} onPointerCancel={() => { coverDragRef.current = null; setCoverSelection(null) }}>
           <canvas ref={canvasRef} aria-label={`Pagina ${pageNumber} del documento`} />
-          {coverSelection && <span className="nacscan-cover-selection" style={{ left: `${coverSelection.x * 100}%`, top: `${coverSelection.y * 100}%`, width: `${coverSelection.width * 100}%`, height: `${coverSelection.height * 100}%` }} />}
+          {coverSelection && <span className="nacscan-cover-selection" style={{ left: `${coverSelection.x * 100}%`, top: `${coverSelection.y * 100}%`, width: `${coverSelection.width * 100}%`, height: `${coverSelection.height * 100}%`, background: coverColor }} />}
           {searchHighlights.map((result) => { const point = pageToVisualPoint(result.x, result.y, page.rotation); return <span key={result.resultIndex} className={`nacscan-search-highlight${result.current ? ' is-current' : ''}`} style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%`, width: `${result.width * 100}%`, height: `${result.height * 100}%` }} /> })}
           {(page.annotations || []).map((annotation) => <AnnotationOverlay annotation={annotation} key={annotation.id} onUpdate={onUpdateAnnotation} onMove={onMoveAnnotation} onStartMove={onBeginAnnotationMove} onDelete={onDeleteAnnotation} rotation={page.rotation} selected={annotation.id === selectedAnnotationId} onSelect={onSelectAnnotation} />)}
         </div>
@@ -394,6 +403,9 @@ function NacScanWebPage() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [activeTool, setActiveTool] = useState('')
+  const [coverColor, setCoverColor] = useState('#000000')
+  const [coverColorInput, setCoverColorInput] = useState('#000000')
+  const [pickingCoverColor, setPickingCoverColor] = useState(false)
   const [textOptions, setTextOptions] = useState(() => ({ size: preferences.defaultTextFontSize, color: preferences.defaultTextColor }))
   const [extractedText, setExtractedText] = useState('')
   const [toolsOpen, setToolsOpen] = useState(false)
@@ -415,6 +427,7 @@ function NacScanWebPage() {
 
   const selectedIndex = pages.findIndex((page) => page.id === selectedId)
   const selectedText = (pages[selectedIndex]?.annotations || []).find((annotation) => annotation.id === selectedAnnotationId && annotation.type === 'text') || null
+  const selectedCover = (pages[selectedIndex]?.annotations || []).find((annotation) => annotation.id === selectedAnnotationId && annotation.type === 'cover') || null
   const language = resolveNacScanLanguage(preferences.languagePreference)
   const tr = (key) => nacScanText(language, key)
   useEffect(() => { loadSaveDirectory().then(setSaveDirectory) }, [])
@@ -554,7 +567,9 @@ function NacScanWebPage() {
       updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), annotation] }))
       setSelectedAnnotationId(annotation.id)
     } else if (activeTool === 'cover') {
-      updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), createCoverAnnotation(x, y, point.width, point.height)] }))
+      const annotation = createCoverAnnotation(x, y, point.width, point.height, coverColor)
+      updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), annotation] }))
+      setSelectedAnnotationId(annotation.id)
     } else if (activeTool === 'signature' && pendingSignature) {
       updateSelected((page) => ({ ...page, annotations: [...(page.annotations || []), createSignatureAnnotation(x, y, pendingSignature)] }))
       setPendingSignature('')
@@ -572,6 +587,14 @@ function NacScanWebPage() {
   function updateAnnotation(id, value, record = true) {
     updateSelected((page) => ({ ...page, annotations: value ? (page.annotations || []).map((item) => item.id === id ? value : item) : (page.annotations || []).filter((item) => item.id !== id) }), record)
     if (!value) setSelectedAnnotationId((current) => current === id ? null : current)
+  }
+
+  function applyCoverColor(value) {
+    const color = normalizeCoverColor(value)
+    setCoverColor(color)
+    setCoverColorInput(color)
+    setPickingCoverColor(false)
+    if (selectedCover) updateAnnotation(selectedCover.id, { ...selectedCover, color })
   }
 
   function beginTextEditing(id) {
@@ -686,7 +709,7 @@ function NacScanWebPage() {
           for (const annotation of page.annotations || []) {
             const { width, height } = sourcePage.getSize()
             if (annotation.type === 'text') drawNacScanText(sourcePage, annotation, flattenedFonts)
-            else if (annotation.type === 'cover') sourcePage.drawRectangle({ x: annotation.x * width, y: (1 - annotation.y - annotation.height) * height, width: annotation.width * width, height: annotation.height * height, color: rgb(0, 0, 0) })
+            else if (annotation.type === 'cover') sourcePage.drawRectangle({ x: annotation.x * width, y: (1 - annotation.y - annotation.height) * height, width: annotation.width * width, height: annotation.height * height, color: rgb(...coverColorToRgb(annotation.color)) })
             else if (annotation.type === 'signature') {
               const signature = annotation.image.startsWith('data:image/jpeg') ? await flattenedSource.embedJpg(annotation.image) : await flattenedSource.embedPng(annotation.image)
               const signatureWidth = annotation.width * width
@@ -717,7 +740,7 @@ function NacScanWebPage() {
           if (annotation.type === 'text') {
             drawNacScanText(targetPage, annotation, textFonts)
           } else if (annotation.type === 'cover') {
-            targetPage.drawRectangle({ x: annotation.x * width, y: (1 - annotation.y - annotation.height) * height, width: annotation.width * width, height: annotation.height * height, color: rgb(0, 0, 0) })
+            targetPage.drawRectangle({ x: annotation.x * width, y: (1 - annotation.y - annotation.height) * height, width: annotation.width * width, height: annotation.height * height, color: rgb(...coverColorToRgb(annotation.color)) })
           } else if (annotation.type === 'signature') {
             const signature = annotation.image.startsWith('data:image/jpeg') ? await output.embedJpg(annotation.image) : await output.embedPng(annotation.image)
             const signatureWidth = annotation.width * width
@@ -805,6 +828,9 @@ function NacScanWebPage() {
                 onPrevious={() => setSelectedId(pages[selectedIndex - 1]?.id || selectedId)}
                 onNext={() => setSelectedId(pages[selectedIndex + 1]?.id || selectedId)}
                 activeTool={activeTool}
+                coverColor={coverColor}
+                pickingCoverColor={pickingCoverColor}
+                onPickCoverColor={applyCoverColor}
                 onAddAnnotation={addAnnotation}
                 onUpdateAnnotation={updateAnnotation}
                 onMoveAnnotation={(id, value) => updateAnnotation(id, value, false)}
@@ -823,9 +849,10 @@ function NacScanWebPage() {
                 <button className="nacscan-tools-button" type="button" onClick={() => setToolsOpen((value) => !value)}>Strumenti</button>
               </div>
               {searchOpen && <div className="nacscan-search-panel" aria-label="Cerca testo nel PDF"><input type="search" placeholder={tr('searchPlaceholder')} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') runSearch() }} /><button type="button" onClick={runSearch} disabled={!searchQuery.trim()}>{tr('search')}</button><strong>{searchResults.length ? `${searchIndex + 1}/${searchResults.length}` : '0/0'}</strong><button type="button" onClick={() => moveSearch(-1)} disabled={!searchResults.length}>{tr('previous')}</button><button type="button" onClick={() => moveSearch(1)} disabled={!searchResults.length}>{tr('next')}</button></div>}
-              {toolsOpen && <aside className="nacscan-tools-panel" aria-label="Strumenti PDF"><h2>Strumenti</h2><button type="button" onClick={exportPdf}>Condividi / Salva</button><button type="button" onClick={() => { setActiveTool('text'); setToolsOpen(false) }}>Compila PDF</button><button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Raddrizza pagina</button><label>Aggiungi pagine<input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} /></label><button type="button" onClick={() => { setActiveTool('cover'); setToolsOpen(false) }}>Copri testo</button>{savedSignatures.map((signature) => <button key={signature.id} type="button" onClick={() => { setPendingSignature(signature.imageData); setActiveTool('signature'); setToolsOpen(false) }}>Usa {signature.name}{signature.isDefault ? ' (predefinita)' : ''}</button>)}<button className="is-primary" type="button" onClick={() => { setSignatureForSettings(false); setSignatureOpen(true); setToolsOpen(false) }}>Disegna nuova firma</button></aside>}
+              {toolsOpen && <aside className="nacscan-tools-panel" aria-label="Strumenti PDF"><h2>Strumenti</h2><button type="button" onClick={exportPdf}>Condividi / Salva</button><button type="button" onClick={() => { setActiveTool('text'); setToolsOpen(false) }}>Compila PDF</button><button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Raddrizza pagina</button><label>Aggiungi pagine<input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} /></label><button type="button" onClick={() => { setSelectedAnnotationId(null); setPickingCoverColor(false); setActiveTool('cover'); setToolsOpen(false) }}>Copri testo</button>{savedSignatures.map((signature) => <button key={signature.id} type="button" onClick={() => { setPendingSignature(signature.imageData); setActiveTool('signature'); setToolsOpen(false) }}>Usa {signature.name}{signature.isDefault ? ' (predefinita)' : ''}</button>)}<button className="is-primary" type="button" onClick={() => { setSignatureForSettings(false); setSignatureOpen(true); setToolsOpen(false) }}>Disegna nuova firma</button></aside>}
               {activeTool === 'text' && <div className="nacscan-edit-options"><strong>Compila PDF</strong><span>Clicca sulla pagina per inserire il testo.</span><select aria-label="Dimensione testo" value={textOptions.size} onChange={(event) => setTextOptions((value) => ({ ...value, size: Number(event.target.value) }))}><option>12</option><option>18</option><option>24</option><option>32</option></select><select aria-label="Colore testo" value={textOptions.color} onChange={(event) => setTextOptions((value) => ({ ...value, color: event.target.value }))}><option value="black">Nero</option><option value="blue">Blu</option><option value="red">Rosso</option></select><button type="button" onClick={() => setActiveTool('')}>Esci</button></div>}
               {activeTool === 'cover' && <div className="nacscan-edit-options"><strong>Copri testo</strong><span>Trascina sulla pagina per coprire l’area desiderata.</span><button type="button" onClick={() => setActiveTool('')}>Esci</button></div>}
+              {(activeTool === 'cover' || selectedCover) && <div className="nacscan-edit-options nacscan-cover-options"><strong>{selectedCover ? 'Modifica copertura' : 'Colore copertura'}</strong><span>{pickingCoverColor ? 'Tocca un punto della pagina per prelevare il colore.' : 'Scegli il colore prima di trascinare sulla pagina.'}</span><div className="nacscan-cover-palette" aria-label="Tavolozza colore copertura">{['#000000', '#ffffff', '#6b7280', '#ef4444', '#2563eb'].map((color) => <button key={color} type="button" className={coverColor === color ? 'is-active' : ''} aria-label={`Usa ${color}`} title={color} style={{ background: color, color: color === '#ffffff' ? '#07172d' : 'white' }} onClick={() => applyCoverColor(color)}>●</button>)}</div><label className="nacscan-cover-color-input">Colore<input type="color" value={normalizeCoverColor(coverColor)} onChange={(event) => applyCoverColor(event.target.value)} /></label><label className="nacscan-cover-color-input">HEX<input type="text" inputMode="text" maxLength="7" value={coverColorInput} onChange={(event) => { const value = event.target.value; setCoverColorInput(value); if (/^#[0-9a-f]{6}$/i.test(value)) applyCoverColor(value) }} onBlur={() => setCoverColorInput(normalizeCoverColor(coverColorInput))} /></label><button type="button" className={pickingCoverColor ? 'is-active' : ''} aria-pressed={pickingCoverColor} onClick={() => { setActiveTool('cover'); setPickingCoverColor((value) => !value) }}>Contagocce</button>{selectedCover && <button className="is-danger" type="button" onClick={() => updateAnnotation(selectedCover.id, null)}>Elimina copertura</button>}</div>}
               <div className="nacscan-web__export">
                 <p>{message || 'Seleziona una pagina per modificarla.'}</p>
                 <button className="button button--primary" type="button" onClick={exportPdf} disabled={busy}>Salva PDF</button>

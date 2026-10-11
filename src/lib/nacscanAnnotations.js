@@ -47,6 +47,17 @@ export function createTextAnnotation(x, y, text, fontSize = 18, color = 'black')
 }
 
 const clampPoint = (value) => Math.max(0, Math.min(1, value))
+export const DEFAULT_COVER_COLOR = '#000000'
+
+export function normalizeCoverColor(value) {
+  const color = String(value || '').trim()
+  return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : DEFAULT_COVER_COLOR
+}
+
+export function coverColorToRgb(value) {
+  const color = normalizeCoverColor(value)
+  return [Number.parseInt(color.slice(1, 3), 16) / 255, Number.parseInt(color.slice(3, 5), 16) / 255, Number.parseInt(color.slice(5, 7), 16) / 255]
+}
 
 export function movePagePointFromVisualDelta(point, deltaX, deltaY, rotation = 0) {
   const visual = pageToVisualPoint(point.x, point.y, rotation)
@@ -57,8 +68,8 @@ export function updateTextAnnotation(annotation, changes) {
   return { ...annotation, ...changes, id: annotation.id, type: 'text' }
 }
 
-export function createCoverAnnotation(x, y, width = 0.24, height = 0.06) {
-  return { id: crypto.randomUUID(), type: 'cover', x: clampPoint(x), y: clampPoint(y), width: clampPoint(width), height: clampPoint(height) }
+export function createCoverAnnotation(x, y, width = 0.24, height = 0.06, color = DEFAULT_COVER_COLOR) {
+  return { id: crypto.randomUUID(), type: 'cover', x: clampPoint(x), y: clampPoint(y), width: clampPoint(width), height: clampPoint(height), color: normalizeCoverColor(color) }
 }
 
 export function createSignatureAnnotation(x, y, image, width = 0.3) {
