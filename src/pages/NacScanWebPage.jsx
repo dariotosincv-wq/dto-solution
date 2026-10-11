@@ -5,7 +5,7 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import MetaDescription from '../components/common/MetaDescription.jsx'
 import { getApplicationBySlug } from '../data/applications.js'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
-import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../lib/nacscanAnnotations.js'
+import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, movePageRectFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../lib/nacscanAnnotations.js'
 import { createDocumentSnapshot, createNacScanHistory, recordNacScanHistory, redoNacScanHistory, undoNacScanHistory } from '../lib/nacscanHistory.js'
 import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
 import { searchNacScanPages } from '../lib/nacscanPdfSearch.js'
@@ -107,7 +107,7 @@ function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete
 
   const startDrag = (event) => {
     event.stopPropagation()
-    dragRef.current = { clientX: event.clientX, clientY: event.clientY, x: visual.x, y: visual.y, moved: false }
+    dragRef.current = { clientX: event.clientX, clientY: event.clientY, annotation: { ...annotation }, moved: false }
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
@@ -121,7 +121,9 @@ function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete
     const deltaY = pixelDeltaY / stage.height
     if (!dragRef.current.moved) onStartMove()
     dragRef.current.moved = true
-    onMove(annotation.id, { ...annotation, ...movePagePointFromVisualDelta(annotation, deltaX, deltaY, rotation) })
+    const start = dragRef.current.annotation
+    const position = start.type === 'cover' ? movePageRectFromVisualDelta(start, deltaX, deltaY, rotation) : movePagePointFromVisualDelta(start, deltaX, deltaY, rotation)
+    onMove(start.id, { ...start, ...position })
   }
 
   const finishDrag = (event) => {

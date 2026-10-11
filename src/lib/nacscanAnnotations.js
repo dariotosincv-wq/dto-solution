@@ -64,6 +64,16 @@ export function movePagePointFromVisualDelta(point, deltaX, deltaY, rotation = 0
   return visualToPagePoint(clampPoint(visual.x + deltaX), clampPoint(visual.y + deltaY), rotation)
 }
 
+export function movePageRectFromVisualDelta(rect, deltaX, deltaY, rotation = 0) {
+  const visual = pageRectToVisualRect(rect, rotation)
+  const bounded = {
+    ...visual,
+    x: Math.max(0, Math.min(1 - visual.width, visual.x + deltaX)),
+    y: Math.max(0, Math.min(1 - visual.height, visual.y + deltaY)),
+  }
+  return visualRectToPageRect(bounded, rotation)
+}
+
 export function updateTextAnnotation(annotation, changes) {
   return { ...annotation, ...changes, id: annotation.id, type: 'text' }
 }

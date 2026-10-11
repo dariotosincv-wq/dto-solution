@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../src/lib/nacscanAnnotations.js'
+import { coverColorToRgb, createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, movePageRectFromVisualDelta, normalizeCoverColor, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../src/lib/nacscanAnnotations.js'
 
 test('creates normalized text and graphical cover annotations', () => {
   const text = createTextAnnotation(.2, .3, 'Prova', 24, 'blue')
@@ -68,6 +68,30 @@ test('drag deltas are stored in normalized original-page coordinates', () => {
   const movedAt90 = movePagePointFromVisualDelta({ x: .2, y: .3 }, .1, -.05, 90)
   assert.ok(Math.abs(movedAt90.x - .15) < 1e-12)
   assert.ok(Math.abs(movedAt90.y - .2) < 1e-12)
+})
+
+test('cover drags use one stable starting rectangle at every zoom and rotation', () => {
+  const original = { x: .2, y: .3, width: .25, height: .1 }
+  for (const rotation of [0, 90, 180, 270]) {
+    const expected = movePageRectFromVisualDelta(original, .12, -.08, rotation)
+    for (const zoom of [.5, 1, 1.5, 2]) {
+      const stageWidth = 1000 * zoom
+      const stageHeight = 800 * zoom
+      const repeated = movePageRectFromVisualDelta(original, (120 * zoom) / stageWidth, (-64 * zoom) / stageHeight, rotation)
+      // Pointer events can fire many times; every event measures from the same drag start.
+      for (const key of ['x', 'y', 'width', 'height']) assert.ok(Math.abs(expected[key] - repeated[key]) < 1e-12)
+    }
+  }
+})
+
+test('cover drags remain within page bounds at every rotation', () => {
+  const original = { x: .82, y: .84, width: .18, height: .16 }
+  for (const rotation of [0, 90, 180, 270]) {
+    const moved = movePageRectFromVisualDelta(original, .5, .5, rotation)
+    assert.ok(moved.x >= 0 && moved.y >= 0)
+    assert.ok(moved.x + moved.width <= 1 + 1e-12)
+    assert.ok(moved.y + moved.height <= 1 + 1e-12)
+  }
 })
 
 test('creates a resizable signature anchored to the page', () => {
