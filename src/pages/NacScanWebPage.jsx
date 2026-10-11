@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PDFDocument, degrees, rgb } from 'pdf-lib'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
@@ -6,6 +6,7 @@ import MetaDescription from '../components/common/MetaDescription.jsx'
 import { getApplicationBySlug } from '../data/applications.js'
 import { inspectNacScanPdf } from '../lib/nacscanPdf.js'
 import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../lib/nacscanAnnotations.js'
+import { createDocumentSnapshot, createNacScanHistory, recordNacScanHistory, redoNacScanHistory, undoNacScanHistory } from '../lib/nacscanHistory.js'
 import { drawNacScanText, embedNacScanTextFonts } from '../lib/nacscanPdfText.js'
 import { searchNacScanPages } from '../lib/nacscanPdfSearch.js'
 import { loadNacScanWebPreferences, nacScanText, resolveNacScanLanguage, saveNacScanWebPreferences } from '../lib/nacscanWebPreferences.js'
@@ -99,7 +100,7 @@ async function flattenPdfPage(bytes) {
   }
 }
 
-function AnnotationOverlay({ annotation, onUpdate, rotation, selected, onSelect }) {
+function AnnotationOverlay({ annotation, onUpdate, onMove, onStartMove, onDelete, rotation, selected, onSelect }) {
   const dragRef = useRef(null)
   const visual = pageToVisualPoint(annotation.x, annotation.y, rotation)
   const visualRect = annotation.type === 'cover' ? pageRectToVisualRect(annotation, rotation) : null
@@ -118,8 +119,9 @@ function AnnotationOverlay({ annotation, onUpdate, rotation, selected, onSelect 
     if (!dragRef.current.moved && Math.hypot(pixelDeltaX, pixelDeltaY) < 3) return
     const deltaX = pixelDeltaX / stage.width
     const deltaY = pixelDeltaY / stage.height
+    if (!dragRef.current.moved) onStartMove()
     dragRef.current.moved = true
-    onUpdate(annotation.id, { ...annotation, ...movePagePointFromVisualDelta(annotation, deltaX, deltaY, rotation) })
+    onMove(annotation.id, { ...annotation, ...movePagePointFromVisualDelta(annotation, deltaX, deltaY, rotation) })
   }
 
   const finishDrag = (event) => {
@@ -128,7 +130,7 @@ function AnnotationOverlay({ annotation, onUpdate, rotation, selected, onSelect 
     dragRef.current = null
     if (!moved) {
       if (annotation.type === 'text') onSelect(annotation.id)
-      else if (window.confirm('Eliminare questo elemento?')) onUpdate(annotation.id, null)
+      else if (window.confirm('Eliminare questo elemento?')) onDelete(annotation.id)
     }
   }
 
@@ -149,7 +151,7 @@ function AnnotationOverlay({ annotation, onUpdate, rotation, selected, onSelect 
   )
 }
 
-function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation, selectedAnnotationId, onSelectAnnotation, searchHighlights }) {
+function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activeTool, onAddAnnotation, onUpdateAnnotation, onMoveAnnotation, onBeginAnnotationMove, onDeleteAnnotation, selectedAnnotationId, onSelectAnnotation, searchHighlights }) {
   const canvasRef = useRef(null)
   const viewportRef = useRef(null)
   const [zoom, setZoom] = useState(1)
@@ -302,7 +304,7 @@ function DocumentViewer({ page, pageNumber, pageCount, onPrevious, onNext, activ
           <canvas ref={canvasRef} aria-label={`Pagina ${pageNumber} del documento`} />
           {coverSelection && <span className="nacscan-cover-selection" style={{ left: `${coverSelection.x * 100}%`, top: `${coverSelection.y * 100}%`, width: `${coverSelection.width * 100}%`, height: `${coverSelection.height * 100}%` }} />}
           {searchHighlights.map((result) => { const point = pageToVisualPoint(result.x, result.y, page.rotation); return <span key={result.resultIndex} className={`nacscan-search-highlight${result.current ? ' is-current' : ''}`} style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%`, width: `${result.width * 100}%`, height: `${result.height * 100}%` }} /> })}
-          {(page.annotations || []).map((annotation) => <AnnotationOverlay annotation={annotation} key={annotation.id} onUpdate={onUpdateAnnotation} rotation={page.rotation} selected={annotation.id === selectedAnnotationId} onSelect={onSelectAnnotation} />)}
+          {(page.annotations || []).map((annotation) => <AnnotationOverlay annotation={annotation} key={annotation.id} onUpdate={onUpdateAnnotation} onMove={onMoveAnnotation} onStartMove={onBeginAnnotationMove} onDelete={onDeleteAnnotation} rotation={page.rotation} selected={annotation.id === selectedAnnotationId} onSelect={onSelectAnnotation} />)}
         </div>
       </div>
     </section>
@@ -407,12 +409,58 @@ function NacScanWebPage() {
   const [saveDirectory, setSaveDirectory] = useState(null)
   const [driveState, setDriveState] = useState(() => loadDriveState())
   const [signatureForSettings, setSignatureForSettings] = useState(false)
+  const [history, setHistory] = useState(createNacScanHistory)
+  const textEditingRef = useRef(null)
+  const textEditingTimerRef = useRef(null)
 
   const selectedIndex = pages.findIndex((page) => page.id === selectedId)
   const selectedText = (pages[selectedIndex]?.annotations || []).find((annotation) => annotation.id === selectedAnnotationId && annotation.type === 'text') || null
   const language = resolveNacScanLanguage(preferences.languagePreference)
   const tr = (key) => nacScanText(language, key)
   useEffect(() => { loadSaveDirectory().then(setSaveDirectory) }, [])
+
+  const setDocumentHistory = (next) => setHistory(next)
+  const recordDocumentChange = () => setDocumentHistory(recordNacScanHistory(history, createDocumentSnapshot(pages, selectedId)))
+  const clearDocumentHistory = () => setDocumentHistory(createNacScanHistory())
+
+  const restoreDocument = (snapshot) => {
+    setPages(snapshot.pages)
+    setSelectedId(snapshot.selectedId)
+    setSelectedAnnotationId(null)
+    setActiveTool('')
+  }
+
+  const undo = useCallback(() => {
+    const result = undoNacScanHistory(history, createDocumentSnapshot(pages, selectedId))
+    if (!result) return
+    setDocumentHistory(result.history)
+    restoreDocument(result.snapshot)
+  }, [history, pages, selectedId])
+
+  const redo = useCallback(() => {
+    const result = redoNacScanHistory(history, createDocumentSnapshot(pages, selectedId))
+    if (!result) return
+    setDocumentHistory(result.history)
+    restoreDocument(result.snapshot)
+  }, [history, pages, selectedId])
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+      const target = event.target
+      if (target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return
+      if (event.key.toLowerCase() === 'z') {
+        event.preventDefault()
+        if (event.shiftKey) redo()
+        else undo()
+      } else if (event.key.toLowerCase() === 'y' && !event.shiftKey) {
+        event.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [redo, undo])
 
   async function runSearch() {
     setBusy(true)
@@ -478,6 +526,8 @@ function NacScanWebPage() {
           throw new Error('Unsupported image format')
         }
       }
+      if (pages.length) recordDocumentChange()
+      else clearDocumentHistory()
       setPages((current) => [...current, ...additions])
       setSelectedId((current) => current || additions[0]?.id || null)
       setMessage(`${additions.length} ${additions.length === 1 ? 'pagina importata' : 'pagine importate'}.`)
@@ -490,7 +540,8 @@ function NacScanWebPage() {
     }
   }
 
-  function updateSelected(updater) {
+  function updateSelected(updater, record = true) {
+    if (record) recordDocumentChange()
     setPages((current) => current.map((page) => page.id === selectedId ? updater(page) : page))
   }
 
@@ -518,13 +569,24 @@ function NacScanWebPage() {
     setCameraOpen(false)
   }
 
-  function updateAnnotation(id, value) {
-    updateSelected((page) => ({ ...page, annotations: value ? (page.annotations || []).map((item) => item.id === id ? value : item) : (page.annotations || []).filter((item) => item.id !== id) }))
+  function updateAnnotation(id, value, record = true) {
+    updateSelected((page) => ({ ...page, annotations: value ? (page.annotations || []).map((item) => item.id === id ? value : item) : (page.annotations || []).filter((item) => item.id !== id) }), record)
     if (!value) setSelectedAnnotationId((current) => current === id ? null : current)
   }
 
+  function beginTextEditing(id) {
+    if (textEditingRef.current !== id) {
+      textEditingRef.current = id
+      recordDocumentChange()
+    }
+    clearTimeout(textEditingTimerRef.current)
+    textEditingTimerRef.current = setTimeout(() => { textEditingRef.current = null }, 600)
+  }
+
   function updateSelectedText(changes) {
-    if (selectedText) updateAnnotation(selectedText.id, updateTextAnnotation(selectedText, changes))
+    if (!selectedText) return
+    beginTextEditing(selectedText.id)
+    updateAnnotation(selectedText.id, updateTextAnnotation(selectedText, changes), false)
   }
 
   async function extractText() {
@@ -565,17 +627,20 @@ function NacScanWebPage() {
   }
 
   function returnHome() {
+    if (pages.length && !window.confirm('Tornare alla Home? Le modifiche non esportate verranno eliminate.')) return
     setPages([])
     setSelectedId(null)
     setActiveTool('')
     setToolsOpen(false)
     setMessage('')
+    clearDocumentHistory()
   }
 
   function moveSelected(offset) {
     if (selectedIndex < 0) return
     const target = selectedIndex + offset
     if (target < 0 || target >= pages.length) return
+    recordDocumentChange()
     setPages((current) => {
       const next = [...current]
       const [page] = next.splice(selectedIndex, 1)
@@ -586,8 +651,7 @@ function NacScanWebPage() {
 
   function removeSelected() {
     if (selectedIndex < 0) return
-    const removed = pages[selectedIndex]
-    if (removed.kind === 'image') URL.revokeObjectURL(removed.url)
+    recordDocumentChange()
     const next = pages.filter((page) => page.id !== selectedId)
     setPages(next)
     setSelectedId(next[Math.min(selectedIndex, next.length - 1)]?.id || null)
@@ -724,6 +788,8 @@ function NacScanWebPage() {
             <>
               <div className="nacscan-web__toolbar" aria-label="Strumenti pagina">
                 <strong>Pagina {selectedIndex + 1} di {pages.length}</strong>
+                <button type="button" onClick={undo} disabled={!history.past.length} aria-label="Annulla ultima operazione" title="Annulla (Ctrl/Cmd+Z)">↶ Annulla</button>
+                <button type="button" onClick={redo} disabled={!history.future.length} aria-label="Ripristina ultima operazione" title="Ripristina (Ctrl+Y o Cmd+Shift+Z)">↷ Ripristina</button>
                 <button type="button" onClick={() => moveSelected(-1)} disabled={selectedIndex <= 0}>← Sposta</button>
                 <button type="button" onClick={() => moveSelected(1)} disabled={selectedIndex === pages.length - 1}>Sposta →</button>
                 <button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Ruota</button>
@@ -741,6 +807,9 @@ function NacScanWebPage() {
                 activeTool={activeTool}
                 onAddAnnotation={addAnnotation}
                 onUpdateAnnotation={updateAnnotation}
+                onMoveAnnotation={(id, value) => updateAnnotation(id, value, false)}
+                onBeginAnnotationMove={recordDocumentChange}
+                onDeleteAnnotation={(id) => updateAnnotation(id, null)}
                 selectedAnnotationId={selectedAnnotationId}
                 onSelectAnnotation={setSelectedAnnotationId}
                 searchHighlights={searchResults.map((result, resultIndex) => ({ ...result, resultIndex, current: resultIndex === searchIndex })).filter((result) => result.pageId === selectedId)}
