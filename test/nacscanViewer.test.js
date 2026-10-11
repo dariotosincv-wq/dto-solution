@@ -26,3 +26,9 @@ test('viewer keeps existing rotate, signature, reorder, delete and export action
 test('cover tool provides color selection, a canvas eyedropper and secure flattening path', () => {
   for (const action of ['Contagocce', 'getImageData', 'coverColorToRgb', 'flattenPdfPage']) assert.match(source, new RegExp(action))
 })
+
+test('ordinary PDF saving never asks for Drive archive details', () => {
+  assert.match(source, /async function exportPdf\(\{ archiveToDrive = false \} = \{\}\)/)
+  assert.match(source, /if \(archiveToDrive && driveState\.connected && driveState\.enabled\)/)
+  assert.match(source, /Archivia su Google Drive/)
+})

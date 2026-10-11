@@ -680,7 +680,7 @@ function NacScanWebPage() {
     setSelectedId(next[Math.min(selectedIndex, next.length - 1)]?.id || null)
   }
 
-  async function exportPdf() {
+  async function exportPdf({ archiveToDrive = false } = {}) {
     setBusy(true)
     setMessage('Creazione PDF in corso…')
     try {
@@ -752,7 +752,7 @@ function NacScanWebPage() {
       const blob = new Blob([await output.save()], { type: 'application/pdf' })
       const fileName = createAndroidCompatiblePdfName(pages)
       const saved = await saveNacScanFile(blob, fileName, saveDirectory)
-      if (driveState.connected && driveState.enabled) {
+      if (archiveToDrive && driveState.connected && driveState.enabled) {
         const company = window.prompt('Azienda / soggetto', '')
         const documentType = company !== null ? window.prompt('Che tipo di documento vuoi salvare?', 'Documenti') : null
         if (company !== null && documentType !== null) {
@@ -847,6 +847,7 @@ function NacScanWebPage() {
                 <button type="button" onClick={() => setSelectedId(pages[selectedIndex - 1]?.id || selectedId)} disabled={selectedIndex <= 0}>Pagina precedente</button>
                 <button type="button" onClick={() => setSelectedId(pages[selectedIndex + 1]?.id || selectedId)} disabled={selectedIndex >= pages.length - 1}>Pagina successiva</button>
                 <button className="nacscan-tools-button" type="button" onClick={() => setToolsOpen((value) => !value)}>Strumenti</button>
+                {driveState.connected && driveState.enabled && <button type="button" onClick={() => exportPdf({ archiveToDrive: true })}>Archivia su Google Drive</button>}
               </div>
               {searchOpen && <div className="nacscan-search-panel" aria-label="Cerca testo nel PDF"><input type="search" placeholder={tr('searchPlaceholder')} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') runSearch() }} /><button type="button" onClick={runSearch} disabled={!searchQuery.trim()}>{tr('search')}</button><strong>{searchResults.length ? `${searchIndex + 1}/${searchResults.length}` : '0/0'}</strong><button type="button" onClick={() => moveSearch(-1)} disabled={!searchResults.length}>{tr('previous')}</button><button type="button" onClick={() => moveSearch(1)} disabled={!searchResults.length}>{tr('next')}</button></div>}
               {toolsOpen && <aside className="nacscan-tools-panel" aria-label="Strumenti PDF"><h2>Strumenti</h2><button type="button" onClick={exportPdf}>Condividi / Salva</button><button type="button" onClick={() => { setActiveTool('text'); setToolsOpen(false) }}>Compila PDF</button><button type="button" onClick={() => updateSelected((page) => ({ ...page, rotation: (page.rotation + 90) % 360 }))}>Raddrizza pagina</button><label>Aggiungi pagine<input type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={importFiles} /></label><button type="button" onClick={() => { setSelectedAnnotationId(null); setPickingCoverColor(false); setActiveTool('cover'); setToolsOpen(false) }}>Copri testo</button>{savedSignatures.map((signature) => <button key={signature.id} type="button" onClick={() => { setPendingSignature(signature.imageData); setActiveTool('signature'); setToolsOpen(false) }}>Usa {signature.name}{signature.isDefault ? ' (predefinita)' : ''}</button>)}<button className="is-primary" type="button" onClick={() => { setSignatureForSettings(false); setSignatureOpen(true); setToolsOpen(false) }}>Disegna nuova firma</button></aside>}
