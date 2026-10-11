@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageToVisualPoint, updateTextAnnotation, visualToPagePoint } from '../src/lib/nacscanAnnotations.js'
+import { createCoverAnnotation, createSignatureAnnotation, createTextAnnotation, movePagePointFromVisualDelta, pageRectToVisualRect, pageToVisualPoint, updateTextAnnotation, visualRectToPageRect, visualToPagePoint } from '../src/lib/nacscanAnnotations.js'
 
 test('creates normalized text and graphical cover annotations', () => {
   const text = createTextAnnotation(.2, .3, 'Prova', 24, 'blue')
@@ -15,6 +15,15 @@ test('page coordinates round-trip through every visual rotation', () => {
     const page = visualToPagePoint(visual.x, visual.y, rotation)
     assert.ok(Math.abs(page.x - .2) < 1e-12)
     assert.ok(Math.abs(page.y - .3) < 1e-12)
+  }
+})
+
+test('cover rectangles retain their exact bounds through visual rotations', () => {
+  const original = { x: .12, y: .27, width: .31, height: .18 }
+  for (const rotation of [0, 90, 180, 270]) {
+    const visual = pageRectToVisualRect(original, rotation)
+    const restored = visualRectToPageRect(visual, rotation)
+    for (const key of ['x', 'y', 'width', 'height']) assert.ok(Math.abs(restored[key] - original[key]) < 1e-12)
   }
 })
 
