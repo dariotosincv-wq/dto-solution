@@ -4,7 +4,7 @@ import { damageInput, damagePhotoInput, publicDamage, publicVehicle, requireComp
 import { handleDeviceVehicleDamages } from './_lib/deviceVehicleDamages.js'
 import { assignmentInput, driverBatchInput, driverInput, driverStatusUpdate, publicAssignment, publicDriver } from './_lib/companyDrivers.js'
 import { planningWeek, readPlanning, mutatePlanning } from './_lib/companyPlanning.js'
-import { confirmOperationalDay, readCurrentOperationalDay } from './_lib/operationalDays.js'
+import { confirmOperationalDay, readCurrentOperationalDay, readOperationalDayAnomalies, resolveOperationalDayAnomaly } from './_lib/operationalDays.js'
 import { confirmDriverNameVariant, revokeDriverNameVariant } from './_lib/driverNameVariants.js'
 import { driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } from './_lib/operationalAccess.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
@@ -332,8 +332,10 @@ async function companyPlanning(request, response, clients) {
 
 async function operationalDayHistory(request, response, clients) {
   const { user, context } = await companyContext(request, clients)
+  if (request.method === 'GET' && request.query?.anomalies === '1') return sendJson(response, 200, await readOperationalDayAnomalies(clients.checkvan, context.organization.id, user.id, request.query?.operating_date))
   if (request.method === 'GET') return sendJson(response, 200, await readCurrentOperationalDay(clients.checkvan, context.organization.id, request.query?.operating_date))
   if (request.method === 'POST') return sendJson(response, 200, await confirmOperationalDay(clients.checkvan, context.organization.id, user.id, request.body))
+  if (request.method === 'PATCH') return sendJson(response, 200, await resolveOperationalDayAnomaly(clients.checkvan, context.organization.id, user.id, request.body))
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
 

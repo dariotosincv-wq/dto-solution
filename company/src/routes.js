@@ -12,6 +12,7 @@ export const COMPANY_ROUTES = Object.freeze({
   drivers: `${COMPANY_BASE_PATH}/driver`,
   planning: `${COMPANY_BASE_PATH}/pianificazione/settimanale`,
   assignments: `${COMPANY_BASE_PATH}/assegnazioni`,
+  operationalImport: `${COMPANY_BASE_PATH}/giornata-operativa/importa`,
   vehicle: (id) => `${COMPANY_BASE_PATH}/veicoli/${id}`,
   account: `${COMPANY_BASE_PATH}/account`,
 })

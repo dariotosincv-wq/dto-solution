@@ -7,8 +7,8 @@ import { readConvocationDefinitivePdf } from '../lib/convocationDefinitivePdf.js
 import { readAssignmentDeparturePdf } from '../lib/assignmentDeparturePdf.js'
 import { buildOperationalDayImportPreview, previewRowId } from '../lib/operationalDayImportPreview.js'
 import { normalizeConvocationDriverName } from '../lib/convocationDefinitiveCore.js'
-import { confirmOperationalDay, loadCompanyDrivers, loadCompanyVehicles, updateCompanyDriver } from '../lib/companySupabase.js'
-import { prepareOperationalDayConfirmation } from '../lib/operationalDayConfirmation.js'
+import { confirmOperationalDay, loadCompanyDrivers, loadCompanyVehicles, loadOperationalDayAnomalies, resolveOperationalDayAnomaly, updateCompanyDriver } from '../lib/companySupabase.js'
+import { operationalDayAnomalyPayload, prepareOperationalDayConfirmation } from '../lib/operationalDayConfirmation.js'
 import { COMPANY_ROUTES } from '../routes.js'
 import './operational-day-import.css'
 
@@ -32,6 +32,11 @@ export default function OperationalDayImportPreviewPage() {
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState('')
   const [confirmationMessage, setConfirmationMessage] = useState('')
+  const [savedAnomalies, setSavedAnomalies] = useState([])
+  const [anomalyDate, setAnomalyDate] = useState('')
+  const [anomalyChoices, setAnomalyChoices] = useState({})
+  const confirmationRef = useRef(null)
+  const anomalyPayloadRef = useRef(null)
 
   const preview = useMemo(
     () => parsed ? buildOperationalDayImportPreview({ ...parsed, manual_links: manualLinks }) : null,
@@ -54,6 +59,11 @@ export default function OperationalDayImportPreviewPage() {
     setConfirming(false)
     setError('')
     setConfirmationMessage('')
+    setSavedAnomalies([])
+    setAnomalyDate('')
+    setAnomalyChoices({})
+    confirmationRef.current = null
+    anomalyPayloadRef.current = null
     if (convocationInput.current) convocationInput.current.value = ''
     if (assignmentInput.current) assignmentInput.current.value = ''
   }
@@ -75,6 +85,8 @@ export default function OperationalDayImportPreviewPage() {
     setManualLinks([])
     setError('')
     setConfirmationMessage('')
+    confirmationRef.current = null
+    anomalyPayloadRef.current = null
   }
 
   const process = async () => {
@@ -133,23 +145,59 @@ export default function OperationalDayImportPreviewPage() {
   }
 
   const confirmDay = async () => {
-    if (!preview || !prepared || preview.outcomes.length || prepared.unresolved.length || confirming || !window.confirm(`Confermi il salvataggio della giornata ${preview.operational_date}? I PDF non verranno salvati.`)) return
+    if (!preview || !prepared || !prepared.rows.length || confirming) return
+    const outcomeAnomalies = preview.outcomes.map((item, index) => ({
+      client_row_id: crypto.randomUUID(), reason_code: item.status === 'AMBIGUO' ? 'MATCH_AMBIGUOUS' : 'DRIVER_MISSING',
+      driver_name_key: item.driver_name_key || null, vehicle_internal_code_key: null, vehicle_plate_key: null,
+      route: null, departure_order: null, departure_group: null, parking_lot_position: null, departure_wave: null, local_index: index,
+    }))
+    const partial = prepared.unresolved.length + outcomeAnomalies.length > 0
+    if (!window.confirm(partial ? `Confermi ${prepared.rows.length} driver validi? ${prepared.unresolved.length + outcomeAnomalies.length} anomalie resteranno aperte.` : `Confermi il salvataggio della giornata ${preview.operational_date}? I PDF non verranno salvati.`)) return
     setConfirming(true)
     setError('')
     setConfirmationMessage('')
     try {
+      if (!confirmationRef.current) confirmationRef.current = crypto.randomUUID()
+      if (partial && !anomalyPayloadRef.current) anomalyPayloadRef.current = [...operationalDayAnomalyPayload(prepared.unresolved), ...outcomeAnomalies]
       await confirmOperationalDay(session.access_token, {
-        action: 'CONFIRM',
+        action: partial ? 'CONFIRM_PARTIAL' : 'CONFIRM',
         operating_date: preview.operational_date,
-        idempotency_key: crypto.randomUUID(),
+        idempotency_key: confirmationRef.current,
         rows: prepared.rows,
+        ...(partial ? { anomalies: anomalyPayloadRef.current } : {}),
       })
-      setConfirmationMessage('Giornata confermata e salvata nello storico. I PDF non sono stati conservati.')
+      setAnomalyDate(preview.operational_date)
+      if (partial) setSavedAnomalies((await loadOperationalDayAnomalies(session.access_token, preview.operational_date)).items || [])
+      setConfirmationMessage(partial ? 'Driver validi confermati. Le anomalie restano aperte per la risoluzione successiva.' : 'Giornata confermata e salvata nello storico. I PDF non sono stati conservati.')
     } catch {
       setError('Conferma non riuscita. Nessun dato è stato salvato.')
     } finally {
       setConfirming(false)
     }
+  }
+
+  const loadSavedAnomalies = async () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(anomalyDate)) return
+    setError('')
+    try {
+      const [data] = await Promise.all([loadOperationalDayAnomalies(session.access_token, anomalyDate), directory.loaded ? Promise.resolve() : loadDirectory()])
+      setSavedAnomalies(data.items || [])
+    } catch { setError('Impossibile leggere le anomalie della giornata.') }
+  }
+
+  const resolveSavedAnomaly = async (item) => {
+    const choice = anomalyChoices[item.id] || {}
+    if (!choice.driver_id || !choice.vehicle_id || !window.confirm('Confermare il recupero? Verrà creata una revisione correttiva della giornata.')) return
+    try {
+      await resolveOperationalDayAnomaly(session.access_token, { action: 'RESOLVE', anomaly_id: item.id, idempotency_key: crypto.randomUUID(), driver_id: choice.driver_id, vehicle_id: choice.vehicle_id })
+      await loadSavedAnomalies()
+    } catch { setError('Recupero non riuscito: il driver, il mezzo o l’ordine potrebbero essere in conflitto.') }
+  }
+  const excludeSavedAnomaly = async (item) => {
+    const exclusion_reason = window.prompt('Motivo dell’esclusione (obbligatorio):')
+    if (!exclusion_reason) return
+    try { await resolveOperationalDayAnomaly(session.access_token, { action: 'EXCLUDE', anomaly_id: item.id, exclusion_reason }); await loadSavedAnomalies() }
+    catch { setError('Esclusione non riuscita.') }
   }
 
   const exit = () => {
@@ -186,7 +234,7 @@ export default function OperationalDayImportPreviewPage() {
 
     {preview && <>
       <section className="operational-date-notice"><CheckCircle2 aria-hidden="true" /><div><strong>Data operativa: {preview.operational_date || 'non ricavata'}</strong><span>La data dell’uscita non è verificabile dal contenuto del PDF e non viene dedotta dal nome del file.</span></div></section>
-      <section className="operational-summary" aria-label="Riepilogo anteprima">{[['Righe convocazione', preview.summary.convocation_rows], ['Righe uscita', preview.summary.assignment_rows], ['Match completi', preview.summary.complete_matches], ['Da verificare', preview.summary.missing + preview.summary.ambiguous]].map(([title, value]) => <div key={title}><span>{title}</span><strong>{value}</strong></div>)}</section>
+      <section className="operational-summary" aria-label="Riepilogo anteprima">{[['Righe convocazione', preview.summary.convocation_rows], ['Righe uscita', preview.summary.assignment_rows], ['Pronti', prepared?.rows.length ?? 0], ['Anomalie', (prepared?.unresolved.length ?? 0) + preview.summary.missing + preview.summary.ambiguous]].map(([title, value]) => <div key={title}><span>{title}</span><strong>{value}</strong></div>)}</section>
 
       {archivedIssues.length > 0 && <section className="operational-review operational-archived-drivers" aria-label="Driver archiviati">
         <div><AlertTriangle aria-hidden="true" /><div><h2>Driver archiviati</h2><p>Questi record esistono già nella tua azienda. La riattivazione modifica solo il loro stato e aggiorna questa anteprima senza rileggere i PDF.</p></div></div>
@@ -205,10 +253,27 @@ export default function OperationalDayImportPreviewPage() {
       </section>}
 
       <section className="operational-results" aria-labelledby="results-title">
-        <header><div><h2 id="results-title">Righe abbinate</h2><p>Ordinate dall’ordine globale di partenza; wave e gruppo sono solo descrittivi.</p></div><button type="button" disabled={Boolean(preview.outcomes.length) || !prepared || prepared.unresolved.length > 0 || confirming || Boolean(confirmationMessage)} onClick={() => void confirmDay()}>{confirming ? 'Conferma in corso…' : confirmationMessage ? 'Giornata confermata' : 'Conferma giornata'}</button></header>
+        <header><div><h2 id="results-title">Righe abbinate</h2><p>Ordinate dall’ordine globale di partenza; wave e gruppo sono solo descrittivi.</p></div><button type="button" disabled={!prepared || !prepared.rows.length || confirming || Boolean(confirmationMessage)} onClick={() => void confirmDay()}>{confirming ? 'Conferma in corso…' : confirmationMessage ? 'Giornata confermata' : prepared?.unresolved.length || preview.outcomes.length ? 'Conferma i driver validi' : 'Conferma giornata'}</button></header>
         <div className="operational-table-wrap"><table><thead><tr><th>Driver</th><th>Turno</th><th>Mezzo</th><th>Targa</th><th>Rotta</th><th>Gruppo</th><th>Parking Lot</th><th>Wave</th><th>Ordine</th><th>Stato</th></tr></thead><tbody>{preview.rows.map(row => <tr key={`${row.status}-${row.driver_name_key}-${row.departure_order}`} className={row.manual_confirmation ? 'is-manual' : ''}><th scope="row">{label(row.driver_name)}</th><td>{label(row.shift_type)}</td><td>{label(row.internal_vehicle_code)}</td><td>{label(row.vehicle_plate)}</td><td>{label(row.route)}</td><td>{label(row.departure_group)}</td><td>{label(row.parking_lot_position)}</td><td>{label(row.departure_wave)}</td><td>{label(row.departure_order)}</td><td>{row.manual_confirmation ? <span className="operational-badge operational-badge--manual">Manuale <button type="button" aria-label="Rimuovi abbinamento manuale" onClick={() => setManualLinks(links => links.filter(link => link.id !== row.manual_link_id))}><X size={14} /></button></span> : <span className="operational-badge">Automatico</span>}</td></tr>)}</tbody></table></div>
         {!preview.rows.length && <p className="operational-empty">Non ci sono ancora abbinamenti completi.</p>}
       </section>
     </>}
+
+    <section className="operational-review" aria-labelledby="saved-anomalies-title">
+      <div><AlertTriangle aria-hidden="true" /><div><h2 id="saved-anomalies-title">Anomalie giornata</h2><p>Solo metadati normalizzati necessari al recupero; nessun PDF o testo estratto viene conservato.</p></div></div>
+      <div className="operational-manual-link"><label>Data giornata<input type="date" value={anomalyDate} onChange={event => setAnomalyDate(event.target.value)} /></label><button type="button" onClick={() => void loadSavedAnomalies()} disabled={!anomalyDate}>Apri anomalie</button></div>
+      {savedAnomalies.length > 0 && <ul className="operational-outcomes">{savedAnomalies.map(item => <li key={item.id} className={item.status === 'open' ? 'is-ambiguous' : ''}>
+        <strong>{item.status === 'open' ? item.reason_code : item.status === 'resolved' ? 'RISOLTA' : 'ESCLUSA'}</strong>
+        <span>{item.driver_name_key || 'Driver non disponibile'}{item.vehicle_internal_code_key || item.vehicle_plate_key ? ` · ${item.vehicle_internal_code_key || ''} ${item.vehicle_plate_key || ''}` : ''}</span>
+        <small>Ordine di partenza {item.departure_order ?? 'non disponibile'}{item.exclusion_reason ? ` · ${item.exclusion_reason}` : ''}</small>
+        {item.status === 'open' && <div className="operational-manual-link">
+          <label>Driver<select value={anomalyChoices[item.id]?.driver_id || ''} onChange={event => setAnomalyChoices(current => ({ ...current, [item.id]: { ...current[item.id], driver_id: event.target.value } }))}><option value="">Seleziona driver attivo</option>{directory.drivers.filter(driver => driver.status === 'active').map(driver => <option key={driver.driver_id} value={driver.driver_id}>{driver.last_name} {driver.first_name}</option>)}</select></label>
+          <label>Mezzo<select value={anomalyChoices[item.id]?.vehicle_id || ''} onChange={event => setAnomalyChoices(current => ({ ...current, [item.id]: { ...current[item.id], vehicle_id: event.target.value } }))}><option value="">Seleziona mezzo attivo</option>{directory.vehicles.filter(vehicle => vehicle.status === 'active').map(vehicle => <option key={vehicle.vehicle_id} value={vehicle.vehicle_id}>{vehicle.internal_code} · {vehicle.plate}</option>)}</select></label>
+          <button type="button" disabled={!anomalyChoices[item.id]?.driver_id || !anomalyChoices[item.id]?.vehicle_id} onClick={() => void resolveSavedAnomaly(item)}>Correggi e recupera</button>
+          <button type="button" onClick={() => void excludeSavedAnomaly(item)}>Escludi con motivo</button>
+        </div>}
+      </li>)}</ul>}
+      {anomalyDate && savedAnomalies.length === 0 && <p className="operational-empty">Nessuna anomalia per la data selezionata.</p>}
+    </section>
   </div>
 }
