@@ -16,6 +16,12 @@ export function driverBatchInput(body = {}) {
 
 export const publicDriver = (row) => ({ driver_id: row.id, driver_code: row.driver_code, first_name: row.first_name, last_name: row.last_name, expected_weekly_days: row.expected_weekly_days ?? null, status: row.status, archived_at: row.archived_at ?? null, created_at: row.created_at, updated_at: row.updated_at })
 
+export function driverStatusUpdate(action, timestamp) {
+  if (action === 'ARCHIVE') return { status: 'archived', archived_at: timestamp, updated_at: timestamp }
+  if (action === 'REACTIVATE') return { status: 'active', archived_at: null, updated_at: timestamp }
+  return null
+}
+
 export function assignmentInput(body = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(body.assignment_date || '') || !uuid(body.driver_id) || !uuid(body.vehicle_id)) throw Object.assign(new Error('INVALID_ASSIGNMENT'), { status: 400 })
   return { assignment_date: body.assignment_date, driver_id: body.driver_id, vehicle_id: body.vehicle_id }

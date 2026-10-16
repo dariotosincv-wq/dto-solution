@@ -2,8 +2,10 @@ import { authenticateRequest, clientsFromEnvironment, resolveCompanyContext, sen
 import { authenticateDeviceRequest, resolveDeviceContext } from './_lib/deviceAuthentication.js'
 import { damageInput, damagePhotoInput, publicDamage, publicVehicle, requireCompanyAdmin, uuid, vehicleBatchInput, vehicleInput } from './_lib/companyVehicles.js'
 import { handleDeviceVehicleDamages } from './_lib/deviceVehicleDamages.js'
-import { assignmentInput, driverBatchInput, driverInput, publicAssignment, publicDriver } from './_lib/companyDrivers.js'
+import { assignmentInput, driverBatchInput, driverInput, driverStatusUpdate, publicAssignment, publicDriver } from './_lib/companyDrivers.js'
 import { planningWeek, readPlanning, mutatePlanning } from './_lib/companyPlanning.js'
+import { confirmOperationalDay, readCurrentOperationalDay } from './_lib/operationalDays.js'
+import { confirmDriverNameVariant, revokeDriverNameVariant } from './_lib/driverNameVariants.js'
 import { driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } from './_lib/operationalAccess.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
@@ -190,9 +192,14 @@ async function companyDrivers(request, response, clients) {
       if (error) throw Object.assign(new Error('DRIVER_PROFILE_SAVE_FAILED'), { status: 400 })
       return sendJson(response, 200, publicDriver(data))
     }
-    const values = request.body.action === 'ARCHIVE' ? { status: 'archived', archived_at: new Date().toISOString(), updated_at: new Date().toISOString() } : { ...driverInput(request.body), status: 'active', archived_at: null, updated_at: new Date().toISOString() }
-    const { data, error } = await clients.checkvan.from('checkvan_drivers').update(values).eq('id', request.body.driver_id).eq('organization_id', context.organization.id).select('*').maybeSingle()
+    const isReactivate = request.body.action === 'REACTIVATE'
+    const statusUpdate = driverStatusUpdate(request.body.action, new Date().toISOString())
+    const values = statusUpdate || { ...driverInput(request.body), status: 'active', archived_at: null, updated_at: new Date().toISOString() }
+    let update = clients.checkvan.from('checkvan_drivers').update(values).eq('id', request.body.driver_id).eq('organization_id', context.organization.id)
+    if (isReactivate) update = update.eq('status', 'archived')
+    const { data, error } = await update.select('*').maybeSingle()
     if (error) throw new Error('DRIVERS_UNAVAILABLE')
+    if (isReactivate && !data) return sendJson(response, 409, { error: 'DRIVER_NOT_ARCHIVED' })
     return data ? sendJson(response, 200, publicDriver(data)) : sendJson(response, 404, { error: 'DRIVER_NOT_FOUND' })
   }
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
@@ -323,6 +330,25 @@ async function companyPlanning(request, response, clients) {
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
 
+async function operationalDayHistory(request, response, clients) {
+  const { user, context } = await companyContext(request, clients)
+  if (request.method === 'GET') return sendJson(response, 200, await readCurrentOperationalDay(clients.checkvan, context.organization.id, request.query?.operating_date))
+  if (request.method === 'POST') return sendJson(response, 200, await confirmOperationalDay(clients.checkvan, context.organization.id, user.id, request.body))
+  return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+}
+
+async function driverNameVariants(request, response, clients) {
+  const { user, context } = await companyContext(request, clients)
+  if (request.method === 'GET') {
+    const { data, error } = await clients.checkvan.from('checkvan_driver_name_variants').select('id,driver_id,source,normalized_name,confirmed_by,confirmed_at,revoked_by,revoked_at,revocation_reason').eq('organization_id', context.organization.id).order('confirmed_at', { ascending: false })
+    if (error) throw new Error('DRIVER_NAME_VARIANTS_UNAVAILABLE')
+    return sendJson(response, 200, { items: data ?? [] })
+  }
+  if (request.method === 'POST') return sendJson(response, 201, await confirmDriverNameVariant(clients.checkvan, context.organization.id, user.id, request.body))
+  if (request.method === 'PATCH') return sendJson(response, 200, await revokeDriverNameVariant(clients.checkvan, context.organization.id, user.id, request.body))
+  return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+}
+
 async function deviceDriverAssignments(request, response, clients) {
   if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
   const device = await authenticateDeviceRequest(request, clients, '/api/device-driver-assignments'), context = await resolveDeviceContext(device, clients)
@@ -411,6 +437,8 @@ export default async function handler(request, response) {
     if (resource === 'company-assignments') return await companyAssignments(request, response, clients)
     if (resource === 'company-cloud') return await companyCloudArchive(request, response, clients)
     if (resource === 'company-planning') return await companyPlanning(request, response, clients)
+    if (resource === 'operational-day-history') return await operationalDayHistory(request, response, clients)
+    if (resource === 'driver-name-variants') return await driverNameVariants(request, response, clients)
     if (resource === 'operational-access') return await operationalAccess(request, response, clients)
     if (resource === 'device-driver-assignments') return await deviceDriverAssignments(request, response, clients)
     if (resource === 'device-operational-assignment') return await deviceOperationalAssignment(request, response, clients)
