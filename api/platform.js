@@ -6,7 +6,8 @@ import { assignmentInput, driverBatchInput, driverInput, driverStatusUpdate, pub
 import { planningWeek, readPlanning, mutatePlanning } from './_lib/companyPlanning.js'
 import { confirmOperationalDay, readCurrentOperationalDay, readOperationalDayAnomalies, resolveOperationalDayAnomaly } from './_lib/operationalDays.js'
 import { confirmDriverNameVariant, revokeDriverNameVariant } from './_lib/driverNameVariants.js'
-import { driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } from './_lib/operationalAccess.js'
+import { cookieValue, driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } from './_lib/operationalAccess.js'
+import { confirmedOperationalAssignment } from './_lib/deviceOperationalAssignment.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
@@ -279,6 +280,17 @@ const operationalCookie = value => `${sessionCookie}=${value}; Path=/; HttpOnly;
 const operationalUuid = value => /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value ?? '')
 async function operationalAccess(request, response, clients) {
   const action = request.query?.action
+  if (action === 'regenerate') {
+    if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+    const sessionSecret = cookieValue(request, sessionCookie)
+    if (!sessionSecret) return sendJson(response, 401, { error: 'OPERATIONAL_ACCESS_REQUIRED' })
+    const secret = newSecret()
+    const { data, error } = await clients.checkvan.rpc('internal_driver_regenerate_operational_qr', { p_session_hash: hashSecret(sessionSecret), p_new_token_hash: hashSecret(secret) })
+    if (error) return sendJson(response, error.message === 'OPERATIONAL_ACCESS_REQUIRED' ? 401 : 503, { error: error.message === 'OPERATIONAL_ACCESS_REQUIRED' ? 'OPERATIONAL_ACCESS_REQUIRED' : 'OPERATIONAL_ACCESS_UNAVAILABLE' })
+    response.setHeader('Cache-Control', 'no-store')
+    response.setHeader('Set-Cookie', `${sessionCookie}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`)
+    return sendJson(response, 201, { status: 'created', access_path: `/area-operativa/access/${secret}`, driver_id: data.driver_id })
+  }
   if (action === 'manage') {
     const user = await authenticateRequest(request, clients), context = await resolveCompanyContext(user.id, clients)
     if (context.membership.role !== 'COMPANY_ADMIN') return sendJson(response, 403, { error: 'COMPANY_ADMIN_REQUIRED' })
@@ -373,16 +385,24 @@ async function deviceOperationalAssignment(request, response, clients) {
   if (error) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
   if (!access) throw invalidOperationalQr()
   const date = operationalToday()
-  const [planning, driverResult, vehiclesResult] = await Promise.all([
-    readPlanning(clients.checkvan, access.organization_id, weekStart(date)),
+  const [dayResult, driverResult] = await Promise.all([
+    clients.checkvan.rpc('internal_read_current_operational_day', { p_organization_id: access.organization_id, p_date: date }),
     clients.checkvan.from('checkvan_drivers').select('id,first_name,last_name').eq('id', access.driver_id).eq('organization_id', access.organization_id).eq('status', 'active').maybeSingle(),
+  ])
+  if (dayResult.error || driverResult.error || !driverResult.data) throw new Error('OPERATIONAL_DATA_UNAVAILABLE')
+  const confirmedDay = dayResult.data
+  if (confirmedDay?.day) {
+    return sendJson(response, 200, confirmedOperationalAssignment(confirmedDay, driverResult.data, date))
+  }
+  const [planning, vehiclesResult] = await Promise.all([
+    readPlanning(clients.checkvan, access.organization_id, weekStart(date)),
     clients.checkvan.from('checkvan_vehicles').select('id,internal_code,plate,silhouette_category').eq('organization_id', access.organization_id),
   ])
-  if (driverResult.error || !driverResult.data || vehiclesResult.error) throw new Error('OPERATIONAL_DATA_UNAVAILABLE')
+  if (vehiclesResult.error) throw new Error('OPERATIONAL_DATA_UNAVAILABLE')
   const entry = planning.effective.find(item => item.driver_id === access.driver_id && item.assignment_date === date)
   const vehicle = entry?.vehicle_id ? (vehiclesResult.data ?? []).find(item => item.id === entry.vehicle_id) ?? null : null
-  if (entry?.work_status === 'TURNO' && !vehicle) return sendJson(response, 200, { date, driver: driverResult.data, status: 'TURNO', assignment: null })
-  return sendJson(response, 200, { date, driver: driverResult.data, status: entry?.work_status ?? 'ALTRO', assignment: entry?.work_status === 'TURNO' ? { vehicle_id: vehicle.id, internal_code: vehicle.internal_code, plate: vehicle.plate, silhouette_category: vehicle.silhouette_category, route: entry.route ?? null, notes: entry.notes ?? null, source: entry.source } : null })
+  if (entry?.work_status === 'TURNO' && !vehicle) return sendJson(response, 200, { date, driver: driverResult.data, status: 'TURNO', assignment: null, departure_order: null, assignment_state: 'PROVISIONAL' })
+  return sendJson(response, 200, { date, driver: driverResult.data, status: entry?.work_status ?? 'ALTRO', assignment: entry?.work_status === 'TURNO' ? { vehicle_id: vehicle.id, internal_code: vehicle.internal_code, plate: vehicle.plate, silhouette_category: vehicle.silhouette_category, route: entry.route ?? null, notes: entry.notes ?? null, source: entry.source } : null, departure_order: null, assignment_state: 'PROVISIONAL' })
 }
 
 async function companyDamagePhoto(request,response,clients){const{user,context}=await companyContext(request,clients);if(request.method!=='POST')return sendJson(response,405,{error:'METHOD_NOT_ALLOWED'});const action=request.body?.action??'VIEW';if(action==='CREATE'){if(!uuid(request.body?.vehicle_id))return sendJson(response,400,{error:'INVALID_VEHICLE_ID'});const d=damageInput(request.body),photo=damagePhotoInput(request.body),bucket='checkvan-vehicle-damages';let{data:damage,error}=await clients.checkvan.from('checkvan_vehicle_damages').select('*').eq('organization_id',context.organization.id).is('reported_by_device_id',null).eq('client_generated_id',photo.client_generated_id).maybeSingle();if(error)throw new Error('DAMAGES_UNAVAILABLE');if(!damage){const id=randomUUID(),ext={"image/jpeg":'jpg',"image/png":'png',"image/webp":'webp'}[photo.photo_mime_type],path=`organizations/${context.organization.id}/vehicles/${request.body.vehicle_id}/damages/${id}/original.${ext}`;({data:damage,error}=await clients.checkvan.from('checkvan_vehicle_damages').insert({id,organization_id:context.organization.id,vehicle_id:request.body.vehicle_id,damage_type:d.damage_type,vehicle_view:d.vehicle_view,normalized_x:d.x,normalized_y:d.y,status:'CONFIRMED',confirmed_by_auth_subject:user.id,confirmed_at:new Date().toISOString(),...photo,photo_bucket:bucket,photo_object_path:path,photo_upload_status:'UPLOADING'}).select('*').single());if(error)throw new Error('DAMAGE_CREATE_FAILED')}const{data:signed,error:signError}=await clients.checkvan.storage.from(damage.photo_bucket).createSignedUploadUrl(damage.photo_object_path,{upsert:false});if(signError)throw new Error('UPLOAD_AUTHORIZATION_FAILED');return sendJson(response,200,{damage:publicDamage(damage),signedUploadUrl:signed.signedUrl})}if(action==='FINALIZE'){if(!uuid(request.body?.damage_id))return sendJson(response,400,{error:'INVALID_DAMAGE_ID'});const{data:damage}=await clients.checkvan.from('checkvan_vehicle_damages').select('*').eq('id',request.body.damage_id).eq('organization_id',context.organization.id).maybeSingle();if(!damage)throw Object.assign(new Error('DAMAGE_NOT_FOUND'),{status:404});const parts=damage.photo_object_path.split('/'),file=parts.pop(),folder=parts.join('/'),{data:objects,error:storageError}=await clients.checkvan.storage.from(damage.photo_bucket).list(folder,{search:file,limit:2}),object=objects?.find(item=>item.name===file);if(storageError||!object)throw Object.assign(new Error('UPLOAD_NOT_FOUND'),{status:409});if(Number(object.metadata?.size)!==Number(damage.photo_size_bytes))throw Object.assign(new Error('UPLOAD_SIZE_MISMATCH'),{status:409});const{data,error}=await clients.checkvan.rpc('internal_admin_finalize_checkvan_damage_photo',{p_auth_subject:user.id,p_organization_id:context.organization.id,p_damage_id:damage.id});if(error)throw Object.assign(new Error(error.message),{status:400});return sendJson(response,200,publicDamage(data))}if(!uuid(request.body?.damage_id))return sendJson(response,400,{error:'INVALID_DAMAGE_ID'});const{data:damage,error}=await clients.checkvan.from('checkvan_vehicle_damages').select('photo_bucket,photo_object_path,photo_upload_status').eq('id',request.body.damage_id).eq('organization_id',context.organization.id).maybeSingle();if(error)throw new Error('DAMAGES_UNAVAILABLE');if(!damage||damage.photo_upload_status!=='AVAILABLE')return sendJson(response,404,{error:'DAMAGE_PHOTO_NOT_FOUND'});const{data:signed,error:signError}=await clients.checkvan.storage.from(damage.photo_bucket).createSignedUrl(damage.photo_object_path,300);if(signError)throw new Error('PHOTO_AUTHORIZATION_FAILED');return sendJson(response,200,{signedUrl:signed.signedUrl,expiresIn:300})}
