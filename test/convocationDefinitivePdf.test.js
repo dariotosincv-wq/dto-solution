@@ -32,6 +32,16 @@ test('convocation parser accepts a fake driver name with a small PDF font baseli
   ])
 })
 
+test('convocation parser infers shifted two-column cells from TURNO anchors', () => {
+  const preview = parseConvocationDefinitiveItems([
+    item(1, 20, 700, 'DELIVERY'),
+    item(1, 55, 650, 'ALFA BETA'), item(1, 260, 650, 'Turno'), item(1, 110, 635, '(V-01-AA123BB)'),
+    item(1, 370, 650, 'GAMMA DELTA'), item(1, 515, 650, 'Turno'), item(1, 405, 635, '(V-02-CC456DD)'),
+  ])
+  assert.equal(preview.rows.filter((row) => row.status === 'parsed').length, 2)
+  assert.equal(preview.rows[1].vehicle_plate, 'CC456DD')
+})
+
 test('convocation parser reports incomplete or orphan fake rows without inventing values', () => {
   const preview = parseConvocationDefinitiveItems([
     item(1, 30, 620, 'DELIVERY'),

@@ -35,6 +35,14 @@ test('assignment parser preserves an optional fake Atlas indication and reports 
   assert.deepEqual(preview.rows[1].issues, ['ROUTE_NOT_FOUND'])
 })
 
+test('assignment parser follows shifted synthetic headers instead of legacy fixed bands', () => {
+  const preview = parseAssignmentDepartureItems([
+    item(40, 760, 'GRUPPO'), item(120, 760, 'ROTTE'), item(230, 760, 'DRIVER SU CORTEX'), item(390, 760, 'PARKING LOT'), item(470, 760, 'ATLAS'),
+    item(40, 720, 'GRUPPO 4'), item(120, 720, 'CA_A23'), item(230, 720, 'NOME FITTIZIO'), item(410, 720, '8'), item(470, 720, 'ATLAS'),
+  ])
+  assert.deepEqual(preview.rows[0], { row: 1, status: 'parsed', departure_group: 4, route: 'CA_A23', driver_name: 'NOME FITTIZIO', parking_lot_position: 8, atlas_indication: 'ATLAS', departure_wave: 1, departure_order: 1, issues: [] })
+})
+
 test('browser assignment reader keeps PDF bytes and extracted coordinates out of persistence paths', () => {
   const source = readFileSync(new URL('../company/src/lib/assignmentDeparturePdf.js', import.meta.url), 'utf8')
   assert.match(source, /file\.arrayBuffer\(\)/)

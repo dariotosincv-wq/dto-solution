@@ -14,6 +14,9 @@ export function parseItalianVehicleReference(value = '') {
 const parseDate = (items) => { for (const item of items) { const match = item.text.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/); if (!match) continue; const [, day, month, year] = match, candidate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`; if (!Number.isNaN(Date.parse(`${candidate}T00:00:00Z`))) return candidate } return null }
 const inDeliverySection = (items) => { const ordered = [...items].sort(sortVisual), delivery = ordered.findIndex((item) => sectionLabel(item.text) === 'DELIVERY'); if (delivery < 0) return []; const end = ordered.findIndex((item, index) => index > delivery && sectionLabel(item.text) === 'UFFICIO'); return ordered.slice(delivery + 1, end < 0 ? undefined : end) }
 const shiftLabel = (value) => /^[-\s]*TURNO\b/i.test(value)
+// Convocation PDFs have no stable headers. TURNO anchors delimit the two
+// repeated delivery cells; preserve the proven left/right layout and rely on
+// content validation plus row proximity for the fields within each cell.
 const sameColumn = (item, anchor) => item.page === anchor.page && (item.x < item.page_width / 2) === (anchor.x < anchor.page_width / 2)
 // PDF text runs with different fonts can share a visual row while their reported
 // baselines differ slightly. Eight points remains well below the next row spacing.
