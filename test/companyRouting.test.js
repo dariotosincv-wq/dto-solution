@@ -14,6 +14,7 @@ test('all company URLs live below /azienda', () => {
     '/azienda/pdf/confronta',
     '/azienda/dispositivi',
     '/azienda/veicoli', '/azienda/driver', '/azienda/pianificazione/settimanale', '/azienda/assegnazioni',
+    '/azienda/giornata-operativa/importa', '/azienda/giornata-operativa/partenze',
     '/azienda/account',
   ])
   assert.equal(COMPANY_ROUTES.vehicle('vehicle-id'), '/azienda/veicoli/vehicle-id')

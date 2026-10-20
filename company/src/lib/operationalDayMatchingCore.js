@@ -124,7 +124,8 @@ export function matchOperationalDayPreviews({ convocation = {}, assignment = {},
     outcomes.push({ status: resolved.ambiguous ? 'AMBIGUO' : 'MANCANTE', driver_name: row.driver_name, driver_name_key: key, issues: [resolved.ambiguous ? 'CONFIRMED_DRIVER_VARIANT_AMBIGUOUS' : 'MISSING_IN_CONVOCATION'] })
   }
 
-  for (const row of [...convocationRows, ...assignmentRows].filter((row) => !driverKey(row))) {
+  const missingDriverCount = [...convocationRows, ...assignmentRows].filter((row) => !driverKey(row)).length
+  for (let index = 0; index < missingDriverCount; index += 1) {
     outcomes.push({ status: 'MANCANTE', driver_name: null, driver_name_key: null, issues: ['DRIVER_NAME_NOT_FOUND'] })
   }
   return {

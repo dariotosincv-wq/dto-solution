@@ -13,6 +13,7 @@ const body = {
   deviceGeneratedId: '50000000-0000-4000-8000-000000000001', inspectionType: 'pickup', vehiclePlate: 'AB-123-CD',
   vehicleDescription: 'Daily 35S', inspectedAt: '2026-08-21T10:00:00.000Z', deviceTimezone: 'Europe/Rome',
   documentHash: 'ab'.repeat(32), documentSizeBytes: 1234, documentFormatVersion: 1, appVersion: '1.0.0',
+  vehicleId: '80000000-0000-4000-8000-000000000001', driverId: '70000000-0000-4000-8000-000000000001', driverFirstName: 'Test', driverLastName: 'Driver', assignmentDate: '2026-08-21',
 }
 
 test('company driver snapshot must match the effective QR operational assignment', () => {
@@ -54,9 +55,10 @@ class Query {
 }
 
 function memoryClients() {
-  const database = { tables: { checkvan_inspections: [], checkvan_license_devices: [] }, objects: new Map() }
+  const database = { tables: { checkvan_inspections: [], checkvan_license_devices: [], checkvan_vehicles: [{ id: body.vehicleId, internal_code: body.vehicleDescription, plate_normalized: 'AB123CD', status: 'active', organization_id: organization.id }] }, objects: new Map() }
   const checkvan = {
     from: (table) => new Query(database, table),
+    rpc: async () => ({ data: { entries: [ { driver_id: body.driverId, vehicle_id: body.vehicleId, assignment_date: body.assignmentDate, work_status: 'TURNO' } ], overrides: [], daily: [] }, error: null }),
     storage: { from: (bucket) => ({
       createSignedUploadUrl: async (path) => ({ data: { token: `token:${path}`, signedUrl: `/signed/${path}` }, error: null }),
       list: async (folder, options) => {
@@ -70,6 +72,7 @@ function memoryClients() {
 
 const uploadDependencies = (clients, selectedDevice = device, selectedContext = context) => ({
   clients, authenticate: async () => selectedDevice, resolveContext: async () => selectedContext,
+  requireIdentity: async () => ({ driver: { id: body.driverId, first_name: body.driverFirstName, last_name: body.driverLastName } }),
   tusEndpoint: 'http://127.0.0.1:54321/storage/v1/upload/resumable',
   randomUUID: () => selectedDevice.id === device.id
     ? '60000000-0000-4000-8000-000000000001'
@@ -112,6 +115,15 @@ test('same deviceGeneratedId with incompatible hash is a real conflict', async (
   assert.deepEqual(response.body, { error: 'INSPECTION_CONFLICT' })
 })
 
+test('a signed device cannot attribute an inspection to a different valid colleague', async () => {
+  const { clients, database } = memoryClients(); const response = responseRecorder()
+  await handleDeviceInspectionUpload({ method: 'POST', body }, response, {
+    ...uploadDependencies(clients),
+    requireIdentity: async () => ({ driver: { id: '70000000-0000-4000-8000-000000000099', first_name: 'Other', last_name: 'Driver' } }),
+  })
+  assert.equal(response.statusCode, 403); assert.deepEqual(response.body, { error: 'DRIVER_IDENTITY_MISMATCH' }); assert.equal(database.tables.checkvan_inspections.length, 0)
+})
+
 test('same deviceGeneratedId of another device cannot recover the first device inspection', async () => {
   const { clients, database } = memoryClients()
   const first = await upload(clients)
@@ -128,7 +140,7 @@ test('finalize succeeds once and repeated finalize is idempotent without changin
   const original = { hash: row.document_hash, path: row.storage_object_path }
   database.objects.set(`${row.storage_bucket}/${row.storage_object_path}`, { name: 'document.pdf', metadata: { size: body.documentSizeBytes } })
   const request = { method: 'POST', body: { inspectionId: created.body.inspectionId } }
-  const dependencies = { clients, authenticate: async () => device, resolveContext: async () => context, now: () => Date.parse('2026-08-21T12:00:00.000Z') }
+  const dependencies = { clients, authenticate: async () => device, resolveContext: async () => context, requireIdentity: async () => ({ driver: { id: body.driverId } }), now: () => Date.parse('2026-08-21T12:00:00.000Z') }
   const first = responseRecorder(); await handleDeviceInspectionFinalize(request, first, dependencies)
   const repeated = responseRecorder(); await handleDeviceInspectionFinalize(request, repeated, dependencies)
   assert.equal(first.statusCode, 200); assert.equal(repeated.statusCode, 200)
@@ -136,12 +148,31 @@ test('finalize succeeds once and repeated finalize is idempotent without changin
   assert.equal(row.document_hash, original.hash); assert.equal(row.storage_object_path, original.path)
 })
 
+test('a confirmed return revokes only the verified driver session', async () => {
+  const { clients, database } = memoryClients()
+  const created = await upload(clients, { ...body, inspectionType: 'return' })
+  const row = database.tables.checkvan_inspections[0]
+  database.objects.set(`${row.storage_bucket}/${row.storage_object_path}`, { name: 'document.pdf', metadata: { size: body.documentSizeBytes } })
+  const revoked = []
+  const response = responseRecorder()
+  await handleDeviceInspectionFinalize({ method: 'POST', body: { inspectionId: created.body.inspectionId } }, response, {
+    clients,
+    authenticate: async () => device,
+    resolveContext: async () => context,
+    requireIdentity: async () => ({ driver: { id: body.driverId }, session: { id: 'verified-session' } }),
+    revokeIdentity: async (_clients, session) => { revoked.push(session.id) },
+    now: () => Date.parse('2026-08-21T12:00:00.000Z'),
+  })
+  assert.equal(response.statusCode, 200)
+  assert.deepEqual(revoked, ['verified-session'])
+})
+
 test('finalize rejects missing/wrong-path objects and incompatible size', async () => {
   for (const object of [null, { name: 'document.pdf', metadata: { size: body.documentSizeBytes + 1 } }]) {
     const { clients, database } = memoryClients(); const created = await upload(clients); const row = database.tables.checkvan_inspections[0]
     if (object) database.objects.set(`${row.storage_bucket}/${row.storage_object_path}`, object)
     const response = responseRecorder()
-    await handleDeviceInspectionFinalize({ method: 'POST', body: { inspectionId: created.body.inspectionId } }, response, { clients, authenticate: async () => device, resolveContext: async () => context })
+    await handleDeviceInspectionFinalize({ method: 'POST', body: { inspectionId: created.body.inspectionId } }, response, { clients, authenticate: async () => device, resolveContext: async () => context, requireIdentity: async () => ({ driver: { id: body.driverId } }) })
     assert.equal(response.statusCode, 409)
     assert.ok(['UPLOAD_NOT_FOUND', 'UPLOAD_SIZE_MISMATCH'].includes(response.body.error))
     assert.equal(row.upload_status, 'uploading')
@@ -151,7 +182,7 @@ test('finalize rejects missing/wrong-path objects and incompatible size', async 
 test('organization isolation prevents finalize through another context', async () => {
   const { clients } = memoryClients(); const created = await upload(clients); const response = responseRecorder()
   await handleDeviceInspectionFinalize({ method: 'POST', body: { inspectionId: created.body.inspectionId } }, response, {
-    clients, authenticate: async () => device, resolveContext: async () => ({ ...context, organization: { ...organization, id: 'other-org' } }),
+    clients, authenticate: async () => device, resolveContext: async () => ({ ...context, organization: { ...organization, id: 'other-org' } }), requireIdentity: async () => ({ driver: { id: body.driverId } }),
   })
   assert.equal(response.statusCode, 404)
   assert.deepEqual(response.body, { error: 'INSPECTION_NOT_FOUND' })

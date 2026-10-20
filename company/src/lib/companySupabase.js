@@ -67,5 +67,7 @@ export const saveCompanyPlanning = (token, value) => authorizedRequest('/api/pla
 export const confirmOperationalDay = (token, value) => authorizedRequest('/api/operational-day-history', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const loadOperationalDayAnomalies = (token, date) => authorizedRequest(`/api/operational-day-history?anomalies=1&operating_date=${encodeURIComponent(date)}`, token)
 export const resolveOperationalDayAnomaly = (token, value) => authorizedRequest('/api/operational-day-history', token, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
+export const loadOperationalDepartureQueue = (token, date) => authorizedRequest(`/api/operational-departure-queue?operating_date=${encodeURIComponent(date)}`, token)
+export const startOperationalDepartureQueue = (token, value) => authorizedRequest('/api/operational-departure-queue', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const createDriverOperationalQr = (token, driverId, action) => authorizedRequest('/api/operational-access?action=manage', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ driver_id: driverId, ...(action ? { action } : {}) }) })
 export const loadDriverOperationalQr = (token, driverId) => authorizedRequest(`/api/operational-access?action=manage&driver_id=${encodeURIComponent(driverId)}`, token)

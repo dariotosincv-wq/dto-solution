@@ -120,7 +120,7 @@ test('confirmed and repaired damage can be removed from the operational view whi
   assert.match(sql, /p_action='REMOVE'.*old_d\.status in \('PENDING','CONFIRMED','REPAIRED'\).*next_status:='REMOVED'.*event_name:='REMOVED'/s)
   assert.match(sql, /insert into public\.checkvan_vehicle_damage_events/)
   assert.doesNotMatch(sql, /delete\s+from/i)
-  assert.match(detail, /\["CONFIRMED", "REPAIRED"\]\.includes\(d\.status\)/)
+  assert.match(detail, /\["CONFIRMED", "REPAIRED"\]\.includes\(damage\.status\)/)
   assert.match(detail, /Eliminare questo danno dalla mappa operativa/)
   assert.match(map, /\["PENDING", "CONFIRMED"\]\.includes\(d\.status\)/)
 })

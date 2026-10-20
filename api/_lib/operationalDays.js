@@ -81,3 +81,16 @@ export async function readCurrentOperationalDay(client, organizationId, operatin
   if (error) throw Object.assign(new Error('OPERATIONAL_DAY_UNAVAILABLE'), { status: 503 })
   return data === null ? { day: null, rows: [] } : data
 }
+
+export async function startOperationalDepartureQueue(client, organizationId, userId, body = {}) {
+  if (!date(body.operating_date) || !Number.isInteger(body.timeout_seconds) || body.timeout_seconds < 10 || body.timeout_seconds > 600) invalid('INVALID_DEPARTURE_QUEUE_INPUT')
+  const { data, error } = await client.rpc('internal_admin_start_operational_departure_queue', { p_auth_subject: userId, p_organization_id: organizationId, p_date: body.operating_date, p_timeout_seconds: body.timeout_seconds })
+  if (error) throw Object.assign(new Error(error.message), { status: error.message === 'COMPANY_ADMIN_REQUIRED' ? 403 : error.message === 'OPERATIONAL_DEPARTURE_CRON_UNAVAILABLE' ? 503 : 409 })
+  return data
+}
+export async function readOperationalDepartureQueue(client, organizationId, userId, operatingDate) {
+  if (!date(operatingDate)) invalid('INVALID_OPERATIONAL_DAY_DATE')
+  const { data, error } = await client.rpc('internal_admin_read_operational_departure_queue', { p_auth_subject: userId, p_organization_id: organizationId, p_date: operatingDate })
+  if (error) throw Object.assign(new Error(error.message), { status: error.message === 'COMPANY_ADMIN_REQUIRED' ? 403 : 503 })
+  return data
+}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { CheckCircle2, Copy, Info, Monitor, Plus, RefreshCw, Smartphone, Users } from 'lucide-react'
+import { CheckCircle2, Info, Monitor, Plus, RefreshCw, Smartphone, Users } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { canManageDevices } from '../access.js'
 import { createEnrollmentToken, loadCompanyDevices } from '../lib/companySupabase.js'

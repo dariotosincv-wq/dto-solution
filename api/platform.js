@@ -4,18 +4,20 @@ import { damageInput, damagePhotoInput, publicDamage, publicVehicle, requireComp
 import { handleDeviceVehicleDamages } from './_lib/deviceVehicleDamages.js'
 import { assignmentInput, driverBatchInput, driverInput, driverStatusUpdate, publicAssignment, publicDriver } from './_lib/companyDrivers.js'
 import { planningWeek, readPlanning, mutatePlanning } from './_lib/companyPlanning.js'
-import { confirmOperationalDay, readCurrentOperationalDay, readOperationalDayAnomalies, resolveOperationalDayAnomaly } from './_lib/operationalDays.js'
+import { confirmOperationalDay, readCurrentOperationalDay, readOperationalDayAnomalies, resolveOperationalDayAnomaly, startOperationalDepartureQueue, readOperationalDepartureQueue } from './_lib/operationalDays.js'
 import { confirmDriverNameVariant, revokeDriverNameVariant } from './_lib/driverNameVariants.js'
 import { cookieValue, driverWeek, hashSecret, newSecret, operationalSession, sessionCookie } from './_lib/operationalAccess.js'
 import { confirmedOperationalAssignment } from './_lib/deviceOperationalAssignment.js'
+import { issueDeviceDriverSession, requireDeviceDriverIdentity, revokeDeviceDriverSession } from './_lib/deviceDriverIdentity.js'
+import { handleDeviceOperationalDeparture } from './_lib/deviceOperationalDeparture.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
 import { beginGoogleDriveOAuth, cloudArchiveStatus, completeGoogleDriveOAuth, createArchiveFolder, disconnectGoogleDrive, queueCloudSyncs, verifyGoogleDriveConnection } from './_lib/cloudArchive.js'
 
-const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-driver-assignments', 'device-vehicle-reports', 'device-operational-assignment'])
+const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-vehicle-reports', 'device-operational-assignment', 'device-driver-logout', 'device-operational-departure'])
 const deviceOrigins = new Set(['http://localhost', 'https://localhost', 'capacitor://localhost'])
-const deviceAllowedHeaders = 'content-type, x-checkvan-device-id, x-checkvan-key-id, x-checkvan-timestamp, x-checkvan-request-id, x-checkvan-signature'
+const deviceAllowedHeaders = 'content-type, x-checkvan-device-id, x-checkvan-key-id, x-checkvan-timestamp, x-checkvan-request-id, x-checkvan-signature, x-checkvan-driver-session'
 
 function handleDeviceCors(request, response, resource) {
   if (!deviceResources.has(resource)) return false
@@ -145,7 +147,9 @@ async function deviceDamages(request, response, clients) {
 async function deviceVehicleReports(request,response,clients){
   if(request.method!=='POST')return sendJson(response,405,{error:'METHOD_NOT_ALLOWED'})
   const device=await authenticateDeviceRequest(request,clients,'/api/device-vehicle-reports'),context=await resolveDeviceContext(device,clients),body=request.body??{}
-  const assigned=await assignedReportContext(clients,context.organization.id,body.driver_id,body.vehicle_id)
+  const identity=await requireDeviceDriverIdentity(request,clients,device,context)
+  if(body.driver_id!==identity.driver.id)return sendJson(response,403,{error:'DRIVER_IDENTITY_MISMATCH'})
+  const assigned=await assignedReportContext(clients,context.organization.id,identity.driver.id,body.vehicle_id)
   if(body.action==='LIST'){const{data,error}=await clients.checkvan.from('checkvan_vehicle_reports').select('*').eq('organization_id',context.organization.id).eq('vehicle_id',body.vehicle_id).eq('status','OPEN').order('reported_at',{ascending:false});if(error)throw new Error('REPORTS_UNAVAILABLE');return sendJson(response,200,{items:(data??[]).map(publicVehicleReport)})}
   if(body.action==='CREATE'){
     if(!uuid(body.client_generated_id))return sendJson(response,400,{error:'INVALID_CLIENT_GENERATED_ID'})
@@ -157,6 +161,15 @@ async function deviceVehicleReports(request,response,clients){
     return sendJson(response,201,publicVehicleReport(data))
   }
   return sendJson(response,400,{error:'INVALID_ACTION'})
+}
+
+async function deviceDriverLogout(request, response, clients) {
+  if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+  const device = await authenticateDeviceRequest(request, clients, '/api/device-driver-logout')
+  const context = await resolveDeviceContext(device, clients)
+  const identity = await requireDeviceDriverIdentity(request, clients, device, context)
+  await revokeDeviceDriverSession(clients, identity.session)
+  return sendJson(response, 200, { status: 'logged_out' })
 }
 
 async function companyVehicleReports(request,response,clients){
@@ -280,6 +293,20 @@ const operationalCookie = value => `${sessionCookie}=${value}; Path=/; HttpOnly;
 const operationalUuid = value => /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value ?? '')
 async function operationalAccess(request, response, clients) {
   const action = request.query?.action
+  if (action === 'departure-status' || action === 'departure-confirm') {
+    const session = await operationalSession(request, clients)
+    const operatingDate = operationalToday()
+    if (action === 'departure-status') {
+      if (request.method !== 'GET') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+      const { data, error } = await clients.checkvan.rpc('internal_driver_departure_status', { p_organization_id: session.organization_id, p_driver_id: session.driver_id, p_date: operatingDate })
+      if (error) throw new Error('DEPARTURE_QUEUE_UNAVAILABLE')
+      return sendJson(response, 200, data)
+    }
+    if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+    const { data, error } = await clients.checkvan.rpc('internal_driver_confirm_operational_departure', { p_organization_id: session.organization_id, p_driver_id: session.driver_id, p_date: operatingDate, p_origin: 'driver_web' })
+    if (error) return sendJson(response, error.message === 'DEPARTURE_NOT_AVAILABLE' ? 409 : 503, { error: error.message })
+    return sendJson(response, 200, data)
+  }
   if (action === 'regenerate') {
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
     const sessionSecret = cookieValue(request, sessionCookie)
@@ -351,6 +378,13 @@ async function operationalDayHistory(request, response, clients) {
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
 
+async function operationalDepartureQueue(request, response, clients) {
+  const user = await authenticateRequest(request, clients), context = await resolveCompanyContext(user.id, clients)
+  if (request.method === 'GET') return sendJson(response, 200, await readOperationalDepartureQueue(clients.checkvan, context.organization.id, user.id, request.query?.operating_date))
+  if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
+  return sendJson(response, 200, await startOperationalDepartureQueue(clients.checkvan, context.organization.id, user.id, request.body))
+}
+
 async function driverNameVariants(request, response, clients) {
   const { user, context } = await companyContext(request, clients)
   if (request.method === 'GET') {
@@ -363,36 +397,28 @@ async function driverNameVariants(request, response, clients) {
   return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
 }
 
-async function deviceDriverAssignments(request, response, clients) {
-  if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
-  const device = await authenticateDeviceRequest(request, clients, '/api/device-driver-assignments'), context = await resolveDeviceContext(device, clients)
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(request.body?.date || '') ? request.body.date : new Date().toISOString().slice(0, 10)
-  const [drivers, assignments] = await Promise.all([
-    clients.checkvan.from('checkvan_drivers').select('id,driver_code,first_name,last_name').eq('organization_id', context.organization.id).eq('status', 'active').order('last_name').order('first_name'),
-    clients.checkvan.from('checkvan_daily_assignments').select('id,assignment_date,driver_id,checkvan_vehicles!inner(*)').eq('organization_id', context.organization.id).eq('assignment_date', date).eq('checkvan_vehicles.status', 'active'),
-  ])
-  if (drivers.error || assignments.error) throw new Error('DRIVER_ASSIGNMENTS_UNAVAILABLE')
-  return sendJson(response, 200, { date, items: (drivers.data ?? []).map((driver) => { const assignment = assignments.data?.find((item) => item.driver_id === driver.id); return { driver_id: driver.id, driver_code: driver.driver_code, first_name: driver.first_name, last_name: driver.last_name, assignment: assignment ? { assignment_id: assignment.id, assignment_date: assignment.assignment_date, vehicle: publicVehicle(assignment.checkvan_vehicles) } : null } }) })
-}
-
 const operationalToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 const invalidOperationalQr = () => Object.assign(new Error('OPERATIONAL_QR_INVALID'), { status: 401 })
 async function deviceOperationalAssignment(request, response, clients) {
   if (request.method !== 'POST') return sendJson(response, 405, { error: 'METHOD_NOT_ALLOWED' })
   const token = typeof request.body?.token === 'string' ? request.body.token : ''
   if (!/^[A-Za-z0-9_-]{40,}$/.test(token)) throw invalidOperationalQr()
-  const { data: access, error } = await clients.checkvan.from('checkvan_driver_access_tokens').select('organization_id,driver_id').eq('token_hash', hashSecret(token)).eq('status', 'active').maybeSingle()
+  const device = await authenticateDeviceRequest(request, clients, '/api/device-operational-assignment')
+  const context = await resolveDeviceContext(device, clients)
+  const { data: access, error } = await clients.checkvan.from('checkvan_driver_access_tokens').select('id,organization_id,driver_id').eq('token_hash', hashSecret(token)).eq('status', 'active').maybeSingle()
   if (error) throw new Error('OPERATIONAL_ACCESS_UNAVAILABLE')
-  if (!access) throw invalidOperationalQr()
+  if (!access || access.organization_id !== context.organization.id) throw invalidOperationalQr()
   const date = operationalToday()
   const [dayResult, driverResult] = await Promise.all([
     clients.checkvan.rpc('internal_read_current_operational_day', { p_organization_id: access.organization_id, p_date: date }),
     clients.checkvan.from('checkvan_drivers').select('id,first_name,last_name').eq('id', access.driver_id).eq('organization_id', access.organization_id).eq('status', 'active').maybeSingle(),
   ])
   if (dayResult.error || driverResult.error || !driverResult.data) throw new Error('OPERATIONAL_DATA_UNAVAILABLE')
+  const issued = await issueDeviceDriverSession(clients, { device, context, access })
+  const withSession = value => ({ ...value, inspection_session: issued.secret, inspection_session_expires_at: issued.expiresAt })
   const confirmedDay = dayResult.data
   if (confirmedDay?.day) {
-    return sendJson(response, 200, confirmedOperationalAssignment(confirmedDay, driverResult.data, date))
+    return sendJson(response, 200, withSession(confirmedOperationalAssignment(confirmedDay, driverResult.data, date)))
   }
   const [planning, vehiclesResult] = await Promise.all([
     readPlanning(clients.checkvan, access.organization_id, weekStart(date)),
@@ -400,9 +426,10 @@ async function deviceOperationalAssignment(request, response, clients) {
   ])
   if (vehiclesResult.error) throw new Error('OPERATIONAL_DATA_UNAVAILABLE')
   const entry = planning.effective.find(item => item.driver_id === access.driver_id && item.assignment_date === date)
+  if (!entry) return sendJson(response, 200, withSession({ date, driver: driverResult.data, status: 'NOT_CONVOKED', assignment: null, departure_order: null, assignment_state: 'PROVISIONAL' }))
   const vehicle = entry?.vehicle_id ? (vehiclesResult.data ?? []).find(item => item.id === entry.vehicle_id) ?? null : null
-  if (entry?.work_status === 'TURNO' && !vehicle) return sendJson(response, 200, { date, driver: driverResult.data, status: 'TURNO', assignment: null, departure_order: null, assignment_state: 'PROVISIONAL' })
-  return sendJson(response, 200, { date, driver: driverResult.data, status: entry?.work_status ?? 'ALTRO', assignment: entry?.work_status === 'TURNO' ? { vehicle_id: vehicle.id, internal_code: vehicle.internal_code, plate: vehicle.plate, silhouette_category: vehicle.silhouette_category, route: entry.route ?? null, notes: entry.notes ?? null, source: entry.source } : null, departure_order: null, assignment_state: 'PROVISIONAL' })
+  if (entry?.work_status === 'TURNO' && !vehicle) return sendJson(response, 200, withSession({ date, driver: driverResult.data, status: 'TURNO', assignment: null, departure_order: null, assignment_state: 'PROVISIONAL' }))
+  return sendJson(response, 200, withSession({ date, driver: driverResult.data, status: entry?.work_status ?? 'ALTRO', assignment: entry?.work_status === 'TURNO' ? { vehicle_id: vehicle.id, internal_code: vehicle.internal_code, plate: vehicle.plate, silhouette_category: vehicle.silhouette_category, route: entry.route ?? null, notes: entry.notes ?? null, source: entry.source } : null, departure_order: null, assignment_state: 'PROVISIONAL' }))
 }
 
 async function companyDamagePhoto(request,response,clients){const{user,context}=await companyContext(request,clients);if(request.method!=='POST')return sendJson(response,405,{error:'METHOD_NOT_ALLOWED'});const action=request.body?.action??'VIEW';if(action==='CREATE'){if(!uuid(request.body?.vehicle_id))return sendJson(response,400,{error:'INVALID_VEHICLE_ID'});const d=damageInput(request.body),photo=damagePhotoInput(request.body),bucket='checkvan-vehicle-damages';let{data:damage,error}=await clients.checkvan.from('checkvan_vehicle_damages').select('*').eq('organization_id',context.organization.id).is('reported_by_device_id',null).eq('client_generated_id',photo.client_generated_id).maybeSingle();if(error)throw new Error('DAMAGES_UNAVAILABLE');if(!damage){const id=randomUUID(),ext={"image/jpeg":'jpg',"image/png":'png',"image/webp":'webp'}[photo.photo_mime_type],path=`organizations/${context.organization.id}/vehicles/${request.body.vehicle_id}/damages/${id}/original.${ext}`;({data:damage,error}=await clients.checkvan.from('checkvan_vehicle_damages').insert({id,organization_id:context.organization.id,vehicle_id:request.body.vehicle_id,damage_type:d.damage_type,vehicle_view:d.vehicle_view,normalized_x:d.x,normalized_y:d.y,status:'CONFIRMED',confirmed_by_auth_subject:user.id,confirmed_at:new Date().toISOString(),...photo,photo_bucket:bucket,photo_object_path:path,photo_upload_status:'UPLOADING'}).select('*').single());if(error)throw new Error('DAMAGE_CREATE_FAILED')}const{data:signed,error:signError}=await clients.checkvan.storage.from(damage.photo_bucket).createSignedUploadUrl(damage.photo_object_path,{upsert:false});if(signError)throw new Error('UPLOAD_AUTHORIZATION_FAILED');return sendJson(response,200,{damage:publicDamage(damage),signedUploadUrl:signed.signedUrl})}if(action==='FINALIZE'){if(!uuid(request.body?.damage_id))return sendJson(response,400,{error:'INVALID_DAMAGE_ID'});const{data:damage}=await clients.checkvan.from('checkvan_vehicle_damages').select('*').eq('id',request.body.damage_id).eq('organization_id',context.organization.id).maybeSingle();if(!damage)throw Object.assign(new Error('DAMAGE_NOT_FOUND'),{status:404});const parts=damage.photo_object_path.split('/'),file=parts.pop(),folder=parts.join('/'),{data:objects,error:storageError}=await clients.checkvan.storage.from(damage.photo_bucket).list(folder,{search:file,limit:2}),object=objects?.find(item=>item.name===file);if(storageError||!object)throw Object.assign(new Error('UPLOAD_NOT_FOUND'),{status:409});if(Number(object.metadata?.size)!==Number(damage.photo_size_bytes))throw Object.assign(new Error('UPLOAD_SIZE_MISMATCH'),{status:409});const{data,error}=await clients.checkvan.rpc('internal_admin_finalize_checkvan_damage_photo',{p_auth_subject:user.id,p_organization_id:context.organization.id,p_damage_id:damage.id});if(error)throw Object.assign(new Error(error.message),{status:400});return sendJson(response,200,publicDamage(data))}if(!uuid(request.body?.damage_id))return sendJson(response,400,{error:'INVALID_DAMAGE_ID'});const{data:damage,error}=await clients.checkvan.from('checkvan_vehicle_damages').select('photo_bucket,photo_object_path,photo_upload_status').eq('id',request.body.damage_id).eq('organization_id',context.organization.id).maybeSingle();if(error)throw new Error('DAMAGES_UNAVAILABLE');if(!damage||damage.photo_upload_status!=='AVAILABLE')return sendJson(response,404,{error:'DAMAGE_PHOTO_NOT_FOUND'});const{data:signed,error:signError}=await clients.checkvan.storage.from(damage.photo_bucket).createSignedUrl(damage.photo_object_path,300);if(signError)throw new Error('PHOTO_AUTHORIZATION_FAILED');return sendJson(response,200,{signedUrl:signed.signedUrl,expiresIn:300})}
@@ -454,15 +481,17 @@ export default async function handler(request, response) {
     if (resource === 'device-vehicles') return await deviceVehicles(request, response, clients)
     if (resource === 'device-damages') return await deviceDamages(request, response, clients)
     if (resource === 'device-vehicle-reports') return await deviceVehicleReports(request,response,clients)
+    if (resource === 'device-driver-logout') return await deviceDriverLogout(request, response, clients)
+    if (resource === 'device-operational-departure') return await handleDeviceOperationalDeparture(request, response, { clients })
     if (resource === 'company-vehicle-reports') return await companyVehicleReports(request,response,clients)
     if (resource === 'company-drivers') return await companyDrivers(request, response, clients)
     if (resource === 'company-assignments') return await companyAssignments(request, response, clients)
     if (resource === 'company-cloud') return await companyCloudArchive(request, response, clients)
     if (resource === 'company-planning') return await companyPlanning(request, response, clients)
     if (resource === 'operational-day-history') return await operationalDayHistory(request, response, clients)
+    if (resource === 'operational-departure-queue') return await operationalDepartureQueue(request, response, clients)
     if (resource === 'driver-name-variants') return await driverNameVariants(request, response, clients)
     if (resource === 'operational-access') return await operationalAccess(request, response, clients)
-    if (resource === 'device-driver-assignments') return await deviceDriverAssignments(request, response, clients)
     if (resource === 'device-operational-assignment') return await deviceOperationalAssignment(request, response, clients)
     return sendJson(response, 404, { error: 'NOT_FOUND' })
   } catch (error) { return sendError(response, error) }

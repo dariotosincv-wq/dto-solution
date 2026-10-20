@@ -10,6 +10,7 @@ test('device operational assignment validates an opaque QR token and gives a con
   assert.match(source, /confirmedOperationalAssignment\(confirmedDay, driverResult\.data, date\)/)
   assert.match(source, /readPlanning\(/)
   assert.match(source, /planning\.effective/)
+  assert.match(source, /status: 'NOT_CONVOKED'/)
   assert.match(source, /first_name,last_name/)
   assert.doesNotMatch(source, /service_role/i)
 })

@@ -83,10 +83,13 @@
     { "source": "/api/company-drivers", "destination": "/api/platform?resource=company-drivers" },
     { "source": "/api/company-assignments", "destination": "/api/platform?resource=company-assignments" },
     { "source": "/api/operational-day-history", "destination": "/api/platform?resource=operational-day-history" },
+    { "source": "/api/operational-departure-queue", "destination": "/api/platform?resource=operational-departure-queue" },
     { "source": "/api/company-cloud", "destination": "/api/platform?resource=company-cloud" },
     { "source": "/api/operational-access", "destination": "/api/platform?resource=operational-access" },
     { "source": "/api/device-driver-assignments", "destination": "/api/platform?resource=device-driver-assignments" },
     { "source": "/api/device-operational-assignment", "destination": "/api/platform?resource=device-operational-assignment" },
+    { "source": "/api/device-operational-departure", "destination": "/api/platform?resource=device-operational-departure" },
+    { "source": "/api/device-driver-logout", "destination": "/api/platform?resource=device-driver-logout" },
     {
       "source": "/sitemap.xml",
       "destination": "/api/platform?resource=seo&type=sitemap"

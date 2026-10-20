@@ -11,7 +11,7 @@ export function parseItalianVehicleReference(value = '') {
   return internal_code ? { internal_code, plate, issue: null } : { internal_code: null, plate, issue: 'INTERNAL_VEHICLE_CODE_NOT_FOUND' }
 }
 
-const parseDate = (items) => { for (const item of items) { const match = item.text.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/); if (!match) continue; const [, day, month, year] = match, candidate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`; if (!Number.isNaN(Date.parse(`${candidate}T00:00:00Z`))) return candidate } return null }
+const parseDate = (items) => { for (const item of items) { const match = item.text.match(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/); if (!match) continue; const [, day, month, year] = match, candidate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`; if (!Number.isNaN(Date.parse(`${candidate}T00:00:00Z`))) return candidate } return null }
 const inDeliverySection = (items) => { const ordered = [...items].sort(sortVisual), delivery = ordered.findIndex((item) => sectionLabel(item.text) === 'DELIVERY'); if (delivery < 0) return []; const end = ordered.findIndex((item, index) => index > delivery && sectionLabel(item.text) === 'UFFICIO'); return ordered.slice(delivery + 1, end < 0 ? undefined : end) }
 const shiftLabel = (value) => /^[-\s]*TURNO\b/i.test(value)
 // Convocation PDFs have no stable headers. TURNO anchors delimit the two

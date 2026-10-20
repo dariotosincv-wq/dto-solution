@@ -13,8 +13,15 @@ export default function AccountPage() {
     { label: 'Ruolo', value: access?.role || 'Non assegnato', icon: UserRound },
     { label: 'Organizzazione', value: organizationName, icon: Landmark },
   ]
-  const refreshArchive = async () => { if (!session?.access_token) return; try { setArchive(await loadCloudArchive(session.access_token)) } catch { setArchiveMessage('Archivio Cloud temporaneamente non disponibile.') } }
-  useEffect(() => { void refreshArchive() }, [session?.access_token])
+  useEffect(() => {
+    if (!session?.access_token) return undefined
+    const timer = window.setTimeout(() => {
+      void loadCloudArchive(session.access_token)
+        .then((value) => setArchive(value))
+        .catch(() => setArchiveMessage('Archivio Cloud temporaneamente non disponibile.'))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [session?.access_token])
   const act = async (action, payload = {}) => { setArchiveBusy(true); setArchiveMessage(''); try { const result = await cloudArchiveAction(session.access_token, action, payload); if (result.authorizationUrl) { window.location.assign(result.authorizationUrl); return } setArchive(result.connected === false ? result : await loadCloudArchive(session.access_token)); setArchiveMessage(action === 'DISCONNECT' ? 'Google Drive scollegato. I file già copiati rimangono nel Drive.' : action === 'VERIFY' ? 'Collegamento attivo.' : action === 'RETRY' ? `${result.synced} sincronizzati, ${result.alreadyPresent} già presenti, ${result.failed} non riusciti.` : 'Impostazione aggiornata.') } catch (error) { setArchiveMessage(error.message === 'CLOUD_ARCHIVE_NOT_CONFIGURED' ? 'Google Drive non è ancora configurato. Contatta l’amministratore DTO Solution.' : 'Operazione non riuscita. Riprova.') } finally { setArchiveBusy(false) } }
 
   return (

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { clientsFromEnvironment, sendError, sendJson } from './_lib/companyLicensing.js'
 import { normalizePlate, validateInspectionInput } from './_lib/companyLicensingCore.js'
 import { authenticateDeviceRequest, resolveDeviceContext } from './_lib/deviceAuthentication.js'
+import { requireDeviceDriverIdentity } from './_lib/deviceDriverIdentity.js'
 import { readPlanning } from './_lib/companyPlanning.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 
@@ -81,19 +82,20 @@ export async function handleDeviceInspectionUpload(request, response, dependenci
     if (!tusEndpoint) throw new Error('SERVER_NOT_CONFIGURED')
     const authenticate = dependencies.authenticate ?? authenticateDeviceRequest
     const resolveContext = dependencies.resolveContext ?? resolveDeviceContext
+    const requireIdentity = dependencies.requireIdentity ?? requireDeviceDriverIdentity
     const device = await authenticate(request, clients)
     const context = await resolveContext(device, clients)
+    const identity = await requireIdentity(request, clients, device, context)
     if (request.body.vehicleId) {
       const { data: vehicle, error: vehicleError } = await clients.checkvan.from('checkvan_vehicles').select('id,internal_code,plate_normalized').eq('id', request.body.vehicleId).eq('organization_id', context.organization.id).eq('status', 'active').maybeSingle()
       if (vehicleError) throw new Error('VEHICLES_UNAVAILABLE')
       if (!vehicle || vehicle.internal_code !== request.body.vehicleDescription || vehicle.plate_normalized !== normalizePlate(request.body.vehiclePlate)) throw Object.assign(new Error('VEHICLE_SNAPSHOT_MISMATCH'), { status: 409 })
     }
-    if (request.body.driverId) {
-      const { data: driver, error: driverError } = await clients.checkvan.from('checkvan_drivers').select('id,first_name,last_name').eq('id', request.body.driverId).eq('organization_id', context.organization.id).maybeSingle()
-      if (driverError) throw new Error('DRIVERS_UNAVAILABLE')
-      if (!driver || driver.first_name !== request.body.driverFirstName || driver.last_name !== request.body.driverLastName) throw Object.assign(new Error('DRIVER_SNAPSHOT_MISMATCH'), { status: 409 })
-      await validateOperationalAssignment(clients, context.organization.id, request.body)
+    if (!request.body.driverId || request.body.driverId !== identity.driver.id
+      || request.body.driverFirstName !== identity.driver.first_name || request.body.driverLastName !== identity.driver.last_name) {
+      throw Object.assign(new Error('DRIVER_IDENTITY_MISMATCH'), { status: 403 })
     }
+    await validateOperationalAssignment(clients, context.organization.id, request.body)
     const existing = await findExisting(clients, device.id, request.body.deviceGeneratedId)
     if (existing) {
       if (!uploadMatchesExisting(existing, request.body, device, context)) throw Object.assign(new Error('INSPECTION_CONFLICT'), { status: 409 })
