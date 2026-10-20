@@ -89,6 +89,7 @@
     { "source": "/api/device-driver-assignments", "destination": "/api/platform?resource=device-driver-assignments" },
     { "source": "/api/device-operational-assignment", "destination": "/api/platform?resource=device-operational-assignment" },
     { "source": "/api/device-operational-departure", "destination": "/api/platform?resource=device-operational-departure" },
+    { "source": "/api/public-qr-hubs", "destination": "/api/platform?resource=public-qr-hubs" },
     { "source": "/api/device-driver-logout", "destination": "/api/platform?resource=device-driver-logout" },
     {
       "source": "/sitemap.xml",

@@ -12,3 +12,5 @@ api/company-drivers.js
 api/company-assignments.js
 api/device-driver-assignments.js
 api/super-admin.js
+api/device-operational-departure.js
+api/public-qr-hubs.js

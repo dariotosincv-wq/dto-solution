@@ -10,6 +10,7 @@ import { cookieValue, driverWeek, hashSecret, newSecret, operationalSession, ses
 import { confirmedOperationalAssignment } from './_lib/deviceOperationalAssignment.js'
 import { issueDeviceDriverSession, requireDeviceDriverIdentity, revokeDeviceDriverSession } from './_lib/deviceDriverIdentity.js'
 import { handleDeviceOperationalDeparture } from './_lib/deviceOperationalDeparture.js'
+import { handlePublicQrHubs } from './_lib/publicQrHubs.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
@@ -483,6 +484,7 @@ export default async function handler(request, response) {
     if (resource === 'device-vehicle-reports') return await deviceVehicleReports(request,response,clients)
     if (resource === 'device-driver-logout') return await deviceDriverLogout(request, response, clients)
     if (resource === 'device-operational-departure') return await handleDeviceOperationalDeparture(request, response, { clients })
+    if (resource === 'public-qr-hubs') return await handlePublicQrHubs(request, response, { clients })
     if (resource === 'company-vehicle-reports') return await companyVehicleReports(request,response,clients)
     if (resource === 'company-drivers') return await companyDrivers(request, response, clients)
     if (resource === 'company-assignments') return await companyAssignments(request, response, clients)

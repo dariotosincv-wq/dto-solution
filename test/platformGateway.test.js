@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 test('Vercel gateway preserves all vehicle and SEO public paths within the Hobby function limit', async () => {
@@ -12,15 +12,22 @@ test('Vercel gateway preserves all vehicle and SEO public paths within the Hobby
   assert.match(routes.get('/api/device-vehicle-damages'), /resource=device-damages/)
   assert.match(routes.get('/api/device-operational-assignment'), /resource=device-operational-assignment/)
   assert.match(routes.get('/api/device-operational-departure'), /resource=device-operational-departure/)
+  assert.match(routes.get('/api/public-qr-hubs'), /resource=public-qr-hubs/)
   assert.match(routes.get('/api/device-driver-logout'), /resource=device-driver-logout/)
   assert.match(routes.get('/api/super-admin'), /resource=super-admin/)
-  for (const file of ['api/company-vehicles.js', 'api/company-vehicle.js', 'api/company-vehicle-damages.js', 'api/company-damage-photo.js', 'api/device-vehicles.js', 'api/device-vehicle-damages.js', 'api/seo.js', 'api/company-drivers.js', 'api/company-assignments.js']) assert.match(ignored, new RegExp(file.replaceAll('.', '\\.')))
+  for (const file of ['api/company-vehicles.js', 'api/company-vehicle.js', 'api/company-vehicle-damages.js', 'api/company-damage-photo.js', 'api/device-vehicles.js', 'api/device-vehicle-damages.js', 'api/seo.js', 'api/company-drivers.js', 'api/company-assignments.js', 'api/device-operational-departure.js', 'api/public-qr-hubs.js']) assert.match(ignored, new RegExp(file.replaceAll('.', '\\.')))
   assert.match(ignored, /api\/super-admin\.js/)
   const platform = await readFile(new URL('../api/platform.js', import.meta.url), 'utf8')
   const wrapper = await readFile(new URL('../api/device-vehicle-damages.js', import.meta.url), 'utf8')
   assert.match(platform, /from '\.\/_lib\/deviceVehicleDamages\.js'/)
+  assert.match(platform, /from '\.\/_lib\/deviceOperationalDeparture\.js'/)
+  assert.match(platform, /from '\.\/_lib\/publicQrHubs\.js'/)
   assert.match(platform, /_lib\/superAdminHandler\.js/)
   assert.match(wrapper, /from '\.\/_lib\/deviceVehicleDamages\.js'/)
+  const apiFiles = await readdir(new URL('../api/', import.meta.url))
+  const ignoredFiles = new Set(ignored.split(/\r?\n/).map((entry) => entry.trim()))
+  const deployedFunctions = apiFiles.filter((file) => file.endsWith('.js') && !ignoredFiles.has(`api/${file}`))
+  assert.equal(deployedFunctions.length, 12)
 })
 
 test('device gateway accepts only safe Capacitor origins and signed-request headers', async () => {
