@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import { CHECKVAN_CATEGORIES, matchLabelsToImages, parseCheckvanMetadata, platesDiffer, recognizeCategory, releaseComparison, validatePdfFile } from '../src/lib/checkvanComparisonCore.js'
-import { clampZoom } from '../src/lib/zoom.js'
+import { MAX_COMPARISON_ZOOM, clampZoom, zoomAtPointer } from '../src/lib/zoom.js'
 import { CHECKVAN_IMAGE_KIND, copyPixelsToRgba, imageToUrl } from '../src/lib/checkvanImagePreview.js'
 import { changeSyncMode, compactDocumentLabel, compactVehicleLabel, comparisonTransformKey, DEFAULT_COMPARISON_SYNCED } from '../src/lib/checkvanComparisonUi.js'
 
@@ -59,7 +59,8 @@ test('reset cleanup revokes every object URL and destroys documents', async () =
   assert.deepEqual(revoked, ['blob:a', 'blob:b']); assert.equal(destroyed, true)
 })
 
-test('zoom clamps to supported range', () => { assert.equal(clampZoom(0), 1); assert.equal(clampZoom(2), 2); assert.equal(clampZoom(9), 4) })
+test('zoom clamps to supported range', () => { assert.equal(clampZoom(0), 1); assert.equal(clampZoom(2), 2); assert.equal(clampZoom(9), MAX_COMPARISON_ZOOM) })
+test('wheel and pinch zoom preserve the cursor anchor', () => assert.deepEqual(zoomAtPointer({ zoom: 1, x: 0, y: 0, pointX: 30, pointY: -10, nextZoom: 2 }), { zoom: 2, x: -30, y: 10 }))
 
 test('converts RGB_24BPP pixels to RGBA with opaque alpha', () => {
   const output = new Uint8ClampedArray(8)

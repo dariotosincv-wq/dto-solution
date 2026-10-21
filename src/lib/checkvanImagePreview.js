@@ -21,7 +21,7 @@ export function copyPixelsToRgba(source, kind, destination, pixelCount) {
   }
 }
 
-export async function imageToUrl(image, maxDimension = 1280) {
+export async function imageToUrl(image, maxDimension = 4096) {
   if (!image?.width || !image?.height) throw new Error('Invalid PDF image dimensions')
   const ratio = Math.min(1, maxDimension / Math.max(image.width, image.height))
   const width = Math.max(1, Math.round(image.width * ratio))
@@ -54,7 +54,7 @@ export async function imageToUrl(image, maxDimension = 1280) {
         previewContext.drawImage(chunk, 0, 0, image.width, rows, 0, sourceRow * ratio, width, rows * ratio)
       }
     }
-    const blob = await new Promise((resolve) => preview.toBlob(resolve, 'image/jpeg', 0.88))
+    const blob = await new Promise((resolve) => preview.toBlob(resolve, 'image/jpeg', 0.95))
     if (!blob) throw new Error('Unable to create image preview')
     return URL.createObjectURL(blob)
   } finally {
