@@ -64,6 +64,7 @@ export function validateInspectionInput(value) {
   if (!Number.isInteger(value.documentSizeBytes) || value.documentSizeBytes < 1 || value.documentSizeBytes > 40 * 1024 * 1024) return 'INVALID_DOCUMENT_SIZE'
   if (!/^[0-9a-f-]{36}$/i.test(value.deviceGeneratedId ?? '')) return 'INVALID_DEVICE_GENERATED_ID'
   if (value.vehicleId != null && !/^[0-9a-f-]{36}$/i.test(value.vehicleId)) return 'INVALID_VEHICLE_ID'
+  if (value.routeUsed != null && (typeof value.routeUsed !== 'string' || !value.routeUsed.trim() || value.routeUsed.trim().length > 100)) return 'INVALID_ROUTE_USED'
   const hasDriver = value.driverId != null || value.driverFirstName != null || value.driverLastName != null || value.assignmentDate != null
   if (hasDriver && (!/^[0-9a-f-]{36}$/i.test(value.driverId ?? '') || typeof value.driverFirstName !== 'string' || !value.driverFirstName.trim() || value.driverFirstName.length > 100 || typeof value.driverLastName !== 'string' || !value.driverLastName.trim() || value.driverLastName.length > 100 || !/^\d{4}-\d{2}-\d{2}$/.test(value.assignmentDate ?? '') || !value.vehicleId)) return 'INVALID_DRIVER_ASSIGNMENT'
   return null

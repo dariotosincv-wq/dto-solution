@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Clock3, FileWarning, History, ShieldCheck, Truck, Wrench } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { canManageVehicles } from "../access.js";
@@ -22,6 +22,7 @@ const damageStatusLabel = { PENDING: "In attesa", CONFIRMED: "Confermato", REJEC
 const displayDate = (value, withTime = false) => value ? new Date(value).toLocaleString("it-IT", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }) : "â€”";
 export default function VehicleDetailPage() {
   const { vehicleId } = useParams(),
+    [searchParams] = useSearchParams(),
     { access, session } = useAuth(),
     [vehicle, setVehicle] = useState(null),
     [damages, setDamages] = useState([]),
@@ -45,6 +46,7 @@ export default function VehicleDetailPage() {
   const photoRequests = useRef(new Map());
   const cameraInputRef = useRef(null);
   const pickerInputRef = useRef(null);
+  const selectedFromQueryRef = useRef(null);
   const refresh = useCallback(async () => {
     try {
       const [v, d, technical] = await Promise.all([
@@ -64,6 +66,19 @@ export default function VehicleDetailPage() {
     const timeoutId = window.setTimeout(() => void refresh(), 0);
     return () => window.clearTimeout(timeoutId);
   }, [access, refresh]);
+  useEffect(() => {
+    const damageId = searchParams.get("damage_id");
+    if (!damageId) { selectedFromQueryRef.current = null; return undefined; }
+    if (selectedFromQueryRef.current === damageId) return undefined;
+    const damage = damages.find((item) => item.damage_id === damageId);
+    if (!damage) return undefined;
+    selectedFromQueryRef.current = damageId;
+    const timeoutId = window.setTimeout(() => {
+      setSelected(damage);
+      setDecisionNote(damage.decision_note || "");
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [damages, searchParams]);
   useEffect(() => {
     if (!photoModal) return undefined;
     const closeOnEscape = (event) => { if (event.key === "Escape") setPhotoModal(null); };

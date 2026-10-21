@@ -10,7 +10,7 @@ test('dashboard never presents missing data as a healthy empty fleet', () => {
   assert.equal(result.attention, null)
 })
 test('dashboard counts vehicles once and keeps administrative status separate from reports', () => {
-  const result = dashboardSummary([{ vehicle_id: 'a', status: 'active' }, { vehicle_id: 'b', status: 'inactive' }, { vehicle_id: 'c', status: 'archived' }], [{ vehicle_id: 'a', status: 'OPEN' }, { vehicle_id: 'a', status: 'OPEN' }, { vehicle_id: 'c', status: 'OPEN' }, { vehicle_id: 'b', status: 'RESOLVED' }], [])
+  const result = dashboardSummary([{ vehicle_id: 'a', status: 'active' }, { vehicle_id: 'b', status: 'inactive' }, { vehicle_id: 'c', status: 'archived' }], [{ vehicle_id: 'a', status: 'OPEN' }, { vehicle_id: 'a', status: 'OPEN' }, { vehicle_id: 'c', status: 'OPEN' }, { vehicle_id: 'b', status: 'RESOLVED' }], [], [])
   assert.equal(result.fleet.length, 2)
   assert.equal(result.active, 1)
   assert.equal(result.inactive, 1)
@@ -18,8 +18,18 @@ test('dashboard counts vehicles once and keeps administrative status separate fr
   assert.equal(result.open.length, 3)
 })
 test('dashboard accepts genuine zero results but leaves partial indicators unknown', () => {
-  assert.equal(dashboardSummary([], [], []).attention, 0)
-  assert.equal(dashboardSummary([], null, []).attention, null)
+  assert.equal(dashboardSummary([], [], [], []).attention, 0)
+  assert.equal(dashboardSummary([], null, [], []).attention, null)
+  assert.equal(dashboardSummary([], [], [], null).attention, null)
+})
+test('dashboard keeps pending and confirmed damages open until an explicit closure', () => {
+  const result = dashboardSummary([{ vehicle_id: 'a', status: 'active' }], [], [], [
+    { damage_id: 'pending', vehicle_id: 'a', status: 'PENDING' },
+    { damage_id: 'confirmed', vehicle_id: 'a', status: 'CONFIRMED' },
+    { damage_id: 'repaired', vehicle_id: 'a', status: 'REPAIRED' },
+  ])
+  assert.deepEqual(result.openDamages.map(item => item.damage_id), ['pending', 'confirmed'])
+  assert.equal(result.attention, 1)
 })
 test('activity sorts available facts by timestamp and ignores invalid dates', () => {
   const result = dashboardSummary([], [{ report_id: 'r', reported_at: '2026-09-06T08:00:00Z' }], [{ id: 'i', inspectedAt: '2026-09-06T09:00:00Z', inspectionType: 'return' }, { id: 'bad', inspectedAt: 'invalid' }])

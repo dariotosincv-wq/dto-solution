@@ -42,6 +42,7 @@ export const removeCompanyVehicle = (token, id) => authorizedRequest(`/api/compa
 export const loadVehicleRemovalPlan = (token, id) => authorizedRequest(`/api/company-vehicle?id=${encodeURIComponent(id)}&removal_check=1`, token)
 export const updateCompanyVehicle = (token, id, value) => authorizedRequest(`/api/company-vehicle?id=${encodeURIComponent(id)}`, token, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const loadVehicleDamages = (token, vehicleId) => authorizedRequest(`/api/company-vehicle-damages?vehicle_id=${encodeURIComponent(vehicleId)}`, token)
+export const loadOpenVehicleDamages = (token) => authorizedRequest('/api/company-vehicle-damages?open=true', token)
 export const loadVehicleReports = (token, vehicleId='') => authorizedRequest(`/api/company-vehicle-reports${vehicleId?`?vehicle_id=${encodeURIComponent(vehicleId)}`:''}`, token)
 export const resolveVehicleReport = (token, reportId) => authorizedRequest('/api/company-vehicle-reports', token, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'RESOLVE',report_id:reportId}) })
 export const createVehicleDamage = (token, value) => authorizedRequest('/api/company-vehicle-damages', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })

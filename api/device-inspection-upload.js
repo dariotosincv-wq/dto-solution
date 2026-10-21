@@ -7,9 +7,10 @@ import { readPlanning } from './_lib/companyPlanning.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 
 const BUCKET = 'checkvan-company-inspections'
-const UPLOAD_SELECT = 'id,organization_id,device_id,device_generated_id,inspection_type,vehicle_id,driver_id,driver_first_name,driver_last_name,assignment_date,vehicle_plate_normalized,vehicle_description,inspection_cycle_id,inspected_at,device_timezone,document_hash,document_size_bytes,document_format_version,app_version,storage_bucket,storage_object_path,upload_status'
+const UPLOAD_SELECT = 'id,organization_id,device_id,device_generated_id,inspection_type,vehicle_id,driver_id,driver_first_name,driver_last_name,assignment_date,vehicle_plate_normalized,vehicle_description,route_used,inspection_cycle_id,inspected_at,device_timezone,document_hash,document_size_bytes,document_format_version,app_version,storage_bucket,storage_object_path,upload_status'
 
 const nullable = (value) => value ?? null
+const normalizeRouteUsed = (value) => typeof value === 'string' ? value.trim() : null
 const sameInstant = (left, right) => Number.isFinite(Date.parse(left)) && Date.parse(left) === Date.parse(right)
 
 export function uploadMatchesExisting(inspection, body, device, context) {
@@ -24,6 +25,7 @@ export function uploadMatchesExisting(inspection, body, device, context) {
     && nullable(inspection.assignment_date) === nullable(body.assignmentDate)
     && inspection.vehicle_plate_normalized === normalizePlate(body.vehiclePlate)
     && nullable(inspection.vehicle_description) === nullable(body.vehicleDescription)
+    && nullable(inspection.route_used) === normalizeRouteUsed(body.routeUsed)
     && nullable(inspection.inspection_cycle_id) === nullable(body.inspectionCycleId)
     && sameInstant(inspection.inspected_at, body.inspectedAt)
     && nullable(inspection.device_timezone) === nullable(body.deviceTimezone)
@@ -114,7 +116,7 @@ export async function handleDeviceInspectionUpload(request, response, dependenci
       driver_id: request.body.driverId ?? null, driver_first_name: request.body.driverFirstName ?? null,
       driver_last_name: request.body.driverLastName ?? null, assignment_date: request.body.assignmentDate ?? null,
       vehicle_plate: request.body.vehiclePlate.trim(), vehicle_plate_normalized: normalizePlate(request.body.vehiclePlate),
-      vehicle_description: request.body.vehicleDescription ?? null, inspection_cycle_id: request.body.inspectionCycleId ?? null,
+      vehicle_description: request.body.vehicleDescription ?? null, route_used: normalizeRouteUsed(request.body.routeUsed), inspection_cycle_id: request.body.inspectionCycleId ?? null,
       inspected_at: request.body.inspectedAt, device_timezone: request.body.deviceTimezone ?? null,
       document_hash: request.body.documentHash, document_size_bytes: request.body.documentSizeBytes,
       storage_bucket: BUCKET, storage_object_path: path, upload_status: 'uploading', upload_started_at: new Date(now).toISOString(),

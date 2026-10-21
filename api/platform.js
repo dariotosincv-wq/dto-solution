@@ -10,13 +10,14 @@ import { cookieValue, driverWeek, hashSecret, newSecret, operationalSession, ses
 import { confirmedOperationalAssignment } from './_lib/deviceOperationalAssignment.js'
 import { issueDeviceDriverSession, requireDeviceDriverIdentity, revokeDeviceDriverSession } from './_lib/deviceDriverIdentity.js'
 import { handleDeviceOperationalDeparture } from './_lib/deviceOperationalDeparture.js'
+import { handleDeparturePushDispatch, handleDevicePushRegistration } from './_lib/departurePush.js'
 import { handlePublicQrHubs } from './_lib/publicQrHubs.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
 import { beginGoogleDriveOAuth, cloudArchiveStatus, completeGoogleDriveOAuth, createArchiveFolder, disconnectGoogleDrive, queueCloudSyncs, verifyGoogleDriveConnection } from './_lib/cloudArchive.js'
 
-const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-vehicle-reports', 'device-operational-assignment', 'device-driver-logout', 'device-operational-departure'])
+const deviceResources = new Set(['device-vehicles', 'device-damages', 'device-vehicle-reports', 'device-operational-assignment', 'device-driver-logout', 'device-operational-departure', 'device-push-registration'])
 const deviceOrigins = new Set(['http://localhost', 'https://localhost', 'capacitor://localhost'])
 const deviceAllowedHeaders = 'content-type, x-checkvan-device-id, x-checkvan-key-id, x-checkvan-timestamp, x-checkvan-request-id, x-checkvan-signature, x-checkvan-driver-session'
 
@@ -108,8 +109,13 @@ async function companyDamages(request, response, clients) {
   const { user, context } = await companyContext(request, clients)
   if (request.method === 'GET') {
     const vehicleId = request.query?.vehicle_id
-    if (!uuid(vehicleId)) return sendJson(response, 400, { error: 'INVALID_VEHICLE_ID' })
-    const { data, error } = await clients.checkvan.from('checkvan_vehicle_damages').select('*').eq('organization_id', context.organization.id).eq('vehicle_id', vehicleId).order('reported_at', { ascending: false })
+    const openOnly = request.query?.open === 'true'
+    if (!vehicleId && !openOnly) return sendJson(response, 400, { error: 'INVALID_VEHICLE_ID' })
+    if (vehicleId && !uuid(vehicleId)) return sendJson(response, 400, { error: 'INVALID_VEHICLE_ID' })
+    let query = clients.checkvan.from('checkvan_vehicle_damages').select('*').eq('organization_id', context.organization.id)
+    if (vehicleId) query = query.eq('vehicle_id', vehicleId)
+    if (openOnly) query = query.in('status', ['PENDING', 'CONFIRMED'])
+    const { data, error } = await query.order('reported_at', { ascending: false })
     if (error) throw new Error('DAMAGES_UNAVAILABLE')
     return sendJson(response, 200, { items: (data ?? []).filter((d) => d.photo_upload_status !== 'UPLOADING').map(publicDamage) })
   }
@@ -484,6 +490,8 @@ export default async function handler(request, response) {
     if (resource === 'device-vehicle-reports') return await deviceVehicleReports(request,response,clients)
     if (resource === 'device-driver-logout') return await deviceDriverLogout(request, response, clients)
     if (resource === 'device-operational-departure') return await handleDeviceOperationalDeparture(request, response, { clients })
+    if (resource === 'device-push-registration') return await handleDevicePushRegistration(request, response, { clients })
+    if (resource === 'departure-push-dispatch') return await handleDeparturePushDispatch(request, response, { clients })
     if (resource === 'public-qr-hubs') return await handlePublicQrHubs(request, response, { clients })
     if (resource === 'company-vehicle-reports') return await companyVehicleReports(request,response,clients)
     if (resource === 'company-drivers') return await companyDrivers(request, response, clients)

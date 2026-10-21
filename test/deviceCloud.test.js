@@ -12,6 +12,7 @@ const context = { organization, assignment: { id: '30000000-0000-4000-8000-00000
 const body = {
   deviceGeneratedId: '50000000-0000-4000-8000-000000000001', inspectionType: 'pickup', vehiclePlate: 'AB-123-CD',
   vehicleDescription: 'Daily 35S', inspectedAt: '2026-08-21T10:00:00.000Z', deviceTimezone: 'Europe/Rome',
+  routeUsed: 'CA_A26',
   documentHash: 'ab'.repeat(32), documentSizeBytes: 1234, documentFormatVersion: 1, appVersion: '1.0.0',
   vehicleId: '80000000-0000-4000-8000-000000000001', driverId: '70000000-0000-4000-8000-000000000001', driverFirstName: 'Test', driverLastName: 'Driver', assignmentDate: '2026-08-21',
 }
@@ -113,6 +114,31 @@ test('same deviceGeneratedId with incompatible hash is a real conflict', async (
   const response = await upload(clients, { ...body, documentHash: 'cd'.repeat(32) })
   assert.equal(response.statusCode, 409)
   assert.deepEqual(response.body, { error: 'INSPECTION_CONFLICT' })
+})
+
+test('a retry cannot alter the route snapshot of an existing inspection', async () => {
+  const { clients, database } = memoryClients()
+  await upload(clients)
+  const response = await upload(clients, { ...body, routeUsed: 'CA_A27' })
+  assert.equal(response.statusCode, 409)
+  assert.deepEqual(response.body, { error: 'INSPECTION_CONFLICT' })
+  assert.equal(database.tables.checkvan_inspections[0].route_used, 'CA_A26')
+})
+
+test('route snapshot validation is optional for legacy uploads and bounded when supplied', async () => {
+  const { clients } = memoryClients()
+  assert.equal((await upload(clients, { ...body, routeUsed: undefined })).statusCode, 201)
+  assert.deepEqual((await upload(memoryClients().clients, { ...body, routeUsed: 'x'.repeat(101) })).body, { error: 'INVALID_ROUTE_USED' })
+})
+
+test('expired QR identity cannot create an inspection with a route snapshot', async () => {
+  const { clients, database } = memoryClients(); const response = responseRecorder()
+  await handleDeviceInspectionUpload({ method: 'POST', body }, response, {
+    ...uploadDependencies(clients),
+    requireIdentity: async () => { throw Object.assign(new Error('DRIVER_SESSION_EXPIRED'), { status: 401 }) },
+  })
+  assert.equal(response.statusCode, 401)
+  assert.equal(database.tables.checkvan_inspections.length, 0)
 })
 
 test('a signed device cannot attribute an inspection to a different valid colleague', async () => {
