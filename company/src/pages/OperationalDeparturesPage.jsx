@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { canManageVehicles } from '../access.js'
 import { useAuth } from '../auth/AuthContext.jsx'
-import { loadOperationalDepartureQueue, startOperationalDepartureQueue } from '../lib/companySupabase.js'
+import { loadCurrentOperationalDay, loadOperationalDepartureQueue, startOperationalDepartureQueue } from '../lib/companySupabase.js'
+import { confirmedDepartureRows, departureDriverLabel } from '../lib/operationalDeparturePreview.js'
 import { COMPANY_ROUTES } from '../routes.js'
 
 const operationalDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
@@ -18,11 +19,16 @@ function Status({ status }) {
   return <span style={{ display: 'inline-block', padding: '0.25rem 0.55rem', borderRadius: '999px', color: value.color, background: value.background, fontWeight: 700 }}>{value.label}</span>
 }
 
+function PreStartTable({ rows }) {
+  return <div className="company-card" style={{ overflowX: 'auto' }}><table><thead><tr><th>Ordine</th><th>Driver</th><th>Mezzo</th><th>Targa</th><th>Rotta</th><th>Wave</th><th>Stato</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id}><td>{row.departure_order}</td><td><strong>{departureDriverLabel(row)}</strong></td><td>{row.vehicle_internal_code_snapshot ?? '—'}</td><td>{row.vehicle_plate_snapshot ?? '—'}</td><td>{row.route_snapshot ?? '—'}</td><td>{row.departure_wave ?? '—'}</td><td><span style={{ display: 'inline-block', padding: '0.25rem 0.55rem', borderRadius: '999px', color: '#475467', background: '#f2f4f7', fontWeight: 700 }}>Non avviata</span></td></tr>)}</tbody></table></div>
+}
+
 export default function OperationalDeparturesPage() {
   const { access, session } = useAuth()
   const [date, setDate] = useState(operationalDate)
   const [timeout, setTimeoutSeconds] = useState(30)
   const [queue, setQueue] = useState(null)
+  const [operationalDay, setOperationalDay] = useState(null)
   const [loading, setLoading] = useState(true)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState('')
@@ -30,8 +36,12 @@ export default function OperationalDeparturesPage() {
   const refresh = useCallback(async () => {
     if (!session?.access_token) return
     try {
-      const data = await loadOperationalDepartureQueue(session.access_token, date)
+      const [data, day] = await Promise.all([
+        loadOperationalDepartureQueue(session.access_token, date),
+        loadCurrentOperationalDay(session.access_token, date),
+      ])
       setQueue(data ?? null)
+      setOperationalDay(day ?? null)
       setError('')
     } catch (reason) {
       setError(reason.message === 'COMPANY_ADMIN_REQUIRED' ? 'Non sei autorizzato a consultare le partenze.' : 'Impossibile aggiornare la coda partenze.')
@@ -50,6 +60,8 @@ export default function OperationalDeparturesPage() {
   const items = useMemo(() => queue?.items ?? [], [queue])
   const departed = useMemo(() => items.filter(({ item }) => item.status === 'departed').length, [items])
   const called = useMemo(() => items.find(({ item }) => item.status === 'called') ?? null, [items])
+  const preStartItems = useMemo(() => confirmedDepartureRows(operationalDay), [operationalDay])
+  const preStart = !queue?.queue && operationalDay?.day?.status === 'confirmed'
 
   const start = async () => {
     if (starting || !window.confirm('Avviare l’unica coda globale delle partenze per questa giornata?')) return
@@ -62,8 +74,8 @@ export default function OperationalDeparturesPage() {
 
   if (!canManageVehicles(access)) return <Navigate to={COMPANY_ROUTES.dashboard} replace />
   return <section className="company-page"><header className="company-page-header"><div><p className="eyebrow">GIORNATA OPERATIVA</p><h1>Partenze</h1><p>Un’unica sequenza continua ordinata esclusivamente per ordine di partenza.</p></div></header>
-    <div className="company-card" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'end', marginBottom: '1rem' }}><label>Data operativa<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><label>Timeout (secondi)<input type="number" min="1" max="600" value={timeout} onChange={(event) => setTimeoutSeconds(Number(event.target.value) || 30)} disabled={Boolean(queue?.queue)} /></label><button type="button" onClick={() => void start()} disabled={starting || Boolean(queue?.queue)}>{starting ? 'Avvio…' : 'Avvia partenze'}</button><span aria-live="polite">Aggiornamento automatico ogni 3 secondi.</span></div>
+    <div className="company-card" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'end', marginBottom: '1rem' }}><label>Data operativa<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><label>Timeout (secondi)<input type="number" min="1" max="600" value={timeout} onChange={(event) => setTimeoutSeconds(Number(event.target.value) || 30)} disabled={Boolean(queue?.queue)} /></label><button type="button" onClick={() => void start()} disabled={starting || Boolean(queue?.queue) || !preStart}>{starting ? 'Avvio…' : 'Avvia partenze'}</button><span aria-live="polite">Aggiornamento automatico ogni 3 secondi.</span></div>
     {error && <p role="alert" className="company-error">{error}</p>}
-    {loading ? <p>Caricamento coda partenze…</p> : !queue?.queue ? <div className="company-card"><h2>Coda non avviata</h2><p>Verifica la giornata confermata e avvia la sequenza quando sei pronto.</p></div> : <><div className="company-card" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}><div><strong>{departed} / {items.length}</strong><p>driver partiti</p></div><div><strong>{called ? `${called.row.driver_name} · #${called.item.departure_order}` : queue.queue.status === 'completed' ? 'Coda completata' : 'Nessun driver chiamato'}</strong><p>driver attualmente chiamato</p></div></div>
+    {loading ? <p>Caricamento coda partenze…</p> : !queue?.queue ? preStart ? <><div className="company-card" style={{ marginBottom: '1rem', border: '1px solid #d0d5dd', background: '#f8fafc' }}><h2>Partenze non avviate</h2><p>La giornata è confermata. La sequenza seguente è pronta e non sono ancora attivi timeout, cron o avvisi ai driver.</p></div>{preStartItems.length ? <PreStartTable rows={preStartItems} /> : <div className="company-card"><h2>Partenze non avviate</h2><p>La giornata è confermata ma non contiene righe TURNO con ordine di partenza valido.</p></div>}</> : <div className="company-card"><h2>Nessuna giornata confermata</h2><p>Conferma prima la giornata operativa per visualizzare e avviare la sequenza.</p></div> : <><div className="company-card" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1rem' }}><div><strong>{departed} / {items.length}</strong><p>driver partiti</p></div><div><strong>{called ? `${called.row.driver_name} · #${called.item.departure_order}` : queue.queue.status === 'completed' ? 'Coda completata' : 'Nessun driver chiamato'}</strong><p>driver attualmente chiamato</p></div></div>
       <div className="company-card" style={{ overflowX: 'auto' }}><table><thead><tr><th>Ordine</th><th>Driver</th><th>Mezzo</th><th>Targa</th><th>Rotta</th><th>Wave</th><th>Stato</th></tr></thead><tbody>{items.map(({ item, row }) => <tr key={item.id} style={item.status === 'called' ? { outline: '2px solid #12b76a', outlineOffset: '-2px' } : undefined}><td>{item.departure_order}</td><td><strong>{row.driver_name}</strong>{item.status === 'called' && <div>Attualmente chiamato</div>}</td><td>{row.vehicle_internal_code ?? '—'}</td><td>{row.vehicle_plate ?? '—'}</td><td>{row.route ?? '—'}</td><td>{row.departure_wave ?? '—'}</td><td><Status status={item.status} /></td></tr>)}</tbody></table></div></>}</section>
 }

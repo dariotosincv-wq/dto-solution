@@ -67,6 +67,7 @@ export const loadCompanyPlanning = (token, start, signal) => authorizedRequest(`
 export const saveCompanyPlanning = (token, value) => authorizedRequest('/api/platform?resource=company-planning', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const confirmOperationalDay = (token, value) => authorizedRequest('/api/operational-day-history', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const loadOperationalDayAnomalies = (token, date) => authorizedRequest(`/api/operational-day-history?anomalies=1&operating_date=${encodeURIComponent(date)}`, token)
+export const loadCurrentOperationalDay = (token, date) => authorizedRequest(`/api/operational-day-history?operating_date=${encodeURIComponent(date)}`, token)
 export const resolveOperationalDayAnomaly = (token, value) => authorizedRequest('/api/operational-day-history', token, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
 export const loadOperationalDepartureQueue = (token, date) => authorizedRequest(`/api/operational-departure-queue?operating_date=${encodeURIComponent(date)}`, token)
 export const startOperationalDepartureQueue = (token, value) => authorizedRequest('/api/operational-departure-queue', token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) })
