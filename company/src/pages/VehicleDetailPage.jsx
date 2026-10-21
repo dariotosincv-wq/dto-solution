@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Clock3, FileWarning, History, ShieldCheck, Truck, Wrench } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, FileWarning, History, Image, ShieldCheck, Truck, Wrench } from "lucide-react";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { canManageVehicles } from "../access.js";
 import {
@@ -34,6 +34,7 @@ export default function VehicleDetailPage() {
     [draft, setDraft] = useState(null),
     [draftPhoto, setDraftPhoto] = useState(null),
     [draftPhotoUrl, setDraftPhotoUrl] = useState(""),
+    [selectedPhoto, setSelectedPhoto] = useState({ status: "idle", url: "", damageId: null }),
     [photoModal, setPhotoModal] = useState(null),
     [savingDraft, setSavingDraft] = useState(false),
     [statusUpdating, setStatusUpdating] = useState(false),
@@ -61,6 +62,34 @@ export default function VehicleDetailPage() {
       setError("Dati veicolo non disponibili.");
     }
   }, [session.access_token, vehicleId]);
+  const selectDamage = useCallback(async (damage) => {
+    setSelected(damage);
+    setView(damage.vehicle_view);
+    setMoving(false);
+    setDecisionNote(damage.decision_note || "");
+    if (!damage.photo_available) {
+      setSelectedPhoto({ status: "unavailable", url: "", damageId: damage.damage_id });
+      return;
+    }
+    setSelectedPhoto({ status: "loading", url: "", damageId: damage.damage_id });
+    try {
+      const cached = photoCache.current.get(damage.damage_id);
+      if (cached?.expiresAt > Date.now()) {
+        setSelectedPhoto({ status: "ready", url: cached.url, damageId: damage.damage_id });
+        return;
+      }
+      let request = photoRequests.current.get(damage.damage_id);
+      if (!request) {
+        request = loadDamagePhoto(session.access_token, damage.damage_id).finally(() => photoRequests.current.delete(damage.damage_id));
+        photoRequests.current.set(damage.damage_id, request);
+      }
+      const { signedUrl, expiresIn } = await request;
+      photoCache.current.set(damage.damage_id, { url: signedUrl, expiresAt: Date.now() + Math.max(30, expiresIn - 15) * 1000 });
+      setSelectedPhoto((current) => current.damageId === damage.damage_id ? { status: "ready", url: signedUrl, damageId: damage.damage_id } : current);
+    } catch {
+      setSelectedPhoto((current) => current.damageId === damage.damage_id ? { status: "error", url: "", damageId: damage.damage_id } : current);
+    }
+  }, [session.access_token]);
   useEffect(() => {
     if (!canManageVehicles(access)) return undefined;
     const timeoutId = window.setTimeout(() => void refresh(), 0);
@@ -74,11 +103,10 @@ export default function VehicleDetailPage() {
     if (!damage) return undefined;
     selectedFromQueryRef.current = damageId;
     const timeoutId = window.setTimeout(() => {
-      setSelected(damage);
-      setDecisionNote(damage.decision_note || "");
+      void selectDamage(damage);
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [damages, searchParams]);
+  }, [damages, searchParams, selectDamage]);
   useEffect(() => {
     if (!photoModal) return undefined;
     const closeOnEscape = (event) => { if (event.key === "Escape") setPhotoModal(null); };
@@ -162,8 +190,10 @@ export default function VehicleDetailPage() {
   const openReports = reports.filter((item) => item.status === "OPEN");
   const resolvedReports = reports.filter((item) => item.status === "RESOLVED");
   const historicDamages = damages.filter((damage) => ["CONFIRMED", "REPAIRED"].includes(damage.status));
+  const pendingDamages = damages.filter((damage) => damage.status === "PENDING");
+  const confirmedDamages = damages.filter((damage) => damage.status === "CONFIRMED");
   return (
-    <div className="company-page">
+    <div className="company-page vehicle-detail-page">
       <header>
         <Link to={COMPANY_ROUTES.vehicles}>← Veicoli</Link>
         <p className="company-kicker">{vehicle.silhouette_category}</p>
@@ -171,6 +201,10 @@ export default function VehicleDetailPage() {
           {vehicle.internal_code} · {vehicle.plate}
         </h1>
       </header>
+      <div className="vehicle-detail-kpis" aria-label="Riepilogo danni operativi">
+        <span><strong>{pendingDamages.length}</strong> in attesa</span>
+        <span><strong>{confirmedDamages.length}</strong> confermati</span>
+      </div>
       {error && <p className="notice notice--error">{error}</p>}
       {vehicle.status !== "active" && <p className="notice notice--warning"><strong>Veicolo disattivato.</strong> Resta consultabile nello storico, ma non può ricevere nuovi danni finché non viene riattivato.</p>}
       <div className="vehicle-controls">
@@ -213,6 +247,7 @@ export default function VehicleDetailPage() {
           O Ammaccatura
         </button>
       </div>
+      <div className="vehicle-detail-workspace">
       <DamageMap
         category={vehicle.silhouette_category}
         damages={damages}
@@ -220,25 +255,34 @@ export default function VehicleDetailPage() {
         onView={setView}
         onAdd={positionDamage}
         onMove={positionDamage}
-          onSelect={(damage) => { setSelected(damage); setMoving(false); setDecisionNote(damage.decision_note || ""); }}
+          onSelect={(damage) => { void selectDamage(damage); }}
         selected={selected}
         moving={moving}
         disabled={vehicle.status !== "active"}
       />
       <div className="vehicle-activity" aria-label="Segnalazioni e storico del veicolo">
-        <section className="vehicle-activity-card vehicle-activity-card--open" aria-labelledby="open-reports-title">
+        <details className="vehicle-activity-card vehicle-activity-card--open" open>
+          <summary className="vehicle-activity-summary">Segnalazioni aperte <span>{openReports.length}</span></summary>
           <header className="vehicle-activity-card__heading"><span className="vehicle-activity-icon" aria-hidden="true"><FileWarning /></span><div><h2 id="open-reports-title">Segnalazioni aperte</h2><p>Qui trovi tutte le segnalazioni ancora in lavorazione relative a questo veicolo.</p></div></header>
           {openReports.length ? <div className="vehicle-activity-list">{openReports.map((item) => <article className="vehicle-activity-item vehicle-activity-item--open" key={item.report_id}><span className="vehicle-activity-item__icon" aria-hidden="true"><AlertCircle /></span><div className="vehicle-activity-item__content"><strong>{VEHICLE_REPORT_LABELS[item.report_type] || item.report_type}</strong>{item.description && <p>{item.description}</p>}<small>Segnalata il {displayDate(item.reported_at, true)}{item.driver ? ` · Driver: ${item.driver}` : ""}</small></div><div className="vehicle-activity-item__aside"><span className="vehicle-activity-status vehicle-activity-status--open">Aperta</span><button onClick={() => void resolveTechnicalReport(item)}><CheckCircle2 size={17} aria-hidden="true" />Segna come risolta</button></div></article>)}</div> : <div className="vehicle-empty-state"><span className="vehicle-empty-state__icon" aria-hidden="true"><ShieldCheck /></span><strong>Nessuna segnalazione aperta</strong><p>Ottimo! Non ci sono segnalazioni in corso per questo veicolo.</p></div>}
-        </section>
-        <section className="vehicle-activity-card" aria-labelledby="report-history-title">
+        </details>
+        <details className="vehicle-activity-card">
+          <summary className="vehicle-activity-summary">Storico segnalazioni <span>{resolvedReports.length}</span></summary>
           <header className="vehicle-activity-card__heading"><span className="vehicle-activity-icon" aria-hidden="true"><History /></span><div><h2 id="report-history-title">Storico segnalazioni</h2><p>Qui trovi tutte le segnalazioni effettuate per questo veicolo, con il relativo stato.</p></div></header>
           {resolvedReports.length ? <div className="vehicle-activity-list">{resolvedReports.map((item) => <article className="vehicle-activity-item" key={item.report_id}><span className="vehicle-activity-item__icon vehicle-activity-item__icon--history" aria-hidden="true"><Wrench /></span><div className="vehicle-activity-item__content"><strong>{VEHICLE_REPORT_LABELS[item.report_type] || item.report_type}</strong>{item.description && <p>{item.description}</p>}<small>Segnalata il {displayDate(item.reported_at)} · Risolta il {displayDate(item.resolved_at)}</small></div><span className="vehicle-activity-status vehicle-activity-status--resolved">Risolta</span></article>)}</div> : <div className="vehicle-empty-state vehicle-empty-state--compact"><span className="vehicle-empty-state__icon" aria-hidden="true"><Clock3 /></span><strong>Nessuna segnalazione nello storico</strong><p>Le segnalazioni risolte compariranno qui.</p></div>}
-        </section>
+        </details>
       </div>
       {selected && (
-        <section className="damage-editor">
-          <h2>Marker {selected.status}</h2>
-          {selected.photo_available && <button onClick={() => viewPhoto(selected)}>Vedi foto</button>}
+        <section className="damage-editor vehicle-damage-detail">
+          <header className="vehicle-damage-detail__header"><div><p className="company-kicker">Danno selezionato</p><h2>{selected.damage_type === "SCRATCH" ? "Graffio" : "Ammaccatura"}</h2></div><span className={`vehicle-activity-status vehicle-activity-status--${selected.status.toLowerCase()}`}>{damageStatusLabel[selected.status] || selected.status}</span></header>
+          <dl className="vehicle-damage-details"><div><dt>Vista</dt><dd>{selected.vehicle_view}</dd></div><div><dt>Segnalato</dt><dd>{displayDate(selected.reported_at, true)}</dd></div></dl>
+          <div className="vehicle-damage-photo">
+            {selectedPhoto.status === "loading" && <p>Caricamento foto…</p>}
+            {selectedPhoto.status === "ready" && <button type="button" className="vehicle-damage-photo__button" onClick={() => viewPhoto(selected)}><img src={selectedPhoto.url} alt="Foto del danno selezionato" /><span><Image size={16} aria-hidden="true" />Ingrandisci foto</span></button>}
+            {selectedPhoto.status === "error" && <p>Foto non disponibile. <button type="button" onClick={() => void selectDamage(selected)}>Riprova</button></p>}
+            {selectedPhoto.status === "unavailable" && <p>Nessuna foto associata a questo danno.</p>}
+          </div>
+          {selected.photo_available && <button className="button-tertiary" onClick={() => viewPhoto(selected)}>Vedi foto</button>}
           {vehicle.status === "active" && selected.status === "PENDING" && <button onClick={() => { movingRef.current = selected; setMoving(true); }}>Sposta</button>}
           {moving && <button onClick={() => { movingRef.current = null; setMoving(false); }}>Annulla spostamento</button>}
           {moving && <p>Seleziona la nuova posizione sulla sagoma.</p>}
@@ -279,6 +323,7 @@ export default function VehicleDetailPage() {
           <button onClick={() => { setSelected(null); setMoving(false); }}>Chiudi</button>
         </section>
       )}
+      </div>
       <section className="vehicle-activity-card vehicle-damage-history" aria-labelledby="damage-history-title">
         <header className="vehicle-activity-card__heading"><span className="vehicle-activity-icon" aria-hidden="true"><Truck /></span><div><h2 id="damage-history-title">Storico danni</h2><p>Qui trovi tutti i danni registrati per questo veicolo.</p></div></header>
         {historicDamages.length ? <ul className="damage-history vehicle-activity-list">{historicDamages.map((d) => <li className="vehicle-activity-item" key={d.damage_id}><span className="vehicle-activity-item__icon vehicle-activity-item__icon--history" aria-hidden="true"><AlertCircle /></span><div className="vehicle-activity-item__content"><strong>{d.damage_type} · {d.vehicle_view}</strong><small>Registrato il {displayDate(d.reported_at, true)}</small></div><div className="vehicle-activity-item__aside"><span className={`vehicle-activity-status vehicle-activity-status--${d.status.toLowerCase()}`}>{damageStatusLabel[d.status] || d.status}</span><div className="damage-history__actions">{vehicle.status === "active" && d.status === "REPAIRED" && <button className="damage-action--reopen" onClick={() => { if (window.confirm("Annullare la riparazione? Il danno tornerà attivo sulla sagoma.")) void patch({ ...d, action: "REOPEN" }); }}>Annulla riparazione</button>}<button className="damage-action--delete" onClick={() => { if (window.confirm("Eliminare questo danno dalla mappa operativa?")) void patch({ ...d, action: "REMOVE" }); }}>Elimina</button></div></div></li>)}</ul> : <div className="vehicle-empty-state"><span className="vehicle-empty-state__icon" aria-hidden="true"><Truck /></span><strong>Nessun danno registrato</strong><p>Non sono presenti danni per questo veicolo.</p></div>}
