@@ -3,7 +3,107 @@ import { matchOperationalDayPreviews } from './operationalDayMatchingCore.js'
 
 const requiredConvocation = (row) => Boolean(row?.driver_name && row?.shift_type && row?.internal_vehicle_code && row?.vehicle_plate)
 const requiredAssignment = (row) => Number.isInteger(row?.departure_group) && Boolean(row?.driver_name && row?.route) && Number.isInteger(row?.parking_lot_position) && Number.isInteger(row?.departure_order)
-export const previewRowId = (source, row) => `${source}:${row.row}`
+export const previewRowId = (source, row) => `${source}${row?.source_file_index == null ? '' : `:${row.source_file_index}`}:${row.row}`
+
+const assignmentSource = (file, file_index, row) => ({
+  file_index,
+  file_name: file.file_name || `Uscita ${file_index + 1}`,
+  row: row.row,
+})
+const assignmentSignature = (row) => [
+  normalizeConvocationDriverName(row.driver_name),
+  row.departure_group ?? '',
+  normalizeConvocationDriverName(row.route),
+  row.parking_lot_position ?? '',
+  normalizeConvocationDriverName(row.atlas_indication),
+  row.departure_wave ?? '',
+].join('|')
+
+export function mergeAssignmentDeparturePreviews(files = []) {
+  const groups = new Map(), outcomes = []
+  for (const [file_index, file] of files.entries()) {
+    const preview = file.preview || file
+    for (const row of preview.rows || []) {
+      const source = assignmentSource(file, file_index, row)
+      const driver_name_key = normalizeConvocationDriverName(row.driver_name)
+      const groupKey = driver_name_key || `__row_${file_index}_${row.row}`
+      const candidates = groups.get(groupKey) || []
+      candidates.push({ ...row, source_file_index: file_index, source_files: [source] })
+      groups.set(groupKey, candidates)
+    }
+    for (const outcome of preview.outcomes || []) outcomes.push({
+      ...outcome,
+      assignment_sources: [assignmentSource(file, file_index, outcome)],
+    })
+  }
+
+  const rows = []
+  for (const [driver_name_key, candidates] of groups) {
+    if (driver_name_key.startsWith('__row_') || candidates.length === 1) {
+      rows.push(...candidates)
+      continue
+    }
+    const signatures = new Set(candidates.map(assignmentSignature))
+    if (signatures.size === 1) {
+      rows.push({ ...candidates[0], source_files: candidates.flatMap(candidate => candidate.source_files) })
+      continue
+    }
+    outcomes.push({
+      status: 'AMBIGUO',
+      driver_name: candidates[0].driver_name,
+      driver_name_key,
+      issues: ['DUPLICATE_ASSIGNMENT_DRIVER_ACROSS_FILES'],
+      assignment_sources: candidates.flatMap(candidate => candidate.source_files),
+    })
+  }
+
+  return {
+    departure_date: null,
+    departure_date_status: 'not_verifiable_from_content',
+    rows: rows
+      .sort((left, right) => left.source_file_index - right.source_file_index || left.row - right.row)
+      .map((row, index) => ({ ...row, departure_order: index + 1 })),
+    outcomes,
+  }
+}
+
+const vehicleConflicts = (rows) => {
+  const byCode = new Map(), byPlate = new Map(), byVehicle = new Map()
+  const add = (index, value, row) => {
+    if (!value) return
+    const items = index.get(value) || []
+    items.push(row)
+    index.set(value, items)
+  }
+  for (const row of rows) {
+    const code = normalizeConvocationDriverName(row.internal_vehicle_code)
+    const plate = normalizeConvocationDriverName(row.vehicle_plate)
+    add(byCode, code, row)
+    add(byPlate, plate, row)
+    add(byVehicle, `${code}|${plate}`, row)
+  }
+  const issuesByDriver = new Map()
+  const flag = (items, issue) => {
+    if (items.length < 2) return
+    for (const row of items) {
+      const issues = issuesByDriver.get(row.driver_name_key) || new Set()
+      issues.add(issue)
+      issuesByDriver.set(row.driver_name_key, issues)
+    }
+  }
+  for (const items of byCode.values()) if (new Set(items.map(row => normalizeConvocationDriverName(row.vehicle_plate))).size > 1) flag(items, 'DUPLICATE_VEHICLE_CODE_INCOMPATIBLE')
+  for (const items of byPlate.values()) if (new Set(items.map(row => normalizeConvocationDriverName(row.internal_vehicle_code))).size > 1) flag(items, 'DUPLICATE_VEHICLE_PLATE_INCOMPATIBLE')
+  for (const items of byVehicle.values()) if (new Set(items.map(row => row.driver_name_key)).size > 1) flag(items, 'DUPLICATE_VEHICLE_ASSIGNMENT')
+  return rows
+    .filter(row => issuesByDriver.has(row.driver_name_key))
+    .map(row => ({
+      status: 'AMBIGUO',
+      driver_name: row.driver_name,
+      driver_name_key: row.driver_name_key,
+      issues: [...issuesByDriver.get(row.driver_name_key)],
+      assignment_sources: row.assignment_sources || [],
+    }))
+}
 
 const manualMatch = (convocation, assignment, manual_link_id) => ({
   status: 'MANUAL_MATCHED', manual_confirmation: true, operational_date: convocation.operational_date,
@@ -12,6 +112,7 @@ const manualMatch = (convocation, assignment, manual_link_id) => ({
   shift_type: convocation.shift_type, internal_vehicle_code: convocation.internal_vehicle_code, vehicle_plate: convocation.vehicle_plate,
   departure_group: assignment.departure_group, route: assignment.route, parking_lot_position: assignment.parking_lot_position,
   atlas_indication: assignment.atlas_indication || null, departure_wave: assignment.departure_wave ?? null, departure_order: assignment.departure_order,
+  assignment_sources: assignment.source_files || [],
 })
 
 const tokens = (name) => normalizeConvocationDriverName(name).split(' ').filter(Boolean)
@@ -50,8 +151,16 @@ export function buildOperationalDayImportPreview({ convocation = {}, assignment 
     resolvedKeys.add(normalizeConvocationDriverName(convocationRow.driver_name)); resolvedKeys.add(normalizeConvocationDriverName(assignmentRow.driver_name))
     manualRows.push(manualMatch({ ...convocationRow, operational_date: automatic.operational_date }, assignmentRow, link.id))
   }
-  const outcomes = automatic.outcomes.filter((outcome) => !resolvedKeys.has(outcome.driver_name_key))
-  const rows = [...automatic.rows, ...manualRows].sort((left, right) => left.departure_order - right.departure_order)
+  const conflictingVehicles = vehicleConflicts(automatic.rows)
+  const conflictingVehicleKeys = new Set(conflictingVehicles.map(outcome => outcome.driver_name_key))
+  const mergeOutcomes = assignment.outcomes || []
+  const excludedAssignmentKeys = new Set(mergeOutcomes.map(outcome => outcome.driver_name_key).filter(Boolean))
+  const outcomes = [
+    ...automatic.outcomes.filter((outcome) => !resolvedKeys.has(outcome.driver_name_key) && !excludedAssignmentKeys.has(outcome.driver_name_key) && !conflictingVehicleKeys.has(outcome.driver_name_key)),
+    ...mergeOutcomes,
+    ...conflictingVehicles,
+  ]
+  const rows = [...automatic.rows.filter(row => !conflictingVehicleKeys.has(row.driver_name_key)), ...manualRows].sort((left, right) => left.departure_order - right.departure_order)
   const occupiedConvocation = new Set(usedConvocation), occupiedAssignment = new Set(usedAssignment)
   for (const row of automatic.rows) {
     const convocationRow = convocationRows.find((candidate) => normalizeConvocationDriverName(candidate.driver_name) === row.driver_name_key)

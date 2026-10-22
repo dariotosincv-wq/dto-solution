@@ -82,6 +82,7 @@ export function matchOperationalDayPreviews({ convocation = {}, assignment = {},
       atlas_indication: assignmentRow.atlas_indication || null,
       departure_wave: assignmentRow.departure_wave ?? null,
       departure_order: assignmentRow.departure_order,
+      ...(assignmentRow.source_files ? { assignment_sources: assignmentRow.source_files } : {}),
     })
   }
 
@@ -109,6 +110,7 @@ export function matchOperationalDayPreviews({ convocation = {}, assignment = {},
       shift_type: convocationRow.shift_type, internal_vehicle_code: convocationRow.internal_vehicle_code, vehicle_plate: convocationRow.vehicle_plate,
       departure_group: assignmentRow.departure_group, route: assignmentRow.route, parking_lot_position: assignmentRow.parking_lot_position,
       atlas_indication: assignmentRow.atlas_indication || null, departure_wave: assignmentRow.departure_wave ?? null, departure_order: assignmentRow.departure_order,
+      ...(assignmentRow.source_files ? { assignment_sources: assignmentRow.source_files } : {}),
     })
     crossMatchedConvocation.add(key)
     crossMatchedAssignment.add(assignmentKey)

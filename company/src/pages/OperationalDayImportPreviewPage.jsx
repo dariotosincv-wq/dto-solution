@@ -5,16 +5,18 @@ import { useAuth } from '../auth/AuthContext.jsx'
 import { canManageVehicles } from '../access.js'
 import { readConvocationDefinitivePdf } from '../lib/convocationDefinitivePdf.js'
 import { readAssignmentDeparturePdf } from '../lib/assignmentDeparturePdf.js'
-import { buildOperationalDayImportPreview, previewRowId } from '../lib/operationalDayImportPreview.js'
+import { buildOperationalDayImportPreview, mergeAssignmentDeparturePreviews, previewRowId } from '../lib/operationalDayImportPreview.js'
 import { normalizeConvocationDriverName } from '../lib/convocationDefinitiveCore.js'
 import { confirmOperationalDay, loadCompanyDrivers, loadCompanyVehicles, loadOperationalDayAnomalies, resolveOperationalDayAnomaly, updateCompanyDriver } from '../lib/companySupabase.js'
 import { operationalDayAnomalyPayload, prepareOperationalDayConfirmation } from '../lib/operationalDayConfirmation.js'
 import { COMPANY_ROUTES } from '../routes.js'
 import './operational-day-import.css'
 
-const emptyFiles = { convocation: null, assignment: null }
+const emptyFiles = { convocation: null, assignments: [] }
 const emptyDirectory = { drivers: [], vehicles: [], loaded: false }
 const label = value => value || '—'
+
+const sourceLabel = (sources = []) => sources.map(source => `${source.file_name} · riga ${source.row}`).join(', ')
 
 export default function OperationalDayImportPreviewPage() {
   const { access, session } = useAuth()
@@ -78,8 +80,9 @@ export default function OperationalDayImportPreviewPage() {
     setDirectory({ drivers: driverData.items || [], vehicles: vehicleData.items || [], loaded: true })
   }
 
-  const choose = (kind, file) => {
-    setFiles(current => ({ ...current, [kind]: file || null }))
+  const choose = (kind, value) => {
+    const selected = kind === 'assignments' ? Array.from(value || []) : value || null
+    setFiles(current => ({ ...current, [kind]: selected }))
     setParsed(null)
     setDirectory(emptyDirectory)
     setManualLinks([])
@@ -90,22 +93,42 @@ export default function OperationalDayImportPreviewPage() {
   }
 
   const process = async () => {
-    if (!files.convocation || !files.assignment || loading) return
+    if (!files.convocation || !files.assignments.length || loading) return
     setLoading(true)
     setError('')
     setConfirmationMessage('')
     setManualLinks([])
     setDirectory(emptyDirectory)
     try {
-      const [convocation, assignment] = await Promise.all([
-        readConvocationDefinitivePdf(files.convocation),
-        readAssignmentDeparturePdf(files.assignment),
-      ])
+      let convocation
+      try {
+        convocation = await readConvocationDefinitivePdf(files.convocation)
+      } catch {
+        throw new Error('CONVOCATION_FILE_INVALID')
+      }
+      const assignments = []
+      for (const file of files.assignments) {
+        try {
+          assignments.push({ file_name: file.name, preview: await readAssignmentDeparturePdf(file) })
+        } catch {
+          throw new Error(`ASSIGNMENT_FILE_INVALID:${file.name}`)
+        }
+      }
+      const assignment = mergeAssignmentDeparturePreviews(assignments)
       setParsed({ convocation, assignment })
       await loadDirectory()
-    } catch {
+    } catch (reason) {
       setParsed(null)
       setDirectory(emptyDirectory)
+      const invalidFile = /^ASSIGNMENT_FILE_INVALID:(.+)$/.exec(reason?.message || '')?.[1]
+      if (reason?.message === 'CONVOCATION_FILE_INVALID') {
+        setError('Il PDF di convocazione non è leggibile o non è valido. Nessun PDF è stato salvato.')
+        return
+      }
+      if (invalidFile) {
+        setError(`Il file di uscita ${invalidFile} non è leggibile o non è un PDF valido. Nessun PDF è stato salvato.`)
+        return
+      }
       setError('Impossibile preparare l’anteprima o verificare l’anagrafica. Nessun PDF è stato salvato.')
     } finally {
       setLoading(false)
@@ -217,13 +240,14 @@ export default function OperationalDayImportPreviewPage() {
     </header>
 
     <section className="operational-import-card" aria-labelledby="import-files-title">
-      <div><h2 id="import-files-title">PDF della giornata</h2><p>Seleziona entrambi i documenti: la convocazione definitiva e assegnazione/uscita.</p></div>
+      <div><h2 id="import-files-title">PDF della giornata</h2><p>Seleziona la convocazione definitiva e uno o più PDF di assegnazione/uscita.</p></div>
       <div className="operational-file-grid">
         <label className="operational-file"><FileText aria-hidden="true" /><span><strong>Convocazione definitiva</strong><small>{files.convocation ? 'PDF selezionato in memoria' : 'Nessun PDF selezionato'}</small></span><input ref={convocationInput} type="file" accept="application/pdf" onChange={event => choose('convocation', event.target.files?.[0])} /></label>
-        <label className="operational-file"><FileText aria-hidden="true" /><span><strong>Assegnazione / Uscita</strong><small>{files.assignment ? 'PDF selezionato in memoria' : 'Nessun PDF selezionato'}</small></span><input ref={assignmentInput} type="file" accept="application/pdf" onChange={event => choose('assignment', event.target.files?.[0])} /></label>
+        <label className="operational-file"><FileText aria-hidden="true" /><span><strong>Assegnazione / Uscita</strong><small>{files.assignments.length ? `${files.assignments.length} PDF selezionati in memoria` : 'Seleziona uno o più PDF'}</small></span><input ref={assignmentInput} type="file" accept="application/pdf" multiple onChange={event => choose('assignments', event.target.files)} /></label>
       </div>
+      {files.assignments.length > 0 && <ul className="operational-selected-files" aria-label="PDF uscita selezionati">{files.assignments.map((file, index) => <li key={`${file.name}-${file.size}-${index}`}>{file.name}</li>)}</ul>}
       <div className="operational-import-actions">
-        <button type="button" className="operational-primary" disabled={!files.convocation || !files.assignment || loading} onClick={() => void process()}><Upload size={17} />{loading ? 'Elaborazione in memoria…' : 'Elabora anteprima'}</button>
+        <button type="button" className="operational-primary" disabled={!files.convocation || !files.assignments.length || loading} onClick={() => void process()}><Upload size={17} />{loading ? 'Elaborazione in memoria…' : 'Elabora anteprima'}</button>
         <button type="button" onClick={clear}><RotateCcw size={17} />Annulla e svuota</button>
         <button type="button" onClick={exit}>Esci dall’anteprima</button>
       </div>
@@ -244,7 +268,7 @@ export default function OperationalDayImportPreviewPage() {
       {preview.outcomes.length > 0 && <section className="operational-review" aria-labelledby="review-title">
         <div><AlertTriangle aria-hidden="true" /><div><h2 id="review-title">Righe da verificare</h2><p>{preview.summary.missing} mancanti · {preview.summary.ambiguous} ambigue. I suggerimenti sono temporanei: non viene salvato nulla.</p></div></div>
         {preview.suggestions.length > 0 && <div className="operational-manual-link"><strong>Abbinamenti suggeriti</strong><p>Il nome della convocazione è l’inizio univoco del nome nell’uscita. Verifica e conferma solo quelli corretti.</p>{preview.suggestions.map(suggestion => <button key={suggestion.id} type="button" onClick={() => addSuggestedLink(suggestion)}><Link2 size={17} />Abbina {suggestion.convocation_name} ↔ {suggestion.assignment_name}</button>)}</div>}
-        <ul className="operational-outcomes">{preview.outcomes.map((outcome, index) => <li key={`${outcome.status}-${outcome.driver_name_key}-${index}`} className={outcome.status === 'AMBIGUO' ? 'is-ambiguous' : ''}><strong>{outcome.status}</strong><span>{outcome.driver_name || 'Nome non disponibile'}</span><small>{outcome.issues.join(' · ')}</small></li>)}</ul>
+        <ul className="operational-outcomes">{preview.outcomes.map((outcome, index) => <li key={`${outcome.status}-${outcome.driver_name_key}-${index}`} className={outcome.status === 'AMBIGUO' ? 'is-ambiguous' : ''}><strong>{outcome.status}</strong><span>{outcome.driver_name || 'Nome non disponibile'}</span><small>{outcome.issues.join(' · ')}{outcome.assignment_sources?.length ? ` · ${sourceLabel(outcome.assignment_sources)}` : ''}</small></li>)}</ul>
         <div className="operational-manual-link">
           <label>Riga convocazione<select value={selectedConvocation} onChange={event => setSelectedConvocation(event.target.value)}><option value="">Seleziona</option>{availableConvocation.map(row => <option key={previewRowId('convocation', row)} value={previewRowId('convocation', row)}>Riga {row.row} · {row.driver_name || 'nome mancante'}</option>)}</select></label>
           <label>Riga uscita<select value={selectedAssignment} onChange={event => setSelectedAssignment(event.target.value)}><option value="">Seleziona</option>{availableAssignment.map(row => <option key={previewRowId('assignment_departure', row)} value={previewRowId('assignment_departure', row)}>Riga {row.row} · {row.driver_name || 'nome mancante'}</option>)}</select></label>
@@ -254,7 +278,7 @@ export default function OperationalDayImportPreviewPage() {
 
       <section className="operational-results" aria-labelledby="results-title">
         <header><div><h2 id="results-title">Righe abbinate</h2><p>Ordinate dall’ordine globale di partenza; wave e gruppo sono solo descrittivi.</p></div><button type="button" disabled={!prepared || !prepared.rows.length || confirming || Boolean(confirmationMessage)} onClick={() => void confirmDay()}>{confirming ? 'Conferma in corso…' : confirmationMessage ? 'Giornata confermata' : prepared?.unresolved.length || preview.outcomes.length ? 'Conferma i driver validi' : 'Conferma giornata'}</button></header>
-        <div className="operational-table-wrap"><table><thead><tr><th>Driver</th><th>Turno</th><th>Mezzo</th><th>Targa</th><th>Rotta</th><th>Gruppo</th><th>Parking Lot</th><th>Wave</th><th>Ordine</th><th>Stato</th></tr></thead><tbody>{preview.rows.map(row => <tr key={`${row.status}-${row.driver_name_key}-${row.departure_order}`} className={row.manual_confirmation ? 'is-manual' : ''}><th scope="row">{label(row.driver_name)}</th><td>{label(row.shift_type)}</td><td>{label(row.internal_vehicle_code)}</td><td>{label(row.vehicle_plate)}</td><td>{label(row.route)}</td><td>{label(row.departure_group)}</td><td>{label(row.parking_lot_position)}</td><td>{label(row.departure_wave)}</td><td>{label(row.departure_order)}</td><td>{row.manual_confirmation ? <span className="operational-badge operational-badge--manual">Manuale <button type="button" aria-label="Rimuovi abbinamento manuale" onClick={() => setManualLinks(links => links.filter(link => link.id !== row.manual_link_id))}><X size={14} /></button></span> : <span className="operational-badge">Automatico</span>}</td></tr>)}</tbody></table></div>
+        <div className="operational-table-wrap"><table><thead><tr><th>Driver</th><th>Turno</th><th>Mezzo</th><th>Targa</th><th>Rotta</th><th>Gruppo</th><th>Parking Lot</th><th>Wave</th><th>Ordine</th><th>Fonte uscita</th><th>Stato</th></tr></thead><tbody>{preview.rows.map(row => <tr key={`${row.status}-${row.driver_name_key}-${row.departure_order}`} className={row.manual_confirmation ? 'is-manual' : ''}><th scope="row">{label(row.driver_name)}</th><td>{label(row.shift_type)}</td><td>{label(row.internal_vehicle_code)}</td><td>{label(row.vehicle_plate)}</td><td>{label(row.route)}</td><td>{label(row.departure_group)}</td><td>{label(row.parking_lot_position)}</td><td>{label(row.departure_wave)}</td><td>{label(row.departure_order)}</td><td>{sourceLabel(row.assignment_sources) || 'PDF singolo'}</td><td>{row.manual_confirmation ? <span className="operational-badge operational-badge--manual">Manuale <button type="button" aria-label="Rimuovi abbinamento manuale" onClick={() => setManualLinks(links => links.filter(link => link.id !== row.manual_link_id))}><X size={14} /></button></span> : <span className="operational-badge">Automatico</span>}</td></tr>)}</tbody></table></div>
         {!preview.rows.length && <p className="operational-empty">Non ci sono ancora abbinamenti completi.</p>}
       </section>
     </>}
