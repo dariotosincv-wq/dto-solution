@@ -12,7 +12,7 @@ import { issueDeviceDriverSession, requireDeviceDriverIdentity, revokeDeviceDriv
 import { handleDeviceOperationalDeparture } from './_lib/deviceOperationalDeparture.js'
 import { handleDeparturePushDispatch, handleDevicePushRegistration } from './_lib/departurePush.js'
 import { handlePublicQrHubs } from './_lib/publicQrHubs.js'
-import companyDevices from './company-devices.js'
+import companyDevices from './_lib/companyDevices.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'

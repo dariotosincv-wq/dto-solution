@@ -3,7 +3,7 @@ import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 
 const migrationUrl = new URL('../supabase/migrations/20261022131500_company_device_assignment_revocation.sql', import.meta.url)
-const devicesUrl = new URL('../api/company-devices.js', import.meta.url)
+const devicesUrl = new URL('../api/_lib/companyDevices.js', import.meta.url)
 const platformUrl = new URL('../api/platform.js', import.meta.url)
 const vercelUrl = new URL('../vercel.json', import.meta.url)
 const pageUrl = new URL('../company/src/pages/DevicesPage.jsx', import.meta.url)
@@ -30,6 +30,7 @@ test('company device endpoint is admin-scoped and routed through the existing ga
   assert.match(endpoint, /context\.capabilities\.manageDevices/)
   assert.match(endpoint, /internal_admin_revoke_company_device/)
   assert.match(endpoint, /p_organization_id: context\.organization\.id/)
+  assert.match(platform, /from '\.\/_lib\/companyDevices\.js'/)
   assert.match(platform, /resource === 'company-devices'/)
   assert.match(config, /"source": "\/api\/company-devices", "destination": "\/api\/platform\?resource=company-devices"/)
 })
