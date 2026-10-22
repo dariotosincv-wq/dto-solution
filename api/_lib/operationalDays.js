@@ -90,7 +90,13 @@ export async function startOperationalDepartureQueue(client, organizationId, use
 }
 export async function readOperationalDepartureQueue(client, organizationId, userId, operatingDate) {
   if (!date(operatingDate)) invalid('INVALID_OPERATIONAL_DAY_DATE')
-  const { data, error } = await client.rpc('internal_admin_read_operational_departure_queue', { p_auth_subject: userId, p_organization_id: organizationId, p_date: operatingDate })
+  const { data, error } = await client.rpc('internal_admin_read_operational_departure_board', {
+    p_auth_subject: userId,
+    p_organization_id: organizationId,
+    p_date: operatingDate,
+    // Server-owned threshold: a browser cannot weaken the connection rule.
+    p_connected_within_seconds: 120,
+  })
   if (error) throw Object.assign(new Error(error.message), { status: error.message === 'COMPANY_ADMIN_REQUIRED' ? 403 : 503 })
   return data
 }
