@@ -29,10 +29,13 @@ test('challenge route requires server-recognized pre-MFA state', async () => {
   assert.match(app, /<Route element={<MfaGuard\/>}><Route path="\/super-admin\/mfa"/)
 })
 
-test('challenge page finds only an existing verified TOTP and never enrolls', async () => {
+test('challenge page starts enrollment when the authorized Super Admin has no verified TOTP', async () => {
   const page = await source('../admin/src/MfaChallengePage.jsx')
   assert.match(page, /state\.verified\[0\]/)
-  assert.doesNotMatch(page, /enroll|qrCode|secret|unenroll/)
+  assert.match(page, /beginTotpEnrollment/)
+  assert.match(page, /Configura TOTP/)
+  assert.match(page, /enrollment\.qrCode/)
+  assert.doesNotMatch(page, /enrollment\.secret/)
 })
 
 test('wrong code remains outside while valid challenge reaches real AAL2', async () => {
@@ -48,9 +51,9 @@ test('successful AAL2 verification redirects only to Super Admin dashboard', asy
   assert.match(page, /verifyTotpCode[\s\S]*window\.location\.replace\('\/super-admin\/dashboard'\)/)
 })
 
-test('full admin APIs retain the AAL2 guard and no MFA/database state is changed', async () => {
+test('full admin APIs retain the AAL2 guard and first enrollment does not change database MFA policy', async () => {
   const [handler, server, page] = await Promise.all([source('../api/_lib/superAdminHandler.js'), source('../api/_lib/superAdmin.js'), source('../admin/src/MfaChallengePage.jsx')])
   assert.match(handler, /authenticateSuperAdmin\(request, clients\)/)
   assert.match(server, /currentLevel !== 'aal2'/)
-  assert.doesNotMatch(handler + page, /require_mfa\s*=|enroll\(|unenroll\(/)
+  assert.doesNotMatch(handler + page, /require_mfa\s*=/)
 })
