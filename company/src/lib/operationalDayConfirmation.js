@@ -2,15 +2,21 @@ import { normalizeConvocationDriverName } from './convocationDefinitiveCore.js'
 
 const key = value => normalizeConvocationDriverName(value || '')
 
+const driverNameKeys = (driver) => [...new Set([
+  key(`${driver.last_name} ${driver.first_name}`),
+  key(`${driver.first_name} ${driver.last_name}`),
+].filter(Boolean))]
+
 const indexDrivers = (drivers) => {
   const index = new Map()
   for (const driver of drivers) {
-    const name = key(`${driver.last_name} ${driver.first_name}`)
-    const items = index.get(name) || []
-    items.push(driver)
-    index.set(name, items)
+    for (const name of driverNameKeys(driver)) {
+      const items = index.get(name) || new Map()
+      items.set(driver.driver_id, driver)
+      index.set(name, items)
+    }
   }
-  return index
+  return new Map([...index].map(([name, items]) => [name, [...items.values()]]))
 }
 
 export function prepareOperationalDayConfirmation(rows, drivers, vehicles) {

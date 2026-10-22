@@ -39,6 +39,29 @@ test('active driver remains a valid confirmed row with its original departure fi
   })
 })
 
+test('active driver is resolved when the PDF uses first name followed by last name', () => {
+  const prepared = prepareOperationalDayConfirmation([{ ...row, driver_name: 'FITTIZIO NOME' }], [activeDriver], [vehicle])
+  assert.equal(prepared.unresolved.length, 0)
+  assert.equal(prepared.rows.length, 1)
+  assert.equal(prepared.rows[0].driver_id, driverId)
+})
+
+test('ambiguous reversed names remain unresolved instead of choosing a driver', () => {
+  const reverseNameDriver = { driver_id: '80000000-0000-4000-8000-000000000003', first_name: 'NOME', last_name: 'FITTIZIO', status: 'active' }
+  const prepared = prepareOperationalDayConfirmation([{ ...row, driver_name: 'NOME FITTIZIO' }], [activeDriver, reverseNameDriver], [vehicle])
+  assert.equal(prepared.rows.length, 0)
+  assert.equal(prepared.unresolved.length, 1)
+  assert.equal(prepared.unresolved[0].missing_driver, true)
+})
+
+test('an inactive vehicle remains unresolved even when the driver name is valid', () => {
+  const prepared = prepareOperationalDayConfirmation([row], [activeDriver], [{ ...vehicle, status: 'inactive' }])
+  assert.equal(prepared.rows.length, 0)
+  assert.equal(prepared.unresolved.length, 1)
+  assert.equal(prepared.unresolved[0].missing_driver, false)
+  assert.equal(prepared.unresolved[0].missing_vehicle, true)
+})
+
 test('archived driver is distinguished from a missing driver without creating a duplicate', () => {
   const archived = prepareOperationalDayConfirmation([row], [archivedDriver], [vehicle])
   assert.equal(archived.rows.length, 0)
