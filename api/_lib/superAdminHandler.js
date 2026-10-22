@@ -55,6 +55,22 @@ async function readResource(resource, request, clients, admin) {
 
 async function mutate(request, clients, admin) {
   const body = request.body ?? {}; const organizationId = /^[0-9a-f-]{36}$/i.test(body.organizationId ?? '') ? body.organizationId : null
+  if (body.action === 'CREATE_COMPANY') {
+    const ownerEmail = typeof body.ownerEmail === 'string' ? body.ownerEmail.trim().toLowerCase() : ''
+    const name = typeof body.name === 'string' ? body.name.trim() : ''
+    const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : ''
+    const capacity = Number(body.capacity)
+    const accessGrant = typeof body.accessGrant === 'string' ? body.accessGrant.toUpperCase() : 'TESTER'
+    const organizationType = typeof body.organizationType === 'string' ? body.organizationType : 'internal_test'
+    const status = typeof body.status === 'string' ? body.status : 'active'
+    const trialDays = body.trialDays == null || body.trialDays === '' ? null : Number(body.trialDays)
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ownerEmail) || !name || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !Number.isInteger(capacity)) throw Object.assign(new Error('INVALID_COMPANY_REQUEST'), { status: 400 })
+    if (!['TESTER', 'PAID', 'TRIAL'].includes(accessGrant) || !['customer', 'internal_test'].includes(organizationType) || !['active', 'suspended'].includes(status) || (trialDays != null && (!Number.isInteger(trialDays) || trialDays < 1 || trialDays > 365))) throw Object.assign(new Error('INVALID_COMPANY_REQUEST'), { status: 400 })
+    const { data, error } = await clients.checkvan.rpc('internal_super_admin_create_company', { p_actor_auth_subject: admin.id, p_owner_email: ownerEmail, p_organization_name: name, p_slug: slug, p_capacity: capacity, p_access_grant: accessGrant, p_organization_type: organizationType, p_status: status, p_trial_days: trialDays })
+    if (error) throw Object.assign(new Error(error.message === 'OWNER_ALREADY_HAS_MEMBERSHIP' ? error.message : 'COMPANY_CREATION_FAILED'), { status: error.message === 'OWNER_ALREADY_HAS_MEMBERSHIP' ? 409 : 400 })
+    await auditAdmin(clients, admin, 'COMPANY_CREATED', { organizationId: data.organization_id })
+    return data
+  }
   if (body.action === 'UPDATE_ORGANIZATION' && organizationId && ['active', 'suspended'].includes(body.status)) {
     const { data, error } = await clients.checkvan.from('checkvan_organizations').update({ status: body.status, updated_at: new Date().toISOString() }).eq('id', organizationId).select('id,name,status').single()
     if (error) throw new Error('ADMIN_UPDATE_FAILED'); await auditAdmin(clients, admin, 'ORGANIZATION_UPDATED', { organizationId }); return data
