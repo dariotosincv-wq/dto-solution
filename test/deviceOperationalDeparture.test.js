@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { handleDeviceOperationalDeparture } from '../api/_lib/deviceOperationalDeparture.js'
+import { deviceDepartureStatus, handleDeviceOperationalDeparture } from '../api/_lib/deviceOperationalDeparture.js'
 
 function response() {
   return {
@@ -26,11 +26,19 @@ test('device departure STATUS derives organization and driver only from verified
   const res = response()
   await handleDeviceOperationalDeparture({ method: 'POST', body: { action: 'STATUS', driver_id: 'attacker', organization_id: 'attacker' } }, res, dependencies(async (...args) => {
     calls.push(args)
-    return { data: { queue_status: 'active', item: { status: 'called' } }, error: null }
+    return { data: { queue_status: 'active', position: 2, drivers_ahead: 0, status: 'called', updated_at: null }, error: null }
   }))
   assert.equal(res.code, 200)
-  assert.deepEqual(res.body, { queue_status: 'active', item: { status: 'called' } })
-  assert.deepEqual(calls, [['internal_driver_departure_status', { p_organization_id: 'organization-verified', p_driver_id: 'driver-verified', p_date: '2026-10-20' }]])
+  assert.deepEqual(res.body, { queue_status: 'active', position: 2, drivers_ahead: 0, status: 'called', updated_at: null })
+  assert.deepEqual(calls, [['internal_device_driver_departure_status', { p_organization_id: 'organization-verified', p_driver_id: 'driver-verified', p_date: '2026-10-20' }]])
+})
+
+test('device departure status exposes only the authenticated driver aggregate', () => {
+  assert.deepEqual(deviceDepartureStatus({
+    queue_status: 'active', position: 19, drivers_ahead: 18, status: 'waiting', updated_at: '2026-10-22T10:00:00.000Z',
+    items: [{ driver_id: 'another-driver', vehicle_plate: 'must-not-leak' }], row: { vehicle_plate: 'must-not-leak' },
+  }), { queue_status: 'active', position: 19, drivers_ahead: 18, status: 'waiting', updated_at: '2026-10-22T10:00:00.000Z' })
+  assert.throws(() => deviceDepartureStatus({ queue_status: 'active', position: 1, drivers_ahead: -1, status: 'waiting' }), /DEPARTURE_QUEUE_UNAVAILABLE/)
 })
 
 test('device departure CONFIRM uses the verified identity and preserves the server idempotent result', async () => {
