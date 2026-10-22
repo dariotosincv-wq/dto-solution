@@ -1,6 +1,7 @@
 dist
 dist-company
 api/company-inspection.js
+api/company-devices.js
 api/company-vehicles.js
 api/company-vehicle.js
 api/company-vehicle-damages.js

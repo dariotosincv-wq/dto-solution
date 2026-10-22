@@ -12,6 +12,7 @@ import { issueDeviceDriverSession, requireDeviceDriverIdentity, revokeDeviceDriv
 import { handleDeviceOperationalDeparture } from './_lib/deviceOperationalDeparture.js'
 import { handleDeparturePushDispatch, handleDevicePushRegistration } from './_lib/departurePush.js'
 import { handlePublicQrHubs } from './_lib/publicQrHubs.js'
+import companyDevices from './company-devices.js'
 import { weekStart } from '../company/src/lib/weeklyPlanning.js'
 import superAdminHandler from './_lib/superAdminHandler.js'
 import { assertCompanyVehicle, assignedReportContext, publicVehicleReport, vehicleReportInput } from './_lib/vehicleReports.js'
@@ -482,6 +483,7 @@ export default async function handler(request, response) {
     if (resource === 'super-admin') return superAdminHandler(request, response)
     const clients = clientsFromEnvironment()
     if (resource === 'company-vehicles') return await companyVehicles(request, response, clients)
+    if (resource === 'company-devices') return await companyDevices(request, response)
     if (resource === 'company-vehicle') return await companyVehicle(request, response, clients)
     if (resource === 'company-damages') return await companyDamages(request, response, clients)
     if (resource === 'company-damage-photo') return await companyDamagePhoto(request, response, clients)

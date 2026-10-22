@@ -22,6 +22,7 @@ async function authorizedRequest(path, accessToken, options = {}) {
 }
 
 export const loadCompanyDevices = (accessToken) => authorizedRequest('/api/company-devices', accessToken)
+export const revokeCompanyDevice = (accessToken, deviceId, reason = null) => authorizedRequest('/api/company-devices', accessToken, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: deviceId, reason }) })
 export const createEnrollmentToken = (accessToken) => authorizedRequest('/api/company-enrollment-token', accessToken, { method: 'POST' })
 export const provisionCompanyTrial = (accessToken, organizationName) => authorizedRequest('/api/company-trial', accessToken, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ organizationName }),
